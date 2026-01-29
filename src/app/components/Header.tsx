@@ -1,5 +1,5 @@
 import { User, Bell, Settings, LogOut } from "lucide-react";
-import logoImage from "figma:asset/a65a012f8dfb6e34563e688039daec79bf5a2d4c.png";
+//import logoImage from "figma:asset/a65a012f8dfb6e34563e688039daec79bf5a2d4c.png";
 
 export function Header() {
   return (
