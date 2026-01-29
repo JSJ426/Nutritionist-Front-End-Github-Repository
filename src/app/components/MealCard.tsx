@@ -1,5 +1,5 @@
 import { CircleCheck, CircleDot } from 'lucide-react';
-import mealBottomImage from 'figma:asset/fd7365955dd9ab94453ff223adf92fe98a6eb6b8.png';
+//import mealBottomImage from 'figma:asset/fd7365955dd9ab94453ff223adf92fe98a6eb6b8.png';
 
 const weekDays = ['월', '화', '수', '목', '금'];
 const meals = [
