@@ -1,4 +1,5 @@
-import { X } from 'lucide-react';
+import { ChevronDown, X } from 'lucide-react';
+import { useState } from 'react';
 
 // 알레르기 정보 매핑
 const allergyInfo: { [key: number]: string } = {
@@ -75,15 +76,39 @@ interface MealDetailModalProps {
   week: string;
   mealType: 'lunch' | 'dinner';
   mealData: { menu: Array<{ name: string; allergy: number[] }> };
+  detail?: {
+    nutrition: {
+      kcal: number;
+      carb: number;
+      prot: number;
+      fat: number;
+    };
+    cost: number;
+    aiComment: string;
+    allergenSummary: {
+      uniqueAllergens: number[];
+      byMenu: Record<string, number[]>;
+    };
+    recipeByMenu?: Record<string, string>;
+  };
   onClose: () => void;
 }
 
-export function MealDetailModal({ day, week, mealType, mealData, onClose }: MealDetailModalProps) {
+export function MealDetailModal({ day, week, mealType, mealData, detail, onClose }: MealDetailModalProps) {
   const details = generateMealDetails(mealData.menu);
-  const allAllergies = Array.from(new Set(mealData.menu.flatMap(item => item.allergy))).sort((a, b) => a - b);
+  const totalCalories = detail?.nutrition.kcal ?? details.totalCalories;
+  const carbValue = detail?.nutrition.carb ?? details.nutrition.carbs;
+  const protValue = detail?.nutrition.prot ?? details.nutrition.protein;
+  const fatValue = detail?.nutrition.fat ?? details.nutrition.fat;
+  const allAllergies = detail?.allergenSummary.uniqueAllergens
+    ? detail.allergenSummary.uniqueAllergens
+    : Array.from(new Set(mealData.menu.flatMap(item => item.allergy))).sort((a, b) => a - b);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const recipeByMenu = detail?.recipeByMenu ?? {};
+  const formattedCost = detail?.cost != null ? detail.cost.toLocaleString('ko-KR') : '-';
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-6">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-6">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 flex-shrink-0">
@@ -114,69 +139,108 @@ export function MealDetailModal({ day, week, mealType, mealData, onClose }: Meal
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white rounded-lg p-4 border border-gray-200">
                 <p className="text-xs text-gray-600 mb-1">총 열량</p>
-                <p className="text-2xl font-medium text-[#5dccb4]">{details.totalCalories} <span className="text-sm text-gray-600">kcal</span></p>
-              </div>
-              <div className="bg-white rounded-lg p-4 border border-gray-200">
-                <p className="text-xs text-gray-600 mb-1">탄수화물</p>
-                <p className="text-2xl font-medium text-gray-800">{details.nutrition.carbs} <span className="text-sm text-gray-600">g</span></p>
-              </div>
-              <div className="bg-white rounded-lg p-4 border border-gray-200">
-                <p className="text-xs text-gray-600 mb-1">단백질</p>
-                <p className="text-2xl font-medium text-gray-800">{details.nutrition.protein} <span className="text-sm text-gray-600">g</span></p>
-              </div>
-              <div className="bg-white rounded-lg p-4 border border-gray-200">
-                <p className="text-xs text-gray-600 mb-1">지방</p>
-                <p className="text-2xl font-medium text-gray-800">{details.nutrition.fat} <span className="text-sm text-gray-600">g</span></p>
-              </div>
+              <p className="text-2xl font-medium text-[#5dccb4]">{totalCalories} <span className="text-sm text-gray-600">kcal</span></p>
             </div>
-            <div className="mt-3 bg-white rounded-lg p-4 border border-gray-200">
-              <p className="text-xs text-gray-600 mb-1">나트륨</p>
-              <p className="text-lg font-medium text-gray-800">{details.nutrition.sodium} <span className="text-sm text-gray-600">mg</span></p>
+            <div className="bg-white rounded-lg p-4 border border-gray-200">
+              <p className="text-xs text-gray-600 mb-1">탄수화물</p>
+              <p className="text-2xl font-medium text-gray-800">{carbValue} <span className="text-sm text-gray-600">g</span></p>
+            </div>
+            <div className="bg-white rounded-lg p-4 border border-gray-200">
+              <p className="text-xs text-gray-600 mb-1">단백질</p>
+              <p className="text-2xl font-medium text-gray-800">{protValue} <span className="text-sm text-gray-600">g</span></p>
+            </div>
+            <div className="bg-white rounded-lg p-4 border border-gray-200">
+              <p className="text-xs text-gray-600 mb-1">지방</p>
+              <p className="text-2xl font-medium text-gray-800">{fatValue} <span className="text-sm text-gray-600">g</span></p>
             </div>
           </div>
+        </div>
 
-          {/* 알레르기 정보 */}
-          <div className="bg-white rounded-lg border border-gray-200 p-5">
-            <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
-              <div className="w-1 h-5 bg-red-500 rounded-full"></div>
-              알레르기 유발 식품 정보
-            </h3>
-            {allAllergies.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {allAllergies.map((allergyNum) => (
-                  <div key={allergyNum} className="inline-flex items-center gap-2 px-3 py-2 bg-[#FCE8E6] text-red-700 rounded-lg border border-red-200">
-                    <span className="font-medium text-sm">{allergyNum}</span>
-                    <span className="text-xs">{allergyInfo[allergyNum] || '알 수 없음'}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (<p className="text-sm text-gray-500">알레르기 유발 식품이 없습니다.</p>)}
-          </div>
+        {/* 단가 */}
+        <div className="mt-3 bg-white rounded-lg p-4 border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+            <div className="w-1 h-5 bg-blue-500 rounded-full"></div>
+            단가
+          </h3>
+          <p className="text-lg font-medium text-gray-800">
+            {formattedCost} <span className="text-sm text-gray-600">원</span>
+          </p>
+        </div>
 
-          {/* 식자재 성분 정보 */}
-          <div className="bg-white rounded-lg border border-gray-200 p-5">
-            <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
-              <div className="w-1 h-5 bg-green-500 rounded-full"></div>
-              식자재 성분 정보
-            </h3>
-            <div className="space-y-4">
-              {details.ingredients.map((ingredient, idx) => (
-                <div key={idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-medium text-gray-800">{ingredient.name}</h4>
-                    {ingredient.allergy.length > 0 && (
-                      <div className="flex gap-1">
-                        {ingredient.allergy.map((allergyNum, aIdx) => (
-                          <span key={aIdx} className="inline-block px-2 py-0.5 bg-[#FCE8E6] text-red-700 text-xs rounded font-medium">{allergyNum}</span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600">{ingredient.components.join(', ')}</p>
+        {/* 알레르기 정보 */}
+        <div className="bg-white rounded-lg border border-gray-200 p-5">
+          <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+            <div className="w-1 h-5 bg-red-500 rounded-full"></div>
+            알레르기 유발 식품 정보
+          </h3>
+          {allAllergies.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {allAllergies.map((allergyNum) => (
+                <div key={allergyNum} className="inline-flex items-center gap-2 px-3 py-2 bg-[#FCE8E6] text-red-700 rounded-lg border border-red-200">
+                  <span className="font-medium text-sm">{allergyNum}</span>
+                  <span className="text-xs">{allergyInfo[allergyNum] || '알 수 없음'}</span>
                 </div>
               ))}
             </div>
+          ) : (<p className="text-sm text-gray-500">알레르기 유발 식품이 없습니다.</p>)}
+        </div>
+
+        {/* 메뉴 상세 정보 */}
+        <div className="bg-white rounded-lg border border-gray-200 p-5">
+          <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+            <div className="w-1 h-5 bg-green-500 rounded-full"></div>
+            메뉴 상세 정보
+          </h3>
+          <div className="space-y-2">
+            {details.ingredients.map((ingredient) => {
+              const isOpen = openMenu === ingredient.name;
+              const recipe = recipeByMenu[ingredient.name];
+              return (
+                <div key={ingredient.name} className="border border-gray-200 rounded-lg bg-gray-50">
+                  <button
+                    onClick={() => setOpenMenu(isOpen ? null : ingredient.name)}
+                    className="w-full flex items-start justify-between px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 rounded-lg"
+                  >
+                    <div className="text-left">
+                      <div className="font-medium text-gray-800">{ingredient.name}</div>
+                      {ingredient.allergy.length > 0 && (
+                        <div className="flex gap-1 mt-2">
+                          {ingredient.allergy.map((allergyNum) => (
+                            <span key={allergyNum} className="inline-block px-2 py-0.5 bg-[#FCE8E6] text-red-700 text-xs rounded font-medium">
+                              {allergyNum}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <ChevronDown className={`w-4 h-4 mt-1 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {isOpen && (
+                    <div className="px-4 pb-4 text-sm text-gray-700 space-y-3">
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">식자재 성분</p>
+                        <p className="text-sm text-gray-700">{ingredient.components.join(', ')}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">레시피</p>
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                          {recipe ? recipe : '등록된 레시피가 없습니다.'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
+        </div>
+
+        {/* {detail?.aiComment && (
+          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <p className="text-xs text-blue-700 mb-1">AI 코멘트</p>
+            <p className="text-sm text-blue-800 whitespace-pre-wrap">{detail.aiComment}</p>
+          </div>
+        )} */}
 
           {/* 알레르기 정보 안내 */}
           <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">

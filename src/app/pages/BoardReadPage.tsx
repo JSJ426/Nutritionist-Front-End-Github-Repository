@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Download, Edit, Paperclip, Trash2 } from 'lucide-react';
 
-type PostCategory = '공지' | '건의' | '요청' | '불편사항' | '기타의견';
+type PostCategory = '공지' | '건의' | '신메뉴' | '기타의견';
 
 interface Post {
   id: number;
@@ -13,6 +13,7 @@ interface Post {
   date: string;
   views: number;
   content: string;
+  attachments?: Array<{ id: number; name: string; size: number }>;
 }
 
 interface BoardReadPageProps {
@@ -29,6 +30,10 @@ const mockPostData: Record<number, Post> = {
     author: '관리자',
     date: '2026-01-10',
     views: 245,
+    attachments: [
+      { id: 1, name: '2026-01-급식일정.pdf', size: 245760 },
+      { id: 2, name: '운영안내서.hwp', size: 1048576 },
+    ],
     content: `안녕하세요. 급식 관리팀입니다.
 
 2026년 1월 급식 운영 일정을 안내드립니다.
@@ -78,7 +83,7 @@ const mockPostData: Record<number, Post> = {
   },
   12: {
     id: 12,
-    category: '요청',
+    category: '기타의견',
     title: '알레르기 정보 상세 표시 요청',
     author: '박학부모',
     date: '2026-01-05',
@@ -101,6 +106,13 @@ const mockPostData: Record<number, Post> = {
 export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps) {
   const postId = initialParams?.postId || 15;
   const [post] = useState<Post>(mockPostData[postId] || mockPostData[15]);
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  };
 
   // 카테고리 뱃지 색상
   const getCategoryColor = (category: PostCategory) => {
@@ -109,10 +121,8 @@ export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps)
         return 'bg-red-100 text-red-800 border-red-200';
       case '건의':
         return 'bg-blue-100 text-blue-800 border-blue-200';
-      case '요청':
+      case '신메뉴':
         return 'bg-green-100 text-green-800 border-green-200';
-      case '불편사항':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
       case '기타의견':
         return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
@@ -172,15 +182,50 @@ export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps)
               </div>
             </div>
 
-            {/* 내용 영역 */}
-            <div className="p-6">
-              <div className="prose max-w-none">
-                <p className="whitespace-pre-wrap text-gray-800 leading-relaxed">
-                  {post.content}
-                </p>
-              </div>
+          {/* 내용 영역 */}
+          <div className="p-6">
+            <div className="prose max-w-none">
+              <p className="whitespace-pre-wrap text-gray-800 leading-relaxed">
+                {post.content}
+              </p>
             </div>
           </div>
+        </div>
+
+        {/* 첨부파일 영역 */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+          <div className="border-b border-gray-200 p-4 flex items-center gap-2">
+            <Paperclip size={16} className="text-gray-500" />
+            <h3 className="text-sm font-medium text-gray-700">첨부파일</h3>
+          </div>
+          <div className="p-4">
+            {post.attachments && post.attachments.length > 0 ? (
+              <div className="space-y-2">
+                {post.attachments.map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-700 truncate">{file.name}</p>
+                      <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => alert('다운로드 기능은 준비 중입니다.')}
+                      className="inline-flex items-center px-3 py-1.5 text-xs border rounded hover:bg-gray-50"
+                    >
+                      <Download size={14} className="mr-1" />
+                      다운로드
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">첨부파일이 없습니다.</p>
+            )}
+          </div>
+        </div>
 
           {/* 버튼 영역 (관리자만) */}
           {post.author === '관리자' && (

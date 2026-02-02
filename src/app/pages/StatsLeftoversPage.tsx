@@ -1,9 +1,9 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
 import { useState, useMemo } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { TrendingDown, TrendingUp, AlertCircle } from 'lucide-react';
+import { KpiCard } from '../components/KpiCard';
+import { StatsFilterPanel } from '../components/StatsFilterPanel';
+//import { SummaryLeftovers } from '../components/SummaryLeftovers';
+import { TrendingDown, TrendingUp } from 'lucide-react';
 
 // 더 풍부한 데이터셋 (중식/석식/메뉴별 구분)
 const weeklyData = [
@@ -14,6 +14,14 @@ const weeklyData = [
   { date: '1월 10일', amount: 44.8, lunch: 40.5, dinner: 49.1, main: 19.2, side: 16.8, soup: 8.8 },
   { date: '1월 11일', amount: 40.5, lunch: 36.8, dinner: 44.2, main: 17.3, side: 14.9, soup: 8.3 },
   { date: '1월 12일', amount: 48.9, lunch: 44.6, dinner: 53.2, main: 21.0, side: 18.3, soup: 9.6 },
+  { date: '1월 13일', amount: 43.6, lunch: 39.4, dinner: 47.8, main: 18.7, side: 16.1, soup: 8.8 },
+  { date: '1월 14일', amount: 50.1, lunch: 45.7, dinner: 54.5, main: 21.4, side: 18.6, soup: 10.1 },
+  { date: '1월 15일', amount: 47.3, lunch: 42.9, dinner: 51.7, main: 20.2, side: 17.4, soup: 9.7 },
+  { date: '1월 16일', amount: 41.8, lunch: 37.9, dinner: 45.7, main: 17.9, side: 15.2, soup: 8.7 },
+  { date: '1월 17일', amount: 45.9, lunch: 41.6, dinner: 50.2, main: 19.6, side: 17.0, soup: 9.3 },
+  { date: '1월 18일', amount: 52.4, lunch: 47.8, dinner: 57.0, main: 22.6, side: 19.7, soup: 10.1 },
+  { date: '1월 19일', amount: 44.2, lunch: 40.1, dinner: 48.3, main: 18.9, side: 16.4, soup: 8.9 },
+  { date: '1월 20일', amount: 49.6, lunch: 45.0, dinner: 54.2, main: 21.1, side: 18.5, soup: 10.0 },
 ];
 
 const monthlyData = [
@@ -133,35 +141,35 @@ export function StatsLeftoversPage() {
     };
   }, [filteredData]);
 
-  // 자동 해석 분석
-  const analysis = useMemo(() => {
-    const amounts = filteredData.map(d => d.displayAmount);
-    const maxAmount = Math.max(...amounts);
-    const maxIndex = amounts.indexOf(maxAmount);
-    const maxDate = filteredData[maxIndex].date;
-    const avgAmount = amounts.reduce((a, b) => a + b, 0) / amounts.length;
-    const exceedCount = amounts.filter(a => a > targetAmount).length;
+  // // 자동 해석 분석
+  // const analysis = useMemo(() => {
+  //   const amounts = filteredData.map(d => d.displayAmount);
+  //   const maxAmount = Math.max(...amounts);
+  //   const maxIndex = amounts.indexOf(maxAmount);
+  //   const maxDate = filteredData[maxIndex].date;
+  //   const avgAmount = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+  //   const exceedCount = amounts.filter(a => a > targetAmount).length;
     
-    // 변동폭 계산
-    const variations = amounts.slice(1).map((amount, i) => Math.abs(amount - amounts[i]));
-    const maxVariation = Math.max(...variations);
-    const maxVariationIndex = variations.indexOf(maxVariation);
-    const variationDate = filteredData[maxVariationIndex + 1].date;
+  //   // 변동폭 계산
+  //   const variations = amounts.slice(1).map((amount, i) => Math.abs(amount - amounts[i]));
+  //   const maxVariation = Math.max(...variations);
+  //   const maxVariationIndex = variations.indexOf(maxVariation);
+  //   const variationDate = filteredData[maxVariationIndex + 1].date;
 
-    const trend = kpiData.weekChange < 0 ? '감소' : '증가';
-    const trendColor = kpiData.weekChange < 0 ? 'text-green-600' : 'text-red-600';
+  //   const trend = kpiData.weekChange < 0 ? '감소' : '증가';
+  //   const trendColor = kpiData.weekChange < 0 ? 'text-green-600' : 'text-red-600';
 
-    return {
-      trend,
-      trendColor,
-      maxDate,
-      maxAmount: maxAmount.toFixed(1),
-      variationDate,
-      maxVariation: maxVariation.toFixed(1),
-      exceedCount,
-      avgAmount: avgAmount.toFixed(1),
-    };
-  }, [filteredData, kpiData, targetAmount]);
+  //   return {
+  //     trend,
+  //     trendColor,
+  //     maxDate,
+  //     maxAmount: maxAmount.toFixed(1),
+  //     variationDate,
+  //     maxVariation: maxVariation.toFixed(1),
+  //     exceedCount,
+  //     avgAmount: avgAmount.toFixed(1),
+  //   };
+  // }, [filteredData, kpiData, targetAmount]);
 
   return (
     <div className="p-6">
@@ -170,186 +178,51 @@ export function StatsLeftoversPage() {
       </div>
 
       {/* 자동 분석 요약 영역 */}
-      <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg shadow-sm p-6 mb-6 border border-orange-100">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-          <div className="flex-1">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">자동 분석 요약</h3>
-            <div className="space-y-2 text-sm text-gray-700">
-              <p className="flex items-start gap-2">
-                <span className="text-orange-600 font-medium">•</span>
-                <span>
-                  이번 기간 평균 잔반량은 <span className={`font-medium ${analysis.trendColor}`}>
-                    전주 대비 {analysis.trend}
-                  </span>했습니다. (평균 {analysis.avgAmount}kg)
-                </span>
-              </p>
-              <p className="flex items-start gap-2">
-                <span className="text-orange-600 font-medium">•</span>
-                <span>
-                  잔반량이 가장 많았던 날짜는 <span className="font-medium text-red-600">
-                    {analysis.maxDate} ({analysis.maxAmount}kg)
-                  </span>입니다.
-                </span>
-              </p>
-              <p className="flex items-start gap-2">
-                <span className="text-orange-600 font-medium">•</span>
-                <span>
-                  {analysis.variationDate}에 잔반량 변동 폭이 <span className="font-medium">
-                    {analysis.maxVariation}kg
-                  </span>로 크게 나타났습니다.
-                </span>
-              </p>
-              <p className="flex items-start gap-2">
-                <span className="text-orange-600 font-medium">•</span>
-                <span>
-                  전체 기간 중 <span className={`font-medium ${analysis.exceedCount > 0 ? 'text-amber-600' : 'text-green-600'}`}>
-                    {analysis.exceedCount}일
-                  </span>이 관리 목표 기준선({targetAmount}kg)을 초과했습니다.
-                </span>
-              </p>
-              <div className="mt-4 pt-4 border-t border-orange-200">
-                <p className="text-xs text-gray-600">
-                  💡 <span className="font-medium">활용 제안:</span> 잔반량이 많은 날짜의 메뉴 구성, 식사 유형, 요일별 패턴을 분석하여 식단 개선 및 조리 수량 최적화 방안을 수립할 수 있습니다.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* <SummaryLeftovers analysis={analysis} targetAmount={targetAmount} /> */}
 
       {/* 조회 조건 필터 영역 */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h3 className="text-sm font-medium text-gray-700 mb-4">조회 조건</h3>
-        <div className="grid grid-cols-4 gap-4">
-          <div>
-            <label className="text-sm text-gray-600 mb-2 block">기간 선택</label>
-            <Select value={draftPeriod} onValueChange={setDraftPeriod}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="weekly">주간 (최근 7일)</SelectItem>
-                <SelectItem value="monthly">월간 (최근 30일)</SelectItem>
-                <SelectItem value="custom">사용자 지정</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {draftPeriod === 'custom' && (
-            <>
-              <div>
-                <label className="text-sm text-gray-600 mb-2 block">시작 날짜</label>
-                <Input 
-                  type="date" 
-                  value={draftStartDate}
-                  onChange={(e) => setDraftStartDate(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 mb-2 block">종료 날짜</label>
-                <Input 
-                  type="date" 
-                  value={draftEndDate}
-                  onChange={(e) => setDraftEndDate(e.target.value)}
-                />
-              </div>
-            </>
-          )}
-
-          <div>
-            <label className="text-sm text-gray-600 mb-2 block">식사 구분</label>
-            <Select value={draftMealType} onValueChange={setDraftMealType}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="lunch">중식</SelectItem>
-                <SelectItem value="dinner">석식</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="text-sm text-gray-600 mb-2 block">메뉴 유형</label>
-            <Select 
-              value={draftMenuType} 
-              onValueChange={setDraftMenuType}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="main">주메뉴</SelectItem>
-                <SelectItem value="side">반찬</SelectItem>
-                <SelectItem value="soup">국·찌개</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-end">
-            <Button className="w-full" onClick={handleSearch}>조회</Button>
-          </div>
-        </div>
-      </div>
+      <StatsFilterPanel
+        period={draftPeriod}
+        onPeriodChange={setDraftPeriod}
+        mealType={draftMealType}
+        onMealTypeChange={setDraftMealType}
+        menuType={draftMenuType}
+        onMenuTypeChange={setDraftMenuType}
+        showMenuType
+        showCustomDates
+        startDate={draftStartDate}
+        endDate={draftEndDate}
+        onStartDateChange={setDraftStartDate}
+        onEndDateChange={setDraftEndDate}
+        onSearch={handleSearch}
+      />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-6 mb-6">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <p className="text-sm text-gray-600 mb-2">오늘 잔반량</p>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-medium">{kpiData.today.toFixed(1)}</span>
-            <span className="text-lg">kg</span>
-          </div>
-          <div className="flex items-center gap-1 mt-1">
-            {kpiData.todayChange > 0 ? (
-              <TrendingUp className="w-4 h-4 text-red-500" />
-            ) : (
-              <TrendingDown className="w-4 h-4 text-green-500" />
-            )}
-            <p className={`text-sm ${kpiData.todayChange > 0 ? 'text-red-500' : 'text-green-500'}`}>
-              전일 대비 {kpiData.todayChange > 0 ? '+' : ''}{kpiData.todayChange.toFixed(1)}kg
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <p className="text-sm text-gray-600 mb-2">주간 평균</p>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-medium">{kpiData.weekAvg.toFixed(1)}</span>
-            <span className="text-lg">kg</span>
-          </div>
-          <div className="flex items-center gap-1 mt-1">
-            {kpiData.weekChange > 0 ? (
-              <TrendingUp className="w-4 h-4 text-red-500" />
-            ) : (
-              <TrendingDown className="w-4 h-4 text-green-500" />
-            )}
-            <p className={`text-sm ${kpiData.weekChange > 0 ? 'text-red-500' : 'text-green-500'}`}>
-              전주 대비 {kpiData.weekChange > 0 ? '+' : ''}{kpiData.weekChange.toFixed(1)}kg
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <p className="text-sm text-gray-600 mb-2">월간 평균</p>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-medium">{kpiData.monthAvg.toFixed(1)}</span>
-            <span className="text-lg">kg</span>
-          </div>
-          <div className="flex items-center gap-1 mt-1">
-            {kpiData.monthChange > 0 ? (
-              <TrendingUp className="w-4 h-4 text-red-500" />
-            ) : (
-              <TrendingDown className="w-4 h-4 text-green-500" />
-            )}
-            <p className={`text-sm ${kpiData.monthChange > 0 ? 'text-red-500' : 'text-green-500'}`}>
-              전월 대비 {kpiData.monthChange > 0 ? '+' : ''}{kpiData.monthChange.toFixed(1)}kg
-            </p>
-          </div>
-        </div>
+        <KpiCard
+          icon={kpiData.todayChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+          title="어제 잔반량"
+          value={kpiData.today.toFixed(1)}
+          unit="kg"
+          sub={`전일 대비 ${kpiData.todayChange > 0 ? '+' : ''}${kpiData.todayChange.toFixed(1)}kg`}
+          color={kpiData.todayChange > 0 ? 'red' : 'green'}
+        />
+        <KpiCard
+          icon={kpiData.weekChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+          title="주간 평균"
+          value={kpiData.weekAvg.toFixed(1)}
+          unit="kg"
+          sub={`전주 대비 ${kpiData.weekChange > 0 ? '+' : ''}${kpiData.weekChange.toFixed(1)}kg`}
+          color={kpiData.weekChange > 0 ? 'red' : 'green'}
+        />
+        <KpiCard
+          icon={kpiData.monthChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+          title="월간 평균"
+          value={kpiData.monthAvg.toFixed(1)}
+          unit="kg"
+          sub={`전월 대비 ${kpiData.monthChange > 0 ? '+' : ''}${kpiData.monthChange.toFixed(1)}kg`}
+          color={kpiData.monthChange > 0 ? 'red' : 'green'}
+        />
       </div>
 
       {/* Chart */}

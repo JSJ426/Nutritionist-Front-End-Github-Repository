@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import {
@@ -17,10 +17,11 @@ import {
   TableRow,
 } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
+import { Pagination } from '../components/Pagination';
 import { Search, Edit } from 'lucide-react';
 
 // 게시물 타입 정의
-type PostCategory = '공지' | '건의' | '요청' | '불편사항' | '기타의견';
+type PostCategory = '공지' | '건의' | '신메뉴' | '기타의견';
 
 interface Post {
   id: number;
@@ -40,27 +41,39 @@ const mockPosts: Post[] = [
   { id: 15, category: '공지', title: '2026년 1월 급식 일정 안내', author: '관리자', date: '2026-01-10', views: 245 },
   { id: 14, category: '공지', title: '식단표 업데이트 안내', author: '관리자', date: '2026-01-08', views: 198 },
   { id: 13, category: '건의', title: '채식 메뉴 확대 건의드립니다', author: '김학생', date: '2026-01-07', views: 87 },
-  { id: 12, category: '요청', title: '알레르기 정보 상세 표시 요청', author: '박학부모', date: '2026-01-05', views: 156 },
-  { id: 11, category: '불편사항', title: '급식 시간 대기 줄이 너무 깁니다', author: '이학생', date: '2026-01-04', views: 203 },
+  { id: 12, category: '기타의견', title: '알레르기 정보 상세 표시 요청', author: '박학부모', date: '2026-01-05', views: 156 },
+  { id: 11, category: '기타의견', title: '급식 시간 대기 줄이 너무 깁니다', author: '이학생', date: '2026-01-04', views: 203 },
   { id: 10, category: '기타의견', title: '급식 만족도 조사 참여 후기', author: '최학생', date: '2026-01-03', views: 92 },
   { id: 9, category: '건의', title: '간식 시간 운영 건의', author: '정학생', date: '2026-01-02', views: 134 },
-  { id: 8, category: '요청', title: '메뉴 다양화 요청드립니다', author: '강학부모', date: '2025-12-28', views: 178 },
+  { id: 8, category: '신메뉴', title: '메뉴 다양화 요청드립니다', author: '강학부모', date: '2025-12-28', views: 178 },
   { id: 7, category: '공지', title: '연말 급식 운영 일정 공지', author: '관리자', date: '2025-12-27', views: 312 },
-  { id: 6, category: '불편사항', title: '식당 온도가 낮습니다', author: '조학생', date: '2025-12-26', views: 145 },
+  { id: 6, category: '기타의견', title: '식당 온도가 낮습니다', author: '조학생', date: '2025-12-26', views: 145 },
 ];
 
 export function BoardListPage({ onNavigate }: BoardListPageProps) {
   const [posts] = useState<Post[]>(mockPosts);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('전체');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // 필터링된 게시물
-  const filteredPosts = posts.filter(post => {
-    const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         post.author.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === '전체' || post.category === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredPosts = useMemo(() => {
+    return posts.filter(post => {
+      const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           post.author.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = categoryFilter === '전체' || post.category === categoryFilter;
+      return matchesSearch && matchesCategory;
+    });
+  }, [categoryFilter, posts, searchQuery]);
+
+  const totalPages = Math.ceil(filteredPosts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentPosts = filteredPosts.slice(startIndex, startIndex + itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [categoryFilter, searchQuery]);
 
   // 카테고리 뱃지 색상
   const getCategoryColor = (category: PostCategory) => {
@@ -69,10 +82,8 @@ export function BoardListPage({ onNavigate }: BoardListPageProps) {
         return 'bg-red-100 text-red-800 border-red-200';
       case '건의':
         return 'bg-blue-100 text-blue-800 border-blue-200';
-      case '요청':
+      case '신메뉴':
         return 'bg-green-100 text-green-800 border-green-200';
-      case '불편사항':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
       case '기타의견':
         return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
@@ -114,8 +125,7 @@ export function BoardListPage({ onNavigate }: BoardListPageProps) {
                     <SelectItem value="전체">전체</SelectItem>
                     <SelectItem value="공지">공지</SelectItem>
                     <SelectItem value="건의">건의</SelectItem>
-                    <SelectItem value="요청">요청</SelectItem>
-                    <SelectItem value="불편사항">불편사항</SelectItem>
+                    <SelectItem value="신메뉴">신메뉴</SelectItem>
                     <SelectItem value="기타의견">기타의견</SelectItem>
                   </SelectContent>
                 </Select>
@@ -144,8 +154,8 @@ export function BoardListPage({ onNavigate }: BoardListPageProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPosts.length > 0 ? (
-                  filteredPosts.map((post) => (
+                {currentPosts.length > 0 ? (
+                  currentPosts.map((post) => (
                     <TableRow 
                       key={post.id}
                       className="cursor-pointer hover:bg-gray-50 transition-colors"
@@ -179,12 +189,12 @@ export function BoardListPage({ onNavigate }: BoardListPageProps) {
             </Table>
           </div>
 
-          {/* 페이지네이션 영역 (향후 추가 가능) */}
-          <div className="mt-6 flex justify-center">
-            <div className="text-sm text-gray-500">
-              총 {filteredPosts.length}개의 게시물
-            </div>
-          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+
         </div>
       </div>
     </div>

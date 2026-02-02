@@ -39,7 +39,7 @@ export function MealCard() {
           
           {/* Meal image */}
           <div className="mt-3">
-            <img src={mealBottomImage} alt="오늘의 식단" className="w-full rounded-lg" />
+            <img src={"fd7365955dd9ab94453ff223adf92fe98a6eb6b8.png"} alt="오늘의 식단" className="w-full rounded-lg" />
           </div>
         </div>
 

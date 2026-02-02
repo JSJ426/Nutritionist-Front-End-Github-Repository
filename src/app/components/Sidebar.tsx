@@ -9,6 +9,7 @@ interface SidebarProps {
 export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
   const [isMealMenuOpen, setIsMealMenuOpen] = useState(true);
   const [isStatsMenuOpen, setIsStatsMenuOpen] = useState(true);
+  const [isOperationMenuOpen, setIsOperationMenuOpen] = useState(true);
 
   return (
     <div className="w-[240px] h-full bg-[#4a4a4a] text-white flex flex-col">
@@ -54,15 +55,15 @@ export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
                 }`}
                 onClick={() => onPageChange('meal-create')}
               >
-                <span className="text-sm">식단표 생성/수정</span>
+                <span className="text-sm">식단표 생성</span>
               </div>
               <div 
                 className={`px-6 py-2 pl-12 cursor-pointer hover:bg-[#505050] ${
-                  currentPage === 'meal-view' ? 'bg-[#505050] border-l-4 border-[#5dccb4]' : ''
+                  currentPage === 'meal-edit' ? 'bg-[#505050] border-l-4 border-[#5dccb4]' : ''
                 }`}
-                onClick={() => onPageChange('meal-view')}
+                onClick={() => onPageChange('meal-edit')}
               >
-                <span className="text-sm">식단표 조회</span>
+                <span className="text-sm">식단표 수정</span>
               </div>
               <div 
                 className={`px-6 py-2 pl-12 cursor-pointer hover:bg-[#505050] ${
@@ -71,6 +72,22 @@ export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
                 onClick={() => onPageChange('meal-history')}
               >
                 <span className="text-sm">식단표 수정 히스토리</span>
+              </div>
+              <div 
+                className={`px-6 py-2 pl-12 cursor-pointer hover:bg-[#505050] ${
+                  currentPage === 'food-list' ? 'bg-[#505050] border-l-4 border-[#5dccb4]' : ''
+                }`}
+                onClick={() => onPageChange('food-list')}
+              >
+                <span className="text-sm">메뉴 조회</span>
+              </div>
+              <div 
+                className={`px-6 py-2 pl-12 cursor-pointer hover:bg-[#505050] ${
+                  currentPage === 'additional-menu-list' ? 'bg-[#505050] border-l-4 border-[#5dccb4]' : ''
+                }`}
+                onClick={() => onPageChange('additional-menu-list')}
+              >
+                <span className="text-sm">신메뉴</span>
               </div>
             </div>
           )}
@@ -116,13 +133,41 @@ export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
               >
                 <span className="text-sm">만족도</span>
               </div>
-              <div 
+            </div>
+          )}
+        </div>
+
+        {/* 운영 기록 - Expandable Menu */}
+        <div>
+          <div
+            className="px-6 py-3 cursor-pointer hover:bg-[#3d3d3d] flex items-center justify-between"
+            onClick={() => setIsOperationMenuOpen(!isOperationMenuOpen)}
+          >
+            <span className="text-sm">운영 기록</span>
+            <ChevronDown
+              size={14}
+              className={`transition-transform ${isOperationMenuOpen ? 'rotate-0' : '-rotate-90'}`}
+            />
+          </div>
+
+          {/* Submenu */}
+          {isOperationMenuOpen && (
+            <div className="bg-[#3d3d3d]">
+              <div
                 className={`px-6 py-2 pl-12 cursor-pointer hover:bg-[#505050] ${
-                  currentPage === 'stats-preference' ? 'bg-[#505050] border-l-4 border-[#5dccb4]' : ''
+                  currentPage === 'operation-record' ? 'bg-[#505050] border-l-4 border-[#5dccb4]' : ''
                 }`}
-                onClick={() => onPageChange('stats-preference')}
+                onClick={() => onPageChange('operation-record')}
               >
-                <span className="text-sm">선호도</span>
+                <span className="text-sm">일간 운영 기록</span>
+              </div>
+              <div
+                className={`px-6 py-2 pl-12 cursor-pointer hover:bg-[#505050] ${
+                  currentPage === 'operation-report-list' ? 'bg-[#505050] border-l-4 border-[#5dccb4]' : ''
+                }`}
+                onClick={() => onPageChange('operation-report-list')}
+              >
+                <span className="text-sm">월간 운영 분석</span>
               </div>
             </div>
           )}
@@ -138,34 +183,26 @@ export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
           <span className="text-sm">게시판</span>
         </div>
 
-        {/* 운영 보고서 */}
+        {/* 기관 정보 */}
         <div 
           className={`px-6 py-3 cursor-pointer hover:bg-[#3d3d3d] ${
-            currentPage === 'operation-report' ? 'bg-[#505050] border-l-4 border-[#5dccb4]' : ''
+            currentPage === 'institution-info' ? 'bg-[#505050] border-l-4 border-[#5dccb4]' : ''
           }`}
-          onClick={() => onPageChange('operation-report')}
+          onClick={() => onPageChange('institution-info')}
         >
-          <span className="text-sm">운영 보고서</span>
+          <span className="text-sm">학교 정보</span>
         </div>
 
-        {/* 마이페이지 */}
+        {/* 영양사 정보 */}
         <div 
           className={`px-6 py-3 cursor-pointer hover:bg-[#3d3d3d] ${
-            currentPage === 'mypage' ? 'bg-[#505050] border-l-4 border-[#5dccb4]' : ''
+            currentPage === 'nutritionist-info'
+              ? 'bg-[#505050] border-l-4 border-[#5dccb4]'
+              : ''
           }`}
-          onClick={() => onPageChange('mypage')}
+          onClick={() => onPageChange('nutritionist-info')}
         >
-          <span className="text-sm">마이페이지</span>
-        </div>
-
-        {/* 기관 정보 등록/수정 */}
-        <div 
-          className={`px-6 py-3 cursor-pointer hover:bg-[#3d3d3d] ${
-            currentPage === 'institution' ? 'bg-[#505050] border-l-4 border-[#5dccb4]' : ''
-          }`}
-          onClick={() => onPageChange('institution')}
-        >
-          <span className="text-sm">기관 정보 등록/수정</span>
+          <span className="text-sm">영양사 정보</span>
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Paperclip, Upload, X } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -11,6 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
+
+interface AttachmentItem {
+  id: number;
+  name: string;
+  size: number;
+}
 
 interface BoardEditPageProps {
   initialParams?: any;
@@ -23,6 +29,10 @@ const mockPostData: Record<number, any> = {
     id: 15,
     category: '공지',
     title: '2026년 1월 급식 일정 안내',
+    attachments: [
+      { id: 1, name: '2026-01-급식일정.pdf', size: 245760 },
+      { id: 2, name: '운영안내서.hwp', size: 1048576 },
+    ],
     content: `안녕하세요. 급식 관리팀입니다.
 
 2026년 1월 급식 운영 일정을 안내드립니다.
@@ -59,6 +69,32 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
   const [title, setTitle] = useState(originalPost.title);
   const [content, setContent] = useState(originalPost.content);
   const [category] = useState('공지'); // 공지로 고정
+  const [existingFiles, setExistingFiles] = useState<AttachmentItem[]>(originalPost.attachments ?? []);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+    const nextFiles = Array.from(files);
+    setUploadedFiles((prev) => [...prev, ...nextFiles]);
+    event.target.value = '';
+  };
+
+  const handleRemoveExisting = (id: number) => {
+    setExistingFiles((prev) => prev.filter((file) => file.id !== id));
+  };
+
+  const handleRemoveNew = (index: number) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = () => {
     if (!title.trim()) {
@@ -70,7 +106,7 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
       return;
     }
 
-    // 실제로는 API 호출
+    // 실제로는 API 호출 (첨부 파일 포함)
     alert('게시물이 수정되었습니다.');
     onNavigate?.('board-read', { postId });
   };
@@ -150,6 +186,72 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
                   onChange={(e) => setContent(e.target.value)}
                   className="w-full min-h-[400px] resize-none"
                 />
+              </div>
+
+              {/* 첨부파일 */}
+              <div>
+                <Label className="text-sm font-medium mb-2 block">
+                  첨부파일
+                </Label>
+                <div className="border border-dashed border-gray-300 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Paperclip size={16} />
+                      <span>파일을 선택하여 첨부하세요.</span>
+                    </div>
+                    <label className="inline-flex items-center px-3 py-2 text-sm border rounded hover:bg-gray-50 cursor-pointer">
+                      <Upload size={16} className="mr-2" />
+                      파일 선택
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  {(existingFiles.length > 0 || uploadedFiles.length > 0) && (
+                    <div className="mt-4 space-y-2">
+                      {existingFiles.map((file) => (
+                        <div
+                          key={`existing-${file.id}`}
+                          className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded px-3 py-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-700 truncate">{file.name}</p>
+                            <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveExisting(file.id)}
+                            className="p-1 rounded hover:bg-gray-200"
+                          >
+                            <X size={16} className="text-gray-500" />
+                          </button>
+                        </div>
+                      ))}
+                      {uploadedFiles.map((file, index) => (
+                        <div
+                          key={`new-${file.name}-${index}`}
+                          className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded px-3 py-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-700 truncate">{file.name}</p>
+                            <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveNew(index)}
+                            className="p-1 rounded hover:bg-gray-200"
+                          >
+                            <X size={16} className="text-gray-500" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* 수정 정보 */}

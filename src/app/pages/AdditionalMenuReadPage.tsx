@@ -1,0 +1,178 @@
+import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
+import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
+import { AdditionalMenuItem } from '../types/additionalMenu';
+
+interface AdditionalMenuReadPageProps {
+  items: AdditionalMenuItem[];
+  initialParams?: any;
+  onNavigate?: (page: string, params?: any) => void;
+  onDelete: (menuId: number) => void;
+}
+
+export function AdditionalMenuReadPage({
+  items,
+  initialParams,
+  onNavigate,
+  onDelete,
+}: AdditionalMenuReadPageProps) {
+  const menuId = initialParams?.menuId as number | undefined;
+  const menu = items.find((item) => item.id === menuId) || items[0];
+  const menuDetails = menu as any;
+  const allergens: number[] = Array.isArray(menuDetails?.allergens) ? menuDetails.allergens : [];
+
+  const handleEdit = () => {
+    if (menu) {
+      onNavigate?.('additional-menu-edit', { menuId: menu.id });
+    }
+  };
+
+  const handleDelete = () => {
+    if (!menu) return;
+    if (confirm('정말 삭제하시겠습니까?')) {
+      onDelete(menu.id);
+      onNavigate?.('additional-menu-list');
+    }
+  };
+
+  if (!menu) {
+    return (
+      <div className="flex flex-col h-full bg-gray-50">
+        <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
+          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+            신메뉴
+          </h1>
+        </div>
+        <div className="flex-1 flex items-center justify-center text-gray-500">
+          등록된 신메뉴가 없습니다.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full bg-gray-50">
+      {/* Header */}
+      <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+            신메뉴
+          </h1>
+          <Button
+            variant="outline"
+            onClick={() => onNavigate?.('additional-menu-list')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft size={16} />
+            목록으로
+          </Button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div className="border-b border-gray-200 p-6">
+              <div className="flex items-start gap-3 mb-3">
+                <h2 className="text-2xl font-medium flex-1">
+                  {menuDetails?.name ?? menu.title}
+                </h2>
+              </div>
+              <div className="flex items-center gap-4 text-sm text-gray-600">
+                <span className="flex items-center gap-2">
+                  메뉴 카테고리:
+                  <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">
+                    {menu.category}
+                  </Badge>
+                </span>
+                <span className="text-gray-300">|</span>
+                <span>작성일: {menu.date}</span>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <p className="text-xs text-gray-500 mb-1">영양 성분 기준</p>
+                  <p className="text-sm font-medium text-gray-800">{menuDetails?.nutrition_basis ?? '-'}</p>
+                </div>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <p className="text-xs text-gray-500 mb-1">1회 제공량</p>
+                  <p className="text-sm font-medium text-gray-800">{menuDetails?.serving_size ?? '-'}</p>
+                </div>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-3">영양 성분</h3>
+                <div className="grid grid-cols-2 gap-3 text-sm text-gray-700">
+                  <div>열량: {menuDetails?.kcal ?? '-'} kcal</div>
+                  <div>탄수화물: {menuDetails?.carb ?? '-'} g</div>
+                  <div>단백질: {menuDetails?.prot ?? '-'} g</div>
+                  <div>지방: {menuDetails?.fat ?? '-'} g</div>
+                  <div>칼슘: {menuDetails?.calcium ?? '-'} mg</div>
+                  <div>철: {menuDetails?.iron ?? '-'} mg</div>
+                  <div>비타민 A: {menuDetails?.vitamin_a ?? '-'} μg</div>
+                  <div>티아민: {menuDetails?.thiamin ?? '-'} mg</div>
+                  <div>리보플라빈: {menuDetails?.riboflavin ?? '-'} mg</div>
+                  <div>비타민 C: {menuDetails?.vitamin_c ?? '-'} mg</div>
+                </div>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-3">원재료 정보</h3>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                  {menuDetails?.ingredients_text ?? '-'}
+                </p>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-3">알레르기 정보</h3>
+                {allergens.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {allergens.map((num) => (
+                      <span
+                        key={num}
+                        className="px-2 py-1 rounded bg-red-50 text-red-700 text-xs border border-red-100"
+                      >
+                        {num}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">알레르기 정보가 없습니다.</p>
+                )}
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-3">조리법</h3>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                  {menuDetails?.recipe_text ?? menu.description}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={handleEdit}
+              className="flex items-center gap-2"
+            >
+              <Edit size={16} />
+              편집
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleDelete}
+              className="flex items-center gap-2 text-red-600 border-red-300 hover:bg-red-50"
+            >
+              <Trash2 size={16} />
+              삭제
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

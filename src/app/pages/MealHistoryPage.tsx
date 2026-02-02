@@ -1,35 +1,39 @@
-import { Undo } from 'lucide-react';
 import { useState } from 'react';
+import { Pagination } from '../components/Pagination';
 
 export function MealHistoryPage() {
-  const [tooltipVisible, setTooltipVisible] = useState<number | null>(null);
   const [selectedActionType, setSelectedActionType] = useState<string>('전체');
   const [appliedActionType, setAppliedActionType] = useState<string>('전체');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
   
   const history = [
     { 
       date: '2026-01-09 14:30',
-      action: '수정',
+      action: '수정 (AI대체)',
       mealDate: '2026-01-15',
       mealType: '중식',
-      changes: '주메뉴: 돈까스 → 치킨까스',
-      reason: '식자재 수급 문제'
+      menuBefore: ['돈까스', '미소국', '깍두기'],
+      menuAfter: ['치킨까스', '미소국', '깍두기'],
+      changes: '주메뉴: 돈까스 → 치킨까스 (식자재 수급 문제)',
     },
     { 
       date: '2026-01-08 10:15',
       action: '생성',
       mealDate: '2026-01-20',
       mealType: '석식',
+      menuBefore: [],
+      menuAfter: ['불고기덮밥', '계란국', '단무지'],
       changes: '신규 식단 생성',
-      reason: '영양 기준 조정'
     },
     { 
       date: '2026-01-07 16:45',
       action: '수정',
       mealDate: '2026-01-12',
       mealType: '중식',
-      changes: '칼로리: 780 → 820 kcal',
-      reason: '알레르기 대응'
+      menuBefore: ['현미밥', '된장국', '생선구이'],
+      menuAfter: ['현미밥', '된장국', '생선구이'],
+      changes: '칼로리: 780 → 820 kcal (알레르기 대응)',
     },
   ];
 
@@ -37,8 +41,13 @@ export function MealHistoryPage() {
     ? history 
     : history.filter(item => item.action === appliedActionType);
 
+  const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentHistory = filteredHistory.slice(startIndex, startIndex + itemsPerPage);
+
   const handleSearch = () => {
     setAppliedActionType(selectedActionType);
+    setCurrentPage(1);
   };
 
   return (
@@ -76,6 +85,7 @@ export function MealHistoryPage() {
               <option>전체</option>
               <option>생성</option>
               <option>수정</option>
+              <option>수정 (AI대체)</option>
             </select>
           </div>
           <div className="flex items-end">
@@ -94,25 +104,17 @@ export function MealHistoryPage() {
             <thead>
               <tr className="border-b-2 border-gray-300">
                 <th className="text-left py-3 px-4">수정 일시</th>
-                <th className="text-left py-3 px-4">작업</th>
                 <th className="text-left py-3 px-4">식단 날짜</th>
-                <th className="text-left py-3 px-4">변경 내용</th>
-                <th className="text-left py-3 px-4">수정 사유</th>
-                <th className="text-left py-3 pl-1 pr-4 w-16"></th>
+                <th className="text-center py-3 px-2">작업</th>
+                <th className="text-left py-3 px-2">메뉴 (변경 전)</th>
+                <th className="text-left py-3 px-2">메뉴 (변경 후)</th>
+                <th className="text-left py-3 px-2">변경 내용</th>
               </tr>
             </thead>
             <tbody>
-              {filteredHistory.map((item, idx) => (
+              {currentHistory.map((item, idx) => (
                 <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50">
                   <td className="py-3 px-4 text-sm">{item.date}</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded text-sm ${
-                      item.action === '생성' ? 'bg-green-100 text-green-700' :
-                      'bg-blue-100 text-blue-700'
-                    }`}>
-                      {item.action}
-                    </span>
-                  </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
                       <span>{item.mealDate}</span>
@@ -125,42 +127,55 @@ export function MealHistoryPage() {
                       </span>
                     </div>
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-600">{item.changes}</td>
-                  <td className="py-3 px-4 text-sm">
-                    {item.action === '생성' ? (
-                      <span className="text-gray-400">-</span>
+                  <td className="py-3 px-2 text-center">
+                    <span className={`inline-block px-2 py-1 rounded text-sm ${
+                      item.action === '생성' ? 'bg-green-100 text-green-700' :
+                      item.action === '수정 (AI대체)' ? 'bg-purple-100 text-purple-700' :
+                      'bg-blue-100 text-blue-700'
+                    }`}>
+                      {item.action}
+                    </span>
+                  </td>
+                  <td className="py-3 px-2 text-sm text-gray-600 align-middle">
+                    {item.menuBefore.length > 0 ? (
+                      <ul className="space-y-1">
+                        {item.menuBefore.map((menu) => (
+                          <li key={menu} className="whitespace-normal">
+                            {menu}
+                          </li>
+                        ))}
+                      </ul>
                     ) : (
-                      item.reason
+                      <span className="text-gray-400">-</span>
                     )}
                   </td>
-                  <td className="py-3 pl-1 pr-4">
-                    {item.action === '수정' && (
-                      <div className="relative inline-block">
-                        <button 
-                          className="p-1.5 hover:bg-gray-200 rounded transition-colors cursor-pointer"
-                          onClick={() => {
-                            console.log(`되돌리기: ${item.mealDate} ${item.mealType}`);
-                          }}
-                          onMouseEnter={() => setTooltipVisible(idx)}
-                          onMouseLeave={() => setTooltipVisible(null)}
-                          aria-label="이전 상태로 되돌리기"
-                        >
-                          <Undo className="w-4 h-4 text-gray-600" />
-                        </button>
-                        {tooltipVisible === idx && (
-                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-10">
-                            이전 상태로 되돌리기
-                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
-                          </div>
-                        )}
-                      </div>
+                  <td className="py-3 px-2 text-sm text-gray-600 align-middle">
+                    {item.menuAfter.length > 0 ? (
+                      <ul className="space-y-1">
+                        {item.menuAfter.map((menu) => (
+                          <li key={menu} className="whitespace-normal">
+                            {menu}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span className="text-gray-400">-</span>
                     )}
+                  </td>
+                  <td className="py-3 px-2 text-sm text-gray-600 align-middle">
+                    {item.changes}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </div>
   );
