@@ -18,15 +18,13 @@ export function MealMonthlyPage() {
     let isActive = true;
 
     const loadInitial = async () => {
-      const response = await fetchMealPlanMonthly();
+      const response = await fetchMealPlanMonthly(now.getFullYear(), now.getMonth() + 1);
       if (!isActive) return;
       const dataByMonth = toMealMonthlyDataByMonth(response);
-      const firstMonth = Object.keys(dataByMonth)[0] ?? '';
-      const initialMonth = firstMonth || initialMonthKey;
 
       setMealDataByMonth(dataByMonth);
-      setCurrentMonth(initialMonth);
-      setDefaultMonth(initialMonth);
+      setCurrentMonth(initialMonthKey);
+      setDefaultMonth(initialMonthKey);
     };
 
     loadInitial();
