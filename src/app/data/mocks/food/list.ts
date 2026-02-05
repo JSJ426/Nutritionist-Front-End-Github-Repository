@@ -1,0 +1,48 @@
+export const mockGetFoodInfoResponse = {
+  status: 'success',
+  message: '메뉴 목록 조회 성공',
+  data: {
+    current_page: 1,
+    page_size: 20,
+    total_pages: 123,
+    total_items: 2453,
+    items: [
+      {
+        menu_id: 'FOOD-1',
+        name: '후라이',
+        category: '밥류',
+        kcal: 118,
+        allergens: [1],
+        created_at: '2026-01-28T10:30:00Z',
+        updated_at: '2026-01-22T11:32:31.856979',
+      },
+      {
+        menu_id: 'FOOD-2',
+        name: '김치찌개',
+        category: '국/찌개류',
+        kcal: 230,
+        allergens: [5, 10],
+        created_at: '2026-01-20T09:10:00Z',
+        updated_at: '2026-01-22T11:32:31.856979',
+      },
+      {
+        menu_id: 'FOOD-3',
+        name: '돈까스',
+        category: '튀김/구이류',
+        kcal: 460,
+        allergens: [1, 5, 6, 10],
+        created_at: '2026-01-18T08:50:00Z',
+        updated_at: '2026-01-22T11:32:31.856979',
+      },
+      {
+        menu_id: 'FOOD-4',
+        name: '오이무침',
+        category: '반찬류',
+        kcal: 45,
+        allergens: [],
+        created_at: '2026-01-15T08:20:00Z',
+        updated_at: '2026-01-22T11:32:31.856979',
+      },
+    ],
+  },
+} as const;

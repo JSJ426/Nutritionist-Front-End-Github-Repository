@@ -43,7 +43,12 @@ export function MealEditModal({
 
   useEffect(() => {
     if (isOpen) {
-      setMenuItems(mealData.menu);
+      setMenuItems(
+        mealData.menu.map((item) => ({
+          name: item.name,
+          allergy: Array.isArray(item.allergy) ? [...item.allergy] : [],
+        }))
+      );
       setReason('');
     }
   }, [isOpen, mealData]);
@@ -60,7 +65,7 @@ export function MealEditModal({
 
   const handleNameChange = (index: number, name: string) => {
     const updated = [...menuItems];
-    updated[index].name = name;
+    updated[index] = { ...updated[index], name };
     setMenuItems(updated);
   };
 
@@ -70,7 +75,7 @@ export function MealEditModal({
       .split(',')
       .map(n => parseInt(n.trim()))
       .filter(n => !isNaN(n));
-    updated[index].allergy = allergyArray;
+    updated[index] = { ...updated[index], allergy: allergyArray };
     setMenuItems(updated);
   };
 
@@ -134,7 +139,6 @@ export function MealEditModal({
           </div>
           <div className="space-y-4">
             {menuItems.map((item, index) => {
-              if (!item.name.trim()) return null;
               const label = menuLabels[index] ?? `항목 ${index + 1}`;
 
               return (

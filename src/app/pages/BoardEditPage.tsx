@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, Paperclip, Upload, X } from 'lucide-react';
+
+import { getBoardDetailResponse, updateBoardPost } from '../data/board';
+
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
-import { ArrowLeft, Paperclip, Upload, X } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -11,6 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
+
+import { toBoardEditVMFromResponse } from '../viewModels/board';
+import type { BoardEditVM } from '../viewModels/board';
 
 interface AttachmentItem {
   id: number;
@@ -23,54 +29,40 @@ interface BoardEditPageProps {
   onNavigate?: (page: string, params?: any) => void;
 }
 
-// 샘플 데이터
-const mockPostData: Record<number, any> = {
-  15: {
-    id: 15,
-    category: '공지',
-    title: '2026년 1월 급식 일정 안내',
-    attachments: [
-      { id: 1, name: '2026-01-급식일정.pdf', size: 245760 },
-      { id: 2, name: '운영안내서.hwp', size: 1048576 },
-    ],
-    content: `안녕하세요. 급식 관리팀입니다.
-
-2026년 1월 급식 운영 일정을 안내드립니다.
-
-■ 운영 기간
-- 2026년 1월 2일(목) ~ 1월 31일(금)
-- 평일(월~금) 중식, 석식 제공
-
-■ 주요 변경사항
-1. 알레르기 정보 표시 강화
-   - 각 음식별 알레르기 유발 성분 상세 표시
-   - 배경색으로 구분하여 가독성 향상
-
-2. 채식 메뉴 확대
-   - 주 2회 채식 메뉴 제공
-   - 채식 선택권 강화
-
-3. 설문조사 실시
-   - 매주 금요일 만족도 조사
-   - 다음 주 메뉴 개선에 반영
-
-■ 문의사항
-- 이메일: ktaivle@kt.com
-- 전화: 02-1234-5678
-
-감사합니다.`,
-  },
-};
-
 export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps) {
   const postId = initialParams?.postId || 15;
-  const originalPost = mockPostData[postId] || mockPostData[15];
-
-  const [title, setTitle] = useState(originalPost.title);
-  const [content, setContent] = useState(originalPost.content);
-  const [category] = useState('공지'); // 공지로 고정
-  const [existingFiles, setExistingFiles] = useState<AttachmentItem[]>(originalPost.attachments ?? []);
+  const [isLoading, setIsLoading] = useState(true);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [category, setCategory] = useState('공지');
+  const [existingFiles, setExistingFiles] = useState<AttachmentItem[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [originalPost, setOriginalPost] = useState<BoardEditVM | null>(null);
+
+  useEffect(() => {
+    let isActive = true;
+    const load = async () => {
+      const rawPost = await getBoardDetailResponse(postId);
+      if (!isActive) return;
+      const nextPost = toBoardEditVMFromResponse(rawPost, '관리자');
+      setOriginalPost(nextPost);
+      setTitle(nextPost.title);
+      setContent(nextPost.content);
+      setCategory(nextPost.category);
+      setExistingFiles(
+        nextPost.existingFiles.map((file) => ({
+          id: file.id,
+          name: file.name,
+          size: file.size,
+        }))
+      );
+      setIsLoading(false);
+    };
+    load();
+    return () => {
+      isActive = false;
+    };
+  }, [postId]);
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -96,7 +88,7 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title.trim()) {
       alert('제목을 입력해주세요.');
       return;
@@ -106,7 +98,7 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
       return;
     }
 
-    // 실제로는 API 호출 (첨부 파일 포함)
+    await updateBoardPost(postId, { title, content, category });
     alert('게시물이 수정되었습니다.');
     onNavigate?.('board-read', { postId });
   };
@@ -116,6 +108,21 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
       onNavigate?.('board-read', { postId });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full bg-gray-50">
+        <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
+          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+            게시물 수정
+          </h1>
+        </div>
+        <div className="flex-1 flex items-center justify-center text-gray-500">
+          데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -257,10 +264,10 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
               {/* 수정 정보 */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                  <strong>수정자:</strong> 관리자 (현재 로그인된 사용자)
+                  <strong>수정자:</strong> {originalPost?.editorName ?? '-'} (현재 로그인된 사용자)
                 </p>
                 <p className="text-sm text-blue-800 mt-1">
-                  <strong>수정일:</strong> {new Date().toLocaleDateString('ko-KR')}
+                  <strong>수정일:</strong> {originalPost?.editedDateText ?? '-'}
                 </p>
               </div>
 

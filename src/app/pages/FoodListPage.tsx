@@ -1,59 +1,32 @@
 import { useEffect, useMemo, useState } from 'react';
+
+import { getFoodListResponse } from '../data/food';
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
 import { Pagination } from '../components/Pagination';
 
-type FoodItem = {
-  id: number;
-  name: string;
-  category: string;
-  calories: number;
-  allergies: number[];
-};
+import { toFoodListVMFromResponse } from '../viewModels/food';
+import type { FoodListVM } from '../viewModels/food';
 
 interface FoodListProps {
   onNavigate?: (page: string, params?: any) => void;
 }
 
-const mockFoods: FoodItem[] = [
-  { id: 101, name: '김치볶음밥', category: '밥류', calories: 520, allergies: [1, 5] },
-  { id: 100, name: '돼지김치찌개', category: '찌개 및 전골류', calories: 410, allergies: [6, 10] },
-  { id: 99, name: '돈까스', category: '튀김류', calories: 680, allergies: [1, 6, 10] },
-];
-
-const categoryOptions = [
-  '전체',
-  '밥류',
-  '국 및 탕류',
-  '스프류',
-  '전·적 및 부침류',
-  '나물·숙채류',
-  '디저트류',
-  '볶음류',
-  '구이류',
-  '생채·무침류',
-  '튀김류',
-  '조림류',
-  '찜류',
-  '면류',
-  '찌개 및 전골류',
-  '죽류',
-  '장아찌·절임류',
-  '김치류',
-  '음료류',
-  '만두류',
-];
-
 export function FoodListPage({ onNavigate }: FoodListProps) {
+  const [foodListVm, setFoodListVm] = useState<FoodListVM | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState('전체');
   const [sortBy, setSortBy] = useState('id-asc');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 20;
+  const [totalPages, setTotalPages] = useState(1);
 
   const filteredFoods = useMemo(() => {
+    if (!foodListVm) return [];
     const baseFoods = categoryFilter === '전체'
-      ? mockFoods
-      : mockFoods.filter((food) => food.category === categoryFilter);
+      ? foodListVm.items
+      : foodListVm.items.filter((food) => food.category === categoryFilter);
 
     const sortedFoods = [...baseFoods].sort((a, b) => {
       switch (sortBy) {
@@ -79,15 +52,54 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
     });
 
     return sortedFoods;
-  }, [categoryFilter, sortBy]);
-
-  const totalPages = Math.ceil(filteredFoods.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentFoods = filteredFoods.slice(startIndex, startIndex + itemsPerPage);
+  }, [categoryFilter, foodListVm, sortBy]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [categoryFilter, sortBy]);
+
+  useEffect(() => {
+    let isActive = true;
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const response = await getFoodListResponse(currentPage, itemsPerPage);
+        if (!isActive) return;
+        setFoodListVm(toFoodListVMFromResponse(response));
+        setTotalPages(response.data.total_pages || 1);
+      } catch (error) {
+        console.error('Failed to load food list:', error);
+        if (!isActive) return;
+        setFoodListVm(null);
+        setTotalPages(1);
+      } finally {
+        if (!isActive) return;
+        setIsLoading(false);
+      }
+    };
+    load();
+    return () => {
+      isActive = false;
+    };
+  }, [currentPage, itemsPerPage]);
+
+  if (isLoading || !foodListVm) {
+    return (
+      <div className="flex flex-col h-full bg-gray-50">
+        <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+              메뉴 조회
+            </h1>
+            <div />
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center text-gray-500">
+          데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -111,7 +123,7 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
                   onChange={(e) => setCategoryFilter(e.target.value)}
                   className="w-48 px-3 py-2 rounded border bg-gray-100 text-sm text-gray-900 focus:outline-none focus:border-[#5dccb4]"
                 >
-                  {categoryOptions.map((option) => (
+                  {foodListVm.categoryOptions.map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
@@ -150,12 +162,12 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentFoods.length > 0 ? (
-                  currentFoods.map((food) => (
+                {filteredFoods.length > 0 ? (
+                  filteredFoods.map((food) => (
                     <TableRow
-                      key={food.id}
+                      key={food.menuId}
                       className="cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => onNavigate?.('food-info', { foodId: food.id })}
+                      onClick={() => onNavigate?.('food-info', { foodId: food.menuId })}
                     >
                       <TableCell className="text-center text-sm">{food.id}</TableCell>
                       <TableCell className="text-center text-sm">
@@ -164,9 +176,9 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-medium">{food.name}</TableCell>
-                      <TableCell className="text-center text-sm text-gray-600">{food.calories}</TableCell>
+                      <TableCell className="text-center text-sm text-gray-600">{food.caloriesText}</TableCell>
                       <TableCell className="text-center text-sm text-gray-600">
-                        {food.allergies.length > 0 ? food.allergies.join(', ') : '-'}
+                        {food.allergiesText}
                       </TableCell>
                     </TableRow>
                   ))

@@ -1,57 +1,92 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
+
+import { getAdditionalMenuDetailResponse, updateAdditionalMenu } from '../data/additionalMenu';
+
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
-import { ArrowLeft } from 'lucide-react';
-import { AdditionalMenuDraft, AdditionalMenuItem } from '../types/additionalMenu';
+
+import {
+  getAdditionalMenuCreateForm,
+  toAdditionalMenuEditVMFromResponse,
+  toAdditionalMenuRequestBody,
+} from '../viewModels/additionalMenu';
 
 interface AdditionalMenuEditPageProps {
-  items: AdditionalMenuItem[];
   initialParams?: any;
   onNavigate?: (page: string, params?: any) => void;
-  onUpdate: (menuId: number, draft: AdditionalMenuDraft) => void;
 }
 
 export function AdditionalMenuEditPage({
-  items,
   initialParams,
   onNavigate,
-  onUpdate,
 }: AdditionalMenuEditPageProps) {
-  const menuId = initialParams?.menuId as number | undefined;
-  const menu = items.find((item) => item.id === menuId);
+  const menuId =
+    initialParams?.menuId !== undefined && initialParams?.menuId !== null
+      ? String(initialParams.menuId)
+      : undefined;
+  const [menuIdValue, setMenuIdValue] = useState<string | undefined>(menuId);
+  const [isLoading, setIsLoading] = useState(true);
+  const [name, setName] = useState('');
+  const [category, setCategory] = useState('');
+  const [nutritionBasis, setNutritionBasis] = useState('');
+  const [servingSize, setServingSize] = useState('');
+  const [kcal, setKcal] = useState('');
+  const [carb, setCarb] = useState('');
+  const [prot, setProt] = useState('');
+  const [fat, setFat] = useState('');
+  const [calcium, setCalcium] = useState('');
+  const [iron, setIron] = useState('');
+  const [vitaminA, setVitaminA] = useState('');
+  const [thiamin, setThiamin] = useState('');
+  const [riboflavin, setRiboflavin] = useState('');
+  const [vitaminC, setVitaminC] = useState('');
+  const [ingredientsText, setIngredientsText] = useState('');
+  const [allergensText, setAllergensText] = useState('');
+  const [recipeText, setRecipeText] = useState('');
+  const [createdAtText, setCreatedAtText] = useState('');
 
-  const [name, setName] = useState((menu as any)?.name ?? menu?.title ?? '');
-  const [category, setCategory] = useState(menu?.category ?? '밥류');
-  const [nutritionBasis, setNutritionBasis] = useState((menu as any)?.nutrition_basis ?? '100g');
-  const [servingSize, setServingSize] = useState((menu as any)?.serving_size ?? '');
-  const [kcal, setKcal] = useState((menu as any)?.kcal?.toString?.() ?? '');
-  const [carb, setCarb] = useState((menu as any)?.carb?.toString?.() ?? '');
-  const [prot, setProt] = useState((menu as any)?.prot?.toString?.() ?? '');
-  const [fat, setFat] = useState((menu as any)?.fat?.toString?.() ?? '');
-  const [calcium, setCalcium] = useState((menu as any)?.calcium?.toString?.() ?? '');
-  const [iron, setIron] = useState((menu as any)?.iron?.toString?.() ?? '');
-  const [vitaminA, setVitaminA] = useState((menu as any)?.vitamin_a?.toString?.() ?? '');
-  const [thiamin, setThiamin] = useState((menu as any)?.thiamin?.toString?.() ?? '');
-  const [riboflavin, setRiboflavin] = useState((menu as any)?.riboflavin?.toString?.() ?? '');
-  const [vitaminC, setVitaminC] = useState((menu as any)?.vitamin_c?.toString?.() ?? '');
-  const [ingredientsText, setIngredientsText] = useState((menu as any)?.ingredients_text ?? '');
-  const [allergensText, setAllergensText] = useState(
-    Array.isArray((menu as any)?.allergens) ? (menu as any).allergens.join(', ') : ''
-  );
-  const [recipeText, setRecipeText] = useState((menu as any)?.recipe_text ?? menu?.description ?? '');
+  useEffect(() => {
+    let isActive = true;
 
-  const parseAllergens = (value: string) => {
-    if (!value.trim()) return [];
-    return value
-      .split(',')
-      .map((n) => Number(n.trim()))
-      .filter((n) => !Number.isNaN(n));
-  };
+    const load = async () => {
+      const response = await getAdditionalMenuDetailResponse(menuId);
+      if (!isActive) return;
+      const editVm = response ? toAdditionalMenuEditVMFromResponse(response, menuId) : null;
+      const initialForm = editVm?.form ?? getAdditionalMenuCreateForm();
 
-  const handleSubmit = () => {
-    if (!menu) return;
+      setMenuIdValue(editVm?.id ?? menuId);
+      setName(initialForm.name);
+      setCategory(initialForm.category);
+      setNutritionBasis(initialForm.nutritionBasis);
+      setServingSize(initialForm.servingSize);
+      setKcal(initialForm.kcal);
+      setCarb(initialForm.carb);
+      setProt(initialForm.prot);
+      setFat(initialForm.fat);
+      setCalcium(initialForm.calcium);
+      setIron(initialForm.iron);
+      setVitaminA(initialForm.vitaminA);
+      setThiamin(initialForm.thiamin);
+      setRiboflavin(initialForm.riboflavin);
+      setVitaminC(initialForm.vitaminC);
+      setIngredientsText(initialForm.ingredientsText);
+      setAllergensText(initialForm.allergensText);
+      setRecipeText(initialForm.recipeText);
+      setCreatedAtText(editVm?.createdAtText ?? '');
+      setIsLoading(false);
+    };
+
+    load();
+
+    return () => {
+      isActive = false;
+    };
+  }, [menuId]);
+
+  const handleSubmit = async () => {
     if (!name.trim()) {
       alert('메뉴명을 입력해주세요.');
       return;
@@ -73,45 +108,43 @@ export function AdditionalMenuEditPage({
       return;
     }
 
-    const requestBody = {
-      name: name.trim(),
+    const form = {
+      name,
       category,
-      nutrition_basis: nutritionBasis.trim(),
-      serving_size: servingSize.trim(),
-      kcal: Number(kcal),
-      carb: Number(carb),
-      prot: Number(prot),
-      fat: Number(fat),
-      calcium: Number(calcium),
-      iron: Number(iron),
-      vitamin_a: Number(vitaminA),
-      thiamin: Number(thiamin),
-      riboflavin: Number(riboflavin),
-      vitamin_c: Number(vitaminC),
-      ingredients_text: ingredientsText.trim(),
-      allergens: parseAllergens(allergensText),
-      recipe_text: recipeText.trim(),
+      nutritionBasis,
+      servingSize,
+      kcal,
+      carb,
+      prot,
+      fat,
+      calcium,
+      iron,
+      vitaminA,
+      thiamin,
+      riboflavin,
+      vitaminC,
+      ingredientsText,
+      allergensText,
+      recipeText,
     };
+    const requestBody = toAdditionalMenuRequestBody(form);
 
     console.log('Update additional menu payload:', requestBody);
 
-    onUpdate(menu.id, {
-      title: name.trim(),
-      category,
-      description: recipeText.trim(),
-    });
-    onNavigate?.('additional-menu-read', { menuId: menu.id });
+    const result = await updateAdditionalMenu(menuIdValue, requestBody);
+    alert(result.message);
+    if (menuIdValue) {
+      onNavigate?.('additional-menu-read', { menuId: menuIdValue });
+    }
   };
 
   const handleCancel = () => {
-    if (!menu) {
-      onNavigate?.('additional-menu-list');
-      return;
+    if (menuIdValue) {
+      onNavigate?.('additional-menu-read', { menuId: menuIdValue });
     }
-    onNavigate?.('additional-menu-read', { menuId: menu.id });
   };
 
-  if (!menu) {
+  if (isLoading) {
     return (
       <div className="flex flex-col h-full bg-gray-50">
         <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
@@ -120,7 +153,7 @@ export function AdditionalMenuEditPage({
           </h1>
         </div>
         <div className="flex-1 flex items-center justify-center text-gray-500">
-          선택한 신메뉴를 찾을 수 없습니다.
+          데이터를 불러오는 중입니다.
         </div>
       </div>
     );
@@ -340,7 +373,7 @@ export function AdditionalMenuEditPage({
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800 mt-1">
-                  <strong>작성일:</strong> {menu.date}
+                  <strong>작성일:</strong> {createdAtText || '-'}
                 </p>
               </div>
 

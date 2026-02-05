@@ -1,8 +1,62 @@
+import { useEffect, useState } from 'react';
 import { Building2, Phone, Mail, Users, FileText, Warehouse } from 'lucide-react';
-import { useState } from 'react';
+
+import { getSchoolResponse } from '../data/school';
 
 export function InstitutionInfoEditPage() {
   const [activeTab, setActiveTab] = useState<'school' | 'rules'>('school');
+  const [form, setForm] = useState({
+    schoolName: '',
+    schoolTypePrimary: '',
+    schoolTypeSecondary: '',
+    phoneArea: '',
+    phoneMiddle: '',
+    phoneLine: '',
+    email: '',
+    studentCount: '',
+    mealPriceTarget: '',
+    mealPriceMax: '',
+    staffCount: '',
+    equipmentDetails: '',
+    rulesText: '',
+  });
+
+  useEffect(() => {
+    const loadSchoolInfo = async () => {
+      const response = await getSchoolResponse();
+      if (response?.status !== 'success') return;
+      const schoolTypeRaw = response.data.school_type ?? '';
+      const schoolTypePrimary =
+        schoolTypeRaw.includes('초') ? '초등학교' :
+        schoolTypeRaw.includes('중') ? '중학교' :
+        schoolTypeRaw.includes('고') ? '고등학교' :
+        '';
+      const phoneRaw = response.data.phone ?? '';
+      const [phoneArea, phoneMiddle, phoneLine] = phoneRaw.split('-');
+      setForm({
+        schoolName: response.data.school_name ?? '',
+        schoolTypePrimary,
+        schoolTypeSecondary: '',
+        phoneArea: phoneArea ?? '',
+        phoneMiddle: phoneMiddle ?? '',
+        phoneLine: phoneLine ?? '',
+        email: response.data.email ?? '',
+        studentCount: String(response.data.student_count ?? ''),
+        mealPriceTarget: String(response.data.target_unit_price ?? ''),
+        mealPriceMax: String(response.data.max_unit_price ?? ''),
+        staffCount: String(response.data.cook_workers ?? ''),
+        equipmentDetails: response.data.kitchen_equipment ?? '',
+        rulesText: response.data.operation_rules ?? '',
+      });
+    };
+    void loadSchoolInfo();
+  }, []);
+
+  const handleFieldChange =
+    (field: keyof typeof form) =>
+    (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+      setForm((prev) => ({ ...prev, [field]: event.target.value }));
+    };
 
   return (
     <div className="p-6">
@@ -51,7 +105,8 @@ export function InstitutionInfoEditPage() {
                 </label>
                 <input 
                   type="text" 
-                  defaultValue="서울중앙고등학교"
+                  value={form.schoolName}
+                  onChange={handleFieldChange('schoolName')}
                   className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
                 />
               </div>
@@ -59,18 +114,28 @@ export function InstitutionInfoEditPage() {
               {/* School Type - Level */}
               <div>
                 <label className="block text-sm font-medium mb-2">학교 구분1</label>
-                <select className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]">
+                <select
+                  className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
+                  value={form.schoolTypePrimary}
+                  onChange={handleFieldChange('schoolTypePrimary')}
+                >
+                  <option value="">선택</option>
                   <option>초등학교</option>
                   <option>중학교</option>
-                  <option selected>고등학교</option>
+                  <option>고등학교</option>
                 </select>
               </div>
 
               {/* School Type - Coed */}
               <div>
                 <label className="block text-sm font-medium mb-2">학교 구분2</label>
-                <select className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]">
-                  <option selected>남녀공학</option>
+                <select
+                  className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
+                  value={form.schoolTypeSecondary}
+                  onChange={handleFieldChange('schoolTypeSecondary')}
+                >
+                  <option value="">선택</option>
+                  <option>남녀공학</option>
                   <option>남학교</option>
                   <option>여학교</option>
                 </select>
@@ -84,9 +149,11 @@ export function InstitutionInfoEditPage() {
                 </label>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                   <select
-                    defaultValue="02"
                     className="w-full sm:w-32 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
+                    value={form.phoneArea}
+                    onChange={handleFieldChange('phoneArea')}
                   >
+                    <option value="">선택</option>
                     <option value="02">02</option>
                     <option value="031">031</option>
                     <option value="032">032</option>
@@ -113,13 +180,15 @@ export function InstitutionInfoEditPage() {
                   </select>
                   <input
                     type="tel"
-                    defaultValue="1234"
+                    value={form.phoneMiddle}
+                    onChange={handleFieldChange('phoneMiddle')}
                     className="w-full sm:flex-1 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
                     placeholder="국번"
                   />
                   <input
                     type="tel"
-                    defaultValue="5678"
+                    value={form.phoneLine}
+                    onChange={handleFieldChange('phoneLine')}
                     className="w-full sm:flex-1 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
                     placeholder="개인번호"
                   />
@@ -134,7 +203,8 @@ export function InstitutionInfoEditPage() {
                 </label>
                 <input 
                   type="email" 
-                  defaultValue="info@seoulcentral.hs.kr"
+                  value={form.email}
+                  onChange={handleFieldChange('email')}
                   className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
                 />
               </div>
@@ -147,7 +217,8 @@ export function InstitutionInfoEditPage() {
                 </label>
                 <input 
                   type="number" 
-                  defaultValue="1250"
+                  value={form.studentCount}
+                  onChange={handleFieldChange('studentCount')}
                   className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
                 />
               </div>
@@ -157,7 +228,8 @@ export function InstitutionInfoEditPage() {
                 <label className="block text-sm font-medium mb-2">목표 1식 단가 (원)</label>
                 <input 
                   type="number" 
-                  defaultValue="5500"
+                  value={form.mealPriceTarget}
+                  onChange={handleFieldChange('mealPriceTarget')}
                   className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
                 />
               </div>
@@ -166,7 +238,8 @@ export function InstitutionInfoEditPage() {
                 <label className="block text-sm font-medium mb-2">1식 단가 상한선 (원)</label>
                 <input 
                   type="number" 
-                  defaultValue="6000"
+                  value={form.mealPriceMax}
+                  onChange={handleFieldChange('mealPriceMax')}
                   className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
                 />
               </div>
@@ -183,7 +256,8 @@ export function InstitutionInfoEditPage() {
                     </label>
                     <input 
                       type="number" 
-                      defaultValue="8"
+                      value={form.staffCount}
+                      onChange={handleFieldChange('staffCount')}
                       className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
                     />
                   </div>
@@ -192,7 +266,8 @@ export function InstitutionInfoEditPage() {
                     <label className="block text-sm font-medium mb-2">주요 조리 기구 현황</label>
                     <textarea 
                       rows={6}
-                      defaultValue="- 회전식 조리기 2대&#10;- 스팀솥 4대&#10;- 냉장고 6대 (업소용)"
+                      value={form.equipmentDetails}
+                      onChange={handleFieldChange('equipmentDetails')}
                       className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
                     />
                   </div>
@@ -224,7 +299,8 @@ export function InstitutionInfoEditPage() {
                 </label>
                 <textarea 
                   rows={12}
-                  defaultValue="[ 급식 제공 시간 ]&#10;• 중식: 12:00 - 13:00 (1학년 11:50, 2학년 12:10, 3학년 12:30 순차 배식)&#10;• 석식: 17:30 - 18:30 (자율 배식)&#10;&#10;[ 위생 및 안전 관리 ]&#10;• 알레르기 식재료 표시 의무화 (메뉴판 및 앱 공지)&#10;• 위생 점검 주 1회 실시 (담당: 영양사, 보건교사)&#10;• 식재료 검수 일일 실시 (오전 8시)&#10;&#10;[ 영양 관리 ]&#10;• 교육부 학교급식 영양관리기준 준수&#10;• 1일 권장 칼로리의 30%(중식), 25%(석식) 제공&#10;• 나트륨 저감화 메뉴 월 4회 이상 제공&#10;&#10;[ 만족도 관리 ]&#10;• 학생 및 학부모 만족도 조사 월 1회 실시&#10;• 선호도 조사 분기별 1회 실시 및 메뉴 반영&#10;• 급식 모니터링단 운영 (학부모 10명)&#10;&#10;[ 잔반 관리 ]&#10;• 잔반량 측정 및 기록 일일 실시&#10;• 잔반 감량 목표: 전년 대비 10% 감소"
+                  value={form.rulesText}
+                  onChange={handleFieldChange('rulesText')}
                   className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4] font-mono text-sm leading-relaxed"
                 />
               </div>

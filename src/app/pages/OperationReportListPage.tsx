@@ -1,4 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Download, FileText, Calendar } from 'lucide-react';
+
+import { getMonthlyOpsDocListResponse } from '../data/operation';
+
 import { Button } from '../components/ui/button';
 import {
   Select,
@@ -15,8 +19,13 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui/table';
-import { Download, FileText, Calendar } from 'lucide-react';
 import { Pagination } from '../components/Pagination';
+
+import {
+  getOperationReportYearOptions,
+  toOperationReportItemsVM,
+  toOperationReportsFromMonthlyOps,
+} from '../viewModels/operation';
 
 interface Report {
   id: number;
@@ -31,17 +40,29 @@ interface OperationReportListPageProps {
   onNavigate?: (page: string, params?: any) => void;
 }
 
-// 샘플 데이터
-const mockReports: Report[] = [];
-
 export function OperationReportListPage({ onNavigate }: OperationReportListPageProps) {
-  const [reports, setReports] = useState<Report[]>(mockReports);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState('전체');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
+  useEffect(() => {
+    let isActive = true;
+    const load = async () => {
+      const response = await getMonthlyOpsDocListResponse();
+      if (!isActive) return;
+      setReports(toOperationReportsFromMonthlyOps(response));
+      setIsLoading(false);
+    };
+    load();
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
   // 연도 목록 생성
-  const years = ['전체', ...Array.from(new Set(reports.map(r => r.year))).sort((a, b) => b - a).map(String)];
+  const years = getOperationReportYearOptions(reports);
 
   // 필터링된 보고서
   const filteredReports = reports.filter(report => {
@@ -52,6 +73,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
   const totalPages = Math.ceil(filteredReports.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedReports = filteredReports.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedReportsVm = toOperationReportItemsVM(paginatedReports);
 
   useEffect(() => {
     if (totalPages === 0) {
@@ -106,6 +128,21 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
     setReports([newReport, ...reports]);
     setCurrentPage(1);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full bg-gray-50">
+        <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
+          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+            월별 운영 기록
+          </h1>
+        </div>
+        <div className="flex-1 flex items-center justify-center text-gray-500">
+          데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -174,29 +211,29 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedReports.length > 0 ? (
-                  paginatedReports.map((report, index) => (
+                {paginatedReportsVm.length > 0 ? (
+                  paginatedReportsVm.map((report, index) => (
                     <TableRow key={report.id} className="hover:bg-gray-50 transition-colors">
                       <TableCell className="text-center text-sm">
                         {startIndex + index + 1}
                       </TableCell>
                       <TableCell className="text-center text-sm font-medium">
-                        {report.year}
+                        {report.yearText}
                       </TableCell>
                       <TableCell className="text-center text-sm font-medium">
-                        {String(report.month).padStart(2, '0')}
+                        {report.monthText}
                       </TableCell>
                       <TableCell className="text-center text-sm font-medium">
                       </TableCell>
                       <TableCell className="text-center text-sm text-gray-600">
-                        {report.generatedDate}
+                        {report.generatedDateText}
                       </TableCell>
                       <TableCell>
                         <div className="flex justify-center gap-2">
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleView(report)}
+                            onClick={() => handleView(paginatedReports[index])}
                             className="flex items-center gap-1"
                           >
                             <FileText size={14} />
@@ -204,7 +241,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
                           </Button>
                           <Button
                             size="sm"
-                            onClick={() => handleDownload(report)}
+                            onClick={() => handleDownload(paginatedReports[index])}
                             className="bg-[#5dccb4] hover:bg-[#4db9a3] text-white flex items-center gap-1"
                           >
                             <Download size={14} />

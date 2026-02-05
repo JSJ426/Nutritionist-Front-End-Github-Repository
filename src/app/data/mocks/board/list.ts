@@ -1,0 +1,36 @@
+export const mockBoardListResponse = {
+  status: 'success',
+  message: '게시글 목록 조회 성공',
+  data: {
+    current_page: 1,
+    page_size: 20,
+    total_pages: 5,
+    total_items: 87,
+    items: [
+      {
+        id: 101,
+        schoolId: 1,
+        category: 'NOTICE',
+        title: '2026년 2월 급식 안내',
+        authorId: 1,
+        authorType: 'DIETITIAN',
+        viewCount: 45,
+        createdAt: '2026-02-01T10:20:30',
+        updatedAt: '2026-02-01T10:20:30',
+        hasAttachment: false,
+      },
+      {
+        id: 102,
+        schoolId: 1,
+        category: 'NEW_MENU',
+        title: '두쫀쿠 추가 요청',
+        authorId: 3,
+        authorType: 'STUDENT',
+        viewCount: 12,
+        createdAt: '2026-02-01T11:00:00',
+        updatedAt: '2026-02-01T11:05:00',
+        hasAttachment: true,
+      },
+    ],
+  },
+} as const;

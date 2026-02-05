@@ -1,7 +1,7 @@
 import { MessageSquare } from 'lucide-react';
 
 type FeedbackItemData = {
-  id: number;
+  id: string | number;
   date: string;
   meal: string;
   menu: string;

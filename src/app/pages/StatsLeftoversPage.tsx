@@ -1,76 +1,129 @@
+import { useEffect, useMemo, useState } from 'react';
+import { TrendingDown, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
-import { useState, useMemo } from 'react';
+
+import { getLeftoversMetrics } from '../data/metrics';
+
 import { KpiCard } from '../components/KpiCard';
 import { StatsFilterPanel } from '../components/StatsFilterPanel';
 //import { SummaryLeftovers } from '../components/SummaryLeftovers';
-import { TrendingDown, TrendingUp } from 'lucide-react';
 
-// 더 풍부한 데이터셋 (중식/석식/메뉴별 구분)
-const weeklyData = [
-  { date: '1월 6일', amount: 42.7, lunch: 38.5, dinner: 46.9, main: 18.2, side: 15.8, soup: 8.7 },
-  { date: '1월 7일', amount: 39.8, lunch: 35.2, dinner: 44.4, main: 16.5, side: 14.3, soup: 9.0 },
-  { date: '1월 8일', amount: 46.5, lunch: 42.1, dinner: 50.9, main: 19.8, side: 17.2, soup: 9.5 },
-  { date: '1월 9일', amount: 51.2, lunch: 47.3, dinner: 55.1, main: 22.1, side: 19.5, soup: 9.6 },
-  { date: '1월 10일', amount: 44.8, lunch: 40.5, dinner: 49.1, main: 19.2, side: 16.8, soup: 8.8 },
-  { date: '1월 11일', amount: 40.5, lunch: 36.8, dinner: 44.2, main: 17.3, side: 14.9, soup: 8.3 },
-  { date: '1월 12일', amount: 48.9, lunch: 44.6, dinner: 53.2, main: 21.0, side: 18.3, soup: 9.6 },
-  { date: '1월 13일', amount: 43.6, lunch: 39.4, dinner: 47.8, main: 18.7, side: 16.1, soup: 8.8 },
-  { date: '1월 14일', amount: 50.1, lunch: 45.7, dinner: 54.5, main: 21.4, side: 18.6, soup: 10.1 },
-  { date: '1월 15일', amount: 47.3, lunch: 42.9, dinner: 51.7, main: 20.2, side: 17.4, soup: 9.7 },
-  { date: '1월 16일', amount: 41.8, lunch: 37.9, dinner: 45.7, main: 17.9, side: 15.2, soup: 8.7 },
-  { date: '1월 17일', amount: 45.9, lunch: 41.6, dinner: 50.2, main: 19.6, side: 17.0, soup: 9.3 },
-  { date: '1월 18일', amount: 52.4, lunch: 47.8, dinner: 57.0, main: 22.6, side: 19.7, soup: 10.1 },
-  { date: '1월 19일', amount: 44.2, lunch: 40.1, dinner: 48.3, main: 18.9, side: 16.4, soup: 8.9 },
-  { date: '1월 20일', amount: 49.6, lunch: 45.0, dinner: 54.2, main: 21.1, side: 18.5, soup: 10.0 },
-];
-
-const monthlyData = [
-  { date: '12월 16일', amount: 45.2, lunch: 41.0, dinner: 49.4, main: 19.3, side: 16.8, soup: 9.1 },
-  { date: '12월 17일', amount: 47.8, lunch: 43.5, dinner: 52.1, main: 20.5, side: 17.9, soup: 9.4 },
-  { date: '12월 18일', amount: 42.1, lunch: 38.2, dinner: 46.0, main: 18.0, side: 15.6, soup: 8.5 },
-  { date: '12월 19일', amount: 52.3, lunch: 48.1, dinner: 56.5, main: 22.4, side: 19.8, soup: 10.1 },
-  { date: '12월 20일', amount: 48.6, lunch: 44.3, dinner: 52.9, main: 20.8, side: 18.2, soup: 9.6 },
-  { date: '12월 23일', amount: 40.8, lunch: 37.0, dinner: 44.6, main: 17.5, side: 15.1, soup: 8.2 },
-  { date: '12월 24일', amount: 44.5, lunch: 40.5, dinner: 48.5, main: 19.0, side: 16.5, soup: 9.0 },
-  { date: '12월 26일', amount: 54.1, lunch: 49.8, dinner: 58.4, main: 23.2, side: 20.3, soup: 10.6 },
-  { date: '12월 27일', amount: 49.8, lunch: 45.5, dinner: 54.1, main: 21.3, side: 18.7, soup: 9.8 },
-  { date: '12월 30일', amount: 41.9, lunch: 38.0, dinner: 45.8, main: 17.9, side: 15.5, soup: 8.5 },
-  { date: '12월 31일', amount: 46.2, lunch: 42.0, dinner: 50.4, main: 19.8, side: 17.2, soup: 9.2 },
-  { date: '1월 2일', amount: 50.5, lunch: 46.3, dinner: 54.7, main: 21.6, side: 19.0, soup: 9.9 },
-  { date: '1월 3일', amount: 41.5, lunch: 37.7, dinner: 45.3, main: 17.8, side: 15.4, soup: 8.3 },
-  { date: '1월 6일', amount: 42.7, lunch: 38.5, dinner: 46.9, main: 18.2, side: 15.8, soup: 8.7 },
-  { date: '1월 7일', amount: 39.8, lunch: 35.2, dinner: 44.4, main: 16.5, side: 14.3, soup: 9.0 },
-  { date: '1월 8일', amount: 46.5, lunch: 42.1, dinner: 50.9, main: 19.8, side: 17.2, soup: 9.5 },
-  { date: '1월 9일', amount: 51.2, lunch: 47.3, dinner: 55.1, main: 22.1, side: 19.5, soup: 9.6 },
-  { date: '1월 10일', amount: 44.8, lunch: 40.5, dinner: 49.1, main: 19.2, side: 16.8, soup: 8.8 },
-  { date: '1월 11일', amount: 40.5, lunch: 36.8, dinner: 44.2, main: 17.3, side: 14.9, soup: 8.3 },
-  { date: '1월 12일', amount: 48.9, lunch: 44.6, dinner: 53.2, main: 21.0, side: 18.3, soup: 9.6 },
-];
-
-const customData = [
-  { date: '1월 8일', amount: 46.5, lunch: 42.1, dinner: 50.9, main: 19.8, side: 17.2, soup: 9.5 },
-  { date: '1월 9일', amount: 51.2, lunch: 47.3, dinner: 55.1, main: 22.1, side: 19.5, soup: 9.6 },
-  { date: '1월 10일', amount: 44.8, lunch: 40.5, dinner: 49.1, main: 19.2, side: 16.8, soup: 8.8 },
-  { date: '1월 11일', amount: 40.5, lunch: 36.8, dinner: 44.2, main: 17.3, side: 14.9, soup: 8.3 },
-  { date: '1월 12일', amount: 48.9, lunch: 44.6, dinner: 53.2, main: 21.0, side: 18.3, soup: 9.6 },
-];
+import {
+  StatsLeftoversMealType,
+  StatsLeftoversMenuType,
+  StatsLeftoversPeriod,
+  getLeftoversBaseData,
+  getLeftoversFilterLabels,
+  getLeftoversFilteredData,
+  getLeftoversKpiData,
+  toLeftoversSeriesByPeriod,
+} from '../viewModels';
+import type { LeftoversMetricsResponse } from '../viewModels/metrics';
+import { useAuth } from '../auth/AuthContext';
 
 export function StatsLeftoversPage() {
+  const { claims, isReady } = useAuth();
+  const schoolId = claims?.schoolId;
+  const [metrics, setMetrics] = useState<LeftoversMetricsResponse | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    if (!isReady || !schoolId) {
+      return;
+    }
+    let isActive = true;
+    const load = async () => {
+      const response = await getLeftoversMetrics(schoolId);
+      if (!isActive) return;
+      setMetrics(response);
+    };
+    load();
+    return () => {
+      isActive = false;
+    };
+  }, [isReady, schoolId]);
+
+  if (!isReady || !schoolId) {
+    return (
+      <div className="p-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold">잔반량</h1>
+        </div>
+        <div className="flex items-center justify-center text-gray-500 py-12">
+          데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
+
+  const fallbackDefaults = {
+    defaultPeriod: 'weekly',
+    defaultMealType: 'all',
+    defaultMenuType: 'all',
+    defaultStartDate: '',
+    defaultEndDate: '',
+    targetAmount: 0,
+    prevMonthAvg: 0,
+  };
+  const fallbackLabels = {
+    period: {
+      weekly: '',
+      monthly: '',
+      custom: '',
+    },
+    meal: {
+      all: '',
+      lunch: '',
+      dinner: '',
+    },
+    menu: {
+      all: '',
+      main: '',
+      side: '',
+      soup: '',
+    },
+  };
+  const defaults = metrics?.defaults ?? fallbackDefaults;
+  const labels = metrics?.labels ?? fallbackLabels;
+
+  const {
+    defaultPeriod,
+    defaultMealType,
+    defaultMenuType,
+    defaultStartDate,
+    defaultEndDate,
+    targetAmount,
+    prevMonthAvg,
+  } = defaults;
+
   // Draft 상태 (사용자가 선택 중인 값)
-  const [draftPeriod, setDraftPeriod] = useState('weekly');
-  const [draftMealType, setDraftMealType] = useState('all');
-  const [draftMenuType, setDraftMenuType] = useState('all');
-  const [draftStartDate, setDraftStartDate] = useState('2026-01-08');
-  const [draftEndDate, setDraftEndDate] = useState('2026-01-12');
+  const [draftPeriod, setDraftPeriod] = useState<StatsLeftoversPeriod>(defaultPeriod as StatsLeftoversPeriod);
+  const [draftMealType, setDraftMealType] = useState<StatsLeftoversMealType>(defaultMealType as StatsLeftoversMealType);
+  const [draftMenuType, setDraftMenuType] = useState<StatsLeftoversMenuType>(defaultMenuType as StatsLeftoversMenuType);
+  const [draftStartDate, setDraftStartDate] = useState(defaultStartDate);
+  const [draftEndDate, setDraftEndDate] = useState(defaultEndDate);
   
   // Applied 상태 (조회 버튼 클릭 후 실제 적용된 값)
-  const [period, setPeriod] = useState('weekly');
-  const [mealType, setMealType] = useState('all');
-  const [menuType, setMenuType] = useState('all');
-  const [startDate, setStartDate] = useState('2026-01-08');
-  const [endDate, setEndDate] = useState('2026-01-12');
-  
-  const targetAmount = 45.0; // 관리 목표 기준선 (kg)
+  const [period, setPeriod] = useState<StatsLeftoversPeriod>(defaultPeriod as StatsLeftoversPeriod);
+  const [mealType, setMealType] = useState<StatsLeftoversMealType>(defaultMealType as StatsLeftoversMealType);
+  const [menuType, setMenuType] = useState<StatsLeftoversMenuType>(defaultMenuType as StatsLeftoversMenuType);
+  const [startDate, setStartDate] = useState(defaultStartDate);
+  const [endDate, setEndDate] = useState(defaultEndDate);
+
+  useEffect(() => {
+    if (!metrics || isInitialized) return;
+    setDraftPeriod(metrics.defaults.defaultPeriod as StatsLeftoversPeriod);
+    setDraftMealType(metrics.defaults.defaultMealType as StatsLeftoversMealType);
+    setDraftMenuType(metrics.defaults.defaultMenuType as StatsLeftoversMenuType);
+    setDraftStartDate(metrics.defaults.defaultStartDate);
+    setDraftEndDate(metrics.defaults.defaultEndDate);
+    setPeriod(metrics.defaults.defaultPeriod as StatsLeftoversPeriod);
+    setMealType(metrics.defaults.defaultMealType as StatsLeftoversMealType);
+    setMenuType(metrics.defaults.defaultMenuType as StatsLeftoversMenuType);
+    setStartDate(metrics.defaults.defaultStartDate);
+    setEndDate(metrics.defaults.defaultEndDate);
+    setIsInitialized(true);
+  }, [metrics, isInitialized]);
 
   // 조회 버튼 클릭 핸들러
   const handleSearch = () => {
@@ -81,65 +134,44 @@ export function StatsLeftoversPage() {
     setEndDate(draftEndDate);
   };
 
+  const leftoversSeries = useMemo(
+    () => {
+      if (!metrics) {
+        return { weekly: [], monthly: [], custom: [] };
+      }
+      const { weeklyLunch, weeklyDinner, monthlyLunch, monthlyDinner } = metrics;
+      return toLeftoversSeriesByPeriod({
+        weeklyLunch,
+        weeklyDinner,
+        monthlyLunch,
+        monthlyDinner,
+      });
+    },
+    [metrics]
+  );
+
   // 필터에 따른 데이터 선택
   const baseData = useMemo(() => {
-    if (period === 'weekly') return weeklyData;
-    if (period === 'monthly') return monthlyData;
-    return customData;
-  }, [period]);
+    return getLeftoversBaseData(period, {
+      weekly: leftoversSeries.weekly,
+      monthly: leftoversSeries.monthly,
+      custom: leftoversSeries.custom,
+    });
+  }, [period, leftoversSeries]);
 
   // 식사 구분 및 메뉴 유형에 따른 데이터 변환
   const filteredData = useMemo(() => {
-    return baseData.map(item => {
-      let displayAmount = item.amount;
-      
-      // 식사 구분만 적용된 경우
-      if (mealType === 'lunch' && menuType === 'all') {
-        displayAmount = item.lunch;
-      } else if (mealType === 'dinner' && menuType === 'all') {
-        displayAmount = item.dinner;
-      }
-      // 메뉴 유형만 적용된 경우
-      else if (mealType === 'all' && menuType !== 'all') {
-        if (menuType === 'main') displayAmount = item.main;
-        else if (menuType === 'side') displayAmount = item.side;
-        else if (menuType === 'soup') displayAmount = item.soup;
-      }
-      // 식사 구분과 메뉴 유형 모두 적용된 경우
-      else if (mealType !== 'all' && menuType !== 'all') {
-        // 식사별 메뉴 유형의 비율을 계산 (전체 대비 중식/석식의 비율 적용)
-        const mealRatio = mealType === 'lunch' ? (item.lunch / item.amount) : (item.dinner / item.amount);
-        if (menuType === 'main') displayAmount = item.main * mealRatio;
-        else if (menuType === 'side') displayAmount = item.side * mealRatio;
-        else if (menuType === 'soup') displayAmount = item.soup * mealRatio;
-      }
-      
-      return {
-        ...item,
-        displayAmount
-      };
-    });
+    return getLeftoversFilteredData(baseData, mealType, menuType);
   }, [baseData, mealType, menuType]);
 
   // KPI 계산
   const kpiData = useMemo(() => {
-    const amounts = filteredData.map(d => d.displayAmount);
-    const todayAmount = amounts[amounts.length - 1];
-    const yesterdayAmount = amounts[amounts.length - 2] || todayAmount;
-    const weekAvg = amounts.slice(-7).reduce((a, b) => a + b, 0) / Math.min(7, amounts.length);
-    const prevWeekAvg = amounts.slice(-14, -7).reduce((a, b) => a + b, 0) / Math.min(7, amounts.slice(-14, -7).length) || weekAvg;
-    const monthAvg = amounts.reduce((a, b) => a + b, 0) / amounts.length;
-    const prevMonthAvg = 53.3; // 전월 평균 (고정값)
+    return getLeftoversKpiData(filteredData, prevMonthAvg);
+  }, [filteredData, prevMonthAvg]);
 
-    return {
-      today: todayAmount,
-      todayChange: todayAmount - yesterdayAmount,
-      weekAvg,
-      weekChange: weekAvg - prevWeekAvg,
-      monthAvg,
-      monthChange: monthAvg - prevMonthAvg,
-    };
-  }, [filteredData]);
+  const { periodLabel, mealLabel, menuLabel } = useMemo(() => {
+    return getLeftoversFilterLabels(period, mealType, menuType, labels);
+  }, [period, mealType, menuType, labels]);
 
   // // 자동 해석 분석
   // const analysis = useMemo(() => {
@@ -170,6 +202,19 @@ export function StatsLeftoversPage() {
   //     avgAmount: avgAmount.toFixed(1),
   //   };
   // }, [filteredData, kpiData, targetAmount]);
+
+  if (!metrics) {
+    return (
+      <div className="p-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">잔반량</h1>
+        </div>
+        <div className="flex items-center justify-center text-gray-500 py-12">
+          데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -231,13 +276,7 @@ export function StatsLeftoversPage() {
           <div>
             <h2 className="text-xl font-medium">일일 잔반량 추이</h2>
             <p className="text-sm text-gray-500 mt-1">
-              기준선 (목표): {targetAmount}kg | 현재 선택: {
-                period === 'weekly' ? '주간' : period === 'monthly' ? '월간' : '사용자 지정'
-              } / {
-                mealType === 'all' ? '전체' : mealType === 'lunch' ? '중식' : '석식'
-              } / {
-                menuType === 'all' ? '전체 메뉴' : menuType === 'main' ? '주메뉴' : menuType === 'side' ? '반찬' : '국·찌개'
-              }
+              기준선 (목표): {targetAmount}kg | 현재 선택: {periodLabel} / {mealLabel} / {menuLabel}
             </p>
           </div>
           <div className="flex items-center gap-2 text-sm">

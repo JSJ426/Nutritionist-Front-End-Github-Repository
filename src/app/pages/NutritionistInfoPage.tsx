@@ -1,25 +1,41 @@
+import { useEffect, useState } from 'react';
 import { KeyRound, Lock, Phone, User } from 'lucide-react';
-import { useState } from 'react';
+
+import { getNutritionistProfile } from '../data/nutritionist';
 
 interface NutritionistInfoPageProps {
   onNavigate?: (page: string, params?: any) => void;
 }
 
-const initialNutritionistInfo = {
-  name: '김영희',
-  phoneArea: '02',
-  phoneMiddle: '9876',
-  phoneLine: '5432',
-};
-
 export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) {
-  const [formState, setFormState] = useState(initialNutritionistInfo);
+  const [formState, setFormState] = useState({
+    name: '',
+    phoneArea: '',
+    phoneMiddle: '',
+    phoneLine: '',
+  });
   const [errors, setErrors] = useState<{ name?: string; phone?: string }>({});
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      const response = await getNutritionistProfile();
+      if (response?.status !== 'success') return;
+      const phoneRaw = response.data.phone ?? '';
+      const [phoneArea, phoneMiddle, phoneLine] = phoneRaw.split('-');
+      setFormState({
+        name: response.data.name ?? '',
+        phoneArea: phoneArea ?? '',
+        phoneMiddle: phoneMiddle ?? '',
+        phoneLine: phoneLine ?? '',
+      });
+    };
+    void loadProfile();
+  }, []);
 
   const validate = () => {
     const nextErrors: { name?: string; phone?: string } = {};

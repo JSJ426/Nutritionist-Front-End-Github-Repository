@@ -1,0 +1,76 @@
+export const mockMealPlanDetailResponse = {
+  status: 'success',
+  message: '일간 식단표 상세 조회 성공',
+  data: {
+    menu_id: 1234,
+    meal_plan_id: 2,
+    school_id: 1,
+    date: '2026-05-04',
+    meal_type: 'LUNCH',
+    nutrition: {
+      kcal: 742,
+      carb: 86,
+      prot: 45,
+      fat: 23,
+    },
+    cost: 10980,
+    ai_comment: '식자재 수급 문제로 인한 변경',
+    menu_items: {
+      rice: {
+        id: 'FOOD-501',
+        name: '팥죽',
+        display: '팥죽(5)',
+        allergens: [5],
+      },
+      soup: {
+        id: 'FOOD-610',
+        name: '된장국',
+        display: '된장국(5)',
+        allergens: [5],
+      },
+      main1: {
+        id: 'FOOD-820',
+        name: '떡돼지갈비찜',
+        display: '떡돼지갈비찜(5,6,10)',
+        allergens: [5, 6, 10],
+      },
+      main2: {
+        id: 'FOOD-901',
+        name: '함박스테이크구이',
+        display: '함박스테이크구이(1,2,5,6,10,16)',
+        allergens: [1, 2, 5, 6, 10, 16],
+      },
+      side: {
+        id: 'FOOD-330',
+        name: '김',
+        display: '김',
+        allergens: [],
+      },
+      kimchi: {
+        id: 'FOOD-140',
+        name: '배추김치',
+        display: '배추김치(9)',
+        allergens: [9],
+      },
+      dessert: {
+        id: 'FOOD-712',
+        name: '딸기우유',
+        display: '딸기우유(2)',
+        allergens: [2],
+      },
+    },
+    allergen_summary: {
+      unique_allergens: [1, 2, 5, 6, 9, 10, 16],
+      by_menu: {
+        '팥죽': [5],
+        '된장국': [5],
+        '떡돼지갈비찜': [5, 6, 10],
+        '함박스테이크구이': [1, 2, 5, 6, 10, 16],
+        '배추김치': [9],
+        '딸기우유': [2],
+      },
+    },
+    created_at: '2026-01-28T10:30:00Z',
+    updated_at: '2026-01-28T10:40:00Z',
+  },
+} as const;

@@ -1,54 +1,92 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+import { fetchMealPlanHistories } from '../data/mealplan';
 import { Pagination } from '../components/Pagination';
+
+import { toMealHistoryVM } from '../viewModels/meal';
+import type { MealHistoryItemVM } from '../viewModels/meal';
 
 export function MealHistoryPage() {
   const [selectedActionType, setSelectedActionType] = useState<string>('전체');
   const [appliedActionType, setAppliedActionType] = useState<string>('전체');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  
-  const history = [
-    { 
-      date: '2026-01-09 14:30',
-      action: '수정 (AI대체)',
-      mealDate: '2026-01-15',
-      mealType: '중식',
-      menuBefore: ['돈까스', '미소국', '깍두기'],
-      menuAfter: ['치킨까스', '미소국', '깍두기'],
-      changes: '주메뉴: 돈까스 → 치킨까스 (식자재 수급 문제)',
-    },
-    { 
-      date: '2026-01-08 10:15',
-      action: '생성',
-      mealDate: '2026-01-20',
-      mealType: '석식',
-      menuBefore: [],
-      menuAfter: ['불고기덮밥', '계란국', '단무지'],
-      changes: '신규 식단 생성',
-    },
-    { 
-      date: '2026-01-07 16:45',
-      action: '수정',
-      mealDate: '2026-01-12',
-      mealType: '중식',
-      menuBefore: ['현미밥', '된장국', '생선구이'],
-      menuAfter: ['현미밥', '된장국', '생선구이'],
-      changes: '칼로리: 780 → 820 kcal (알레르기 대응)',
-    },
-  ];
+  const [history, setHistory] = useState<MealHistoryItemVM[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const toDateString = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const today = new Date();
+  const defaultEndDate = toDateString(today);
+  const defaultStart = new Date(today);
+  defaultStart.setDate(today.getDate() - 30);
+  const defaultStartDate = toDateString(defaultStart);
 
-  const filteredHistory = appliedActionType === '전체' 
-    ? history 
-    : history.filter(item => item.action === appliedActionType);
+  const [selectedStartDate, setSelectedStartDate] = useState(defaultStartDate);
+  const [selectedEndDate, setSelectedEndDate] = useState(defaultEndDate);
+  const [appliedStartDate, setAppliedStartDate] = useState(defaultStartDate);
+  const [appliedEndDate, setAppliedEndDate] = useState(defaultEndDate);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentHistory = filteredHistory.slice(startIndex, startIndex + itemsPerPage);
+  const actionTypeToApi = (value: string) => {
+    if (value === '수정') return 'MANUAL_UPDATE';
+    if (value === '수정 (AI대체)') return 'AI_AUTO_REPLACE';
+    return undefined;
+  };
+
+  useEffect(() => {
+    let isActive = true;
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetchMealPlanHistories({
+          startDate: appliedStartDate || undefined,
+          endDate: appliedEndDate || undefined,
+          actionType: actionTypeToApi(appliedActionType),
+          page: currentPage - 1,
+          size: itemsPerPage,
+        });
+        if (!isActive) return;
+        setHistory(toMealHistoryVM(response));
+        setTotalPages(response.data.total_pages || 1);
+      } catch (error) {
+        console.error('Failed to load meal plan histories:', error);
+        if (!isActive) return;
+        setHistory([]);
+        setTotalPages(1);
+      } finally {
+        if (!isActive) return;
+        setIsLoading(false);
+      }
+    };
+    load();
+    return () => {
+      isActive = false;
+    };
+  }, [appliedActionType, appliedStartDate, appliedEndDate, currentPage, itemsPerPage]);
 
   const handleSearch = () => {
     setAppliedActionType(selectedActionType);
+    setAppliedStartDate(selectedStartDate);
+    setAppliedEndDate(selectedEndDate);
     setCurrentPage(1);
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">식단표 수정 히스토리</h1>
+        </div>
+        <div className="flex items-center justify-center text-gray-500 py-12">
+          데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -63,7 +101,8 @@ export function MealHistoryPage() {
             <label className="block text-sm font-medium mb-2">조회 기간</label>
             <input 
               type="date" 
-              defaultValue="2026-01-01"
+              value={selectedStartDate}
+              onChange={(e) => setSelectedStartDate(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
             />
           </div>
@@ -71,7 +110,8 @@ export function MealHistoryPage() {
             <label className="block text-sm font-medium mb-2">~</label>
             <input 
               type="date" 
-              defaultValue="2026-01-09"
+              value={selectedEndDate}
+              onChange={(e) => setSelectedEndDate(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
             />
           </div>
@@ -83,7 +123,6 @@ export function MealHistoryPage() {
               onChange={(e) => setSelectedActionType(e.target.value)}
             >
               <option>전체</option>
-              <option>생성</option>
               <option>수정</option>
               <option>수정 (AI대체)</option>
             </select>
@@ -112,7 +151,7 @@ export function MealHistoryPage() {
               </tr>
             </thead>
             <tbody>
-              {currentHistory.map((item, idx) => (
+              {history.map((item, idx) => (
                 <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50">
                   <td className="py-3 px-4 text-sm">{item.date}</td>
                   <td className="py-3 px-4">
@@ -129,9 +168,9 @@ export function MealHistoryPage() {
                   </td>
                   <td className="py-3 px-2 text-center">
                     <span className={`inline-block px-2 py-1 rounded text-sm ${
-                      item.action === '생성' ? 'bg-green-100 text-green-700' :
-                      item.action === '수정 (AI대체)' ? 'bg-purple-100 text-purple-700' :
-                      'bg-blue-100 text-blue-700'
+                      item.action === '수정 (AI대체)'
+                        ? 'bg-purple-100 text-purple-700'
+                        : 'bg-blue-100 text-blue-700'
                     }`}>
                       {item.action}
                     </span>

@@ -1,9 +1,13 @@
 import { useState } from 'react';
+import { ArrowLeft, Paperclip, Upload, X } from 'lucide-react';
+
+import { createBoardPost } from '../data/board';
+import { useAuth } from '../auth/AuthContext';
+
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
-import { ArrowLeft, Paperclip, Upload, X } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -21,6 +25,7 @@ export function BoardWritePage({ onNavigate }: BoardWritePageProps) {
   const [content, setContent] = useState('');
   const [category] = useState('공지'); // 공지로 고정
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const { token } = useAuth();
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -43,7 +48,8 @@ export function BoardWritePage({ onNavigate }: BoardWritePageProps) {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    console.info('[board] submit token', token);
     if (!title.trim()) {
       alert('제목을 입력해주세요.');
       return;
@@ -53,7 +59,7 @@ export function BoardWritePage({ onNavigate }: BoardWritePageProps) {
       return;
     }
 
-    // 실제로는 API 호출 (첨부 파일 포함)
+    await createBoardPost({ title, content, category });
     alert('게시물이 등록되었습니다.');
     onNavigate?.('board-list');
   };

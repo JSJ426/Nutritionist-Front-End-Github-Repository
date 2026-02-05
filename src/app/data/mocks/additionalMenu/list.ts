@@ -1,0 +1,33 @@
+export const mockAdditionalMenuListResponse = {
+  status: 'success',
+  message: '신메뉴 목록 조회 성공',
+  data: {
+    current_page: 1,
+    page_size: 20,
+    total_pages: 123,
+    total_items: 2453,
+    items: [
+      {
+        menu_id: 'NEWFOOD-1',
+        name: '후라이',
+        category: '밥류',
+        nutrition_basis: '100ml',
+        serving_size: '310ml',
+        kcal: 118,
+        carb: 25.78,
+        prot: 2.1,
+        fat: 0.16,
+        calcium: 0.42,
+        iron: 0.0,
+        vitamin_a: 0.08,
+        thiamin: 0.01,
+        riboflavin: 0.0,
+        vitamin_c: 0.0,
+        ingredients_text: '면발(밀) 외 ...',
+        allergens: [1],
+        recipe_text: '1. ...\n2. ...\n3. ...',
+        updated_at: '2026-01-22T11:32:31.856979',
+      },
+    ],
+  },
+} as const;

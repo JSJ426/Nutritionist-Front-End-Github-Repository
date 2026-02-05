@@ -1,5 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+import {
+  createLeftoverDaily,
+  createSkipMealDaily,
+  getLeftoverMonthly,
+  getSkipMealMonthly,
+  updateLeftoverDaily,
+  updateSkipMealDaily,
+} from '../data/metrics';
+
 import { Button } from '../components/ui/button';
+import { useAuth } from '../auth/AuthContext';
 
 type DailyRecord = {
   lunchMissed: number;
@@ -21,7 +32,51 @@ const formatMonthLabel = (date: Date) => {
   return `${year}.${month}`;
 };
 
+const buildMonthlyRecords = (inputs: {
+  leftoverLunch: Awaited<ReturnType<typeof getLeftoverMonthly>>;
+  leftoverDinner: Awaited<ReturnType<typeof getLeftoverMonthly>>;
+  skipLunch: Awaited<ReturnType<typeof getSkipMealMonthly>>;
+  skipDinner: Awaited<ReturnType<typeof getSkipMealMonthly>>;
+}): Record<string, DailyRecord> => {
+  const byDate = new Map<string, DailyRecord>();
+  const ensure = (date: string) => {
+    if (!byDate.has(date)) {
+      byDate.set(date, {
+        lunchMissed: 0,
+        lunchLeftoversKg: 0,
+        dinnerMissed: 0,
+        dinnerLeftoversKg: 0,
+      });
+    }
+    return byDate.get(date)!;
+  };
+
+  inputs.leftoverLunch.data.daily_data.forEach((entry) => {
+    const record = ensure(entry.date);
+    record.lunchLeftoversKg = entry.amount_kg;
+  });
+
+  inputs.leftoverDinner.data.daily_data.forEach((entry) => {
+    const record = ensure(entry.date);
+    record.dinnerLeftoversKg = entry.amount_kg;
+  });
+
+  inputs.skipLunch.data.daily_data.forEach((entry) => {
+    const record = ensure(entry.date);
+    record.lunchMissed = entry.skipped_count;
+  });
+
+  inputs.skipDinner.data.daily_data.forEach((entry) => {
+    const record = ensure(entry.date);
+    record.dinnerMissed = entry.skipped_count;
+  });
+
+  return Object.fromEntries(byDate.entries());
+};
+
 export function OperationRecordDailyPage() {
+  const { claims, isReady } = useAuth();
+  const schoolId = claims?.schoolId;
   const serverNow = useMemo(() => new Date(), []);
   const serverToday = useMemo(() => {
     const d = new Date(serverNow);
@@ -32,62 +87,8 @@ export function OperationRecordDailyPage() {
   const [currentMonth, setCurrentMonth] = useState(
     () => new Date(serverToday.getFullYear(), serverToday.getMonth(), 1)
   );
-  const [records, setRecords] = useState<Record<string, DailyRecord>>({
-    '2025-12-18': {
-      lunchMissed: 2,
-      lunchLeftoversKg: 9.1,
-      dinnerMissed: 1,
-      dinnerLeftoversKg: 5.4,
-    },
-    '2025-12-22': {
-      lunchMissed: 4,
-      lunchLeftoversKg: 13.7,
-      dinnerMissed: 2,
-      dinnerLeftoversKg: 7.2,
-    },
-    '2025-12-29': {
-      lunchMissed: 3,
-      lunchLeftoversKg: 11.8,
-      dinnerMissed: 2,
-      dinnerLeftoversKg: 6.1,
-    },
-    '2026-01-03': {
-      lunchMissed: 1,
-      lunchLeftoversKg: 8.2,
-      dinnerMissed: 1,
-      dinnerLeftoversKg: 4.9,
-    },
-    '2026-01-08': {
-      lunchMissed: 5,
-      lunchLeftoversKg: 14.3,
-      dinnerMissed: 2,
-      dinnerLeftoversKg: 7.6,
-    },
-    '2026-01-12': {
-      lunchMissed: 2,
-      lunchLeftoversKg: 10.4,
-      dinnerMissed: 1,
-      dinnerLeftoversKg: 5.8,
-    },
-    '2026-01-17': {
-      lunchMissed: 4,
-      lunchLeftoversKg: 12.9,
-      dinnerMissed: 3,
-      dinnerLeftoversKg: 8.3,
-    },
-    '2026-01-22': {
-      lunchMissed: 2,
-      lunchLeftoversKg: 9.7,
-      dinnerMissed: 2,
-      dinnerLeftoversKg: 6.6,
-    },
-    '2026-01-28': {
-      lunchMissed: 3,
-      lunchLeftoversKg: 12.4,
-      dinnerMissed: 1,
-      dinnerLeftoversKg: 6.8,
-    },
-  });
+  const [records, setRecords] = useState<Record<string, DailyRecord>>({});
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [formValues, setFormValues] = useState({
@@ -96,6 +97,58 @@ export function OperationRecordDailyPage() {
     dinnerMissed: '',
     dinnerLeftoversKg: '',
   });
+
+  if (!isReady || !schoolId) {
+    return (
+      <div className="p-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold">운영 기록</h1>
+        </div>
+        <div className="flex items-center justify-center text-gray-500 py-12">
+          데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
+
+  useEffect(() => {
+    if (!schoolId) return;
+    let isActive = true;
+    const load = async () => {
+      setIsLoading(true);
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth() + 1;
+
+      try {
+        const [leftoverLunch, leftoverDinner, skipLunch, skipDinner] = await Promise.all([
+          getLeftoverMonthly(year, month, 'LUNCH'),
+          getLeftoverMonthly(year, month, 'DINNER'),
+          getSkipMealMonthly(year, month, 'LUNCH'),
+          getSkipMealMonthly(year, month, 'DINNER'),
+        ]);
+        if (!isActive) return;
+        setRecords(
+          buildMonthlyRecords({
+            leftoverLunch,
+            leftoverDinner,
+            skipLunch,
+            skipDinner,
+          })
+        );
+      } catch (error) {
+        console.error('Failed to load monthly records:', error);
+        if (!isActive) return;
+        setRecords({});
+      } finally {
+        if (!isActive) return;
+        setIsLoading(false);
+      }
+    };
+    load();
+    return () => {
+      isActive = false;
+    };
+  }, [currentMonth, schoolId]);
 
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
   const startDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
@@ -127,21 +180,103 @@ export function OperationRecordDailyPage() {
     return Number.isFinite(parsed) ? parsed : 0;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedDate) return;
-    setRecords((prev) => ({
-      ...prev,
-      [selectedDate]: {
-        lunchMissed: toNumberOrZero(formValues.lunchMissed),
-        lunchLeftoversKg: toNumberOrZero(formValues.lunchLeftoversKg),
-        dinnerMissed: toNumberOrZero(formValues.dinnerMissed),
-        dinnerLeftoversKg: toNumberOrZero(formValues.dinnerLeftoversKg),
-      },
-    }));
-    setIsModalOpen(false);
+    const lunchMissed = toNumberOrZero(formValues.lunchMissed);
+    const lunchLeftoversKg = toNumberOrZero(formValues.lunchLeftoversKg);
+    const dinnerMissed = toNumberOrZero(formValues.dinnerMissed);
+    const dinnerLeftoversKg = toNumberOrZero(formValues.dinnerLeftoversKg);
+
+    try {
+      const saveHandlers = hasRecord
+        ? [
+            updateLeftoverDaily({
+              date: selectedDate,
+              meal_type: 'LUNCH',
+              amount_kg: lunchLeftoversKg,
+            }),
+            updateSkipMealDaily({
+              date: selectedDate,
+              meal_type: 'LUNCH',
+              skipped_count: lunchMissed,
+              total_students: 0,
+            }),
+            updateLeftoverDaily({
+              date: selectedDate,
+              meal_type: 'DINNER',
+              amount_kg: dinnerLeftoversKg,
+            }),
+            updateSkipMealDaily({
+              date: selectedDate,
+              meal_type: 'DINNER',
+              skipped_count: dinnerMissed,
+              total_students: 0,
+            }),
+          ]
+        : [
+            createLeftoverDaily({
+              school_id: schoolId,
+              date: selectedDate,
+              meal_type: 'LUNCH',
+              amount_kg: lunchLeftoversKg,
+            }),
+            createSkipMealDaily({
+              school_id: schoolId,
+              date: selectedDate,
+              meal_type: 'LUNCH',
+              skipped_count: lunchMissed,
+              total_students: lunchMissed + 1,
+            }),
+            createLeftoverDaily({
+              school_id: schoolId,
+              date: selectedDate,
+              meal_type: 'DINNER',
+              amount_kg: dinnerLeftoversKg,
+            }),
+            createSkipMealDaily({
+              school_id: schoolId,
+              date: selectedDate,
+              meal_type: 'DINNER',
+              skipped_count: dinnerMissed,
+              total_students: dinnerMissed + 1,
+            }),
+          ];
+      await Promise.all(saveHandlers);
+
+      setRecords((prev) => ({
+        ...prev,
+        [selectedDate]: {
+          lunchMissed,
+          lunchLeftoversKg,
+          dinnerMissed,
+          dinnerLeftoversKg,
+        },
+      }));
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Failed to save daily records:', error);
+      alert('일간 운영 기록 저장에 실패했습니다.');
+    }
   };
 
   const hasRecord = selectedDate ? Boolean(records[selectedDate]) : false;
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full bg-gray-50">
+        <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+              일간 운영 기록
+            </h1>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center text-gray-500">
+          데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-gray-50">

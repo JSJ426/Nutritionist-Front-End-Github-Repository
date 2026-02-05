@@ -27,20 +27,24 @@ interface DayMeals {
 interface MealDayCardEditableProps {
   day: string;
   dateLabel: string;
+  mealDate: string;
   weekNum: number;
   meals: DayMeals;
   onEdit: (day: string, mealType: 'lunch' | 'dinner', event: React.MouseEvent) => void;
   onDetail: (weekNum: number, day: string, mealType: 'lunch' | 'dinner') => void;
+  onAiReplace: (day: string, mealType: 'lunch' | 'dinner', date: string) => void;
   hasChanges?: boolean;
 }
 
 export function MealDayCardEditable({
   day,
   dateLabel,
+  mealDate,
   weekNum,
   meals,
   onEdit,
   onDetail,
+  onAiReplace,
   hasChanges,
 }: MealDayCardEditableProps) {
   const [openAiReasonKey, setOpenAiReasonKey] = useState<string | null>(null);
@@ -91,6 +95,10 @@ export function MealDayCardEditable({
               size="sm"
               variant="outline"
               className="h-6 px-3 text-xs text-[#cc5db4] hover:bg-[#cc5db4]/10"
+              onClick={() => {
+                if (!mealDate) return;
+                onAiReplace(day, mealType, mealDate);
+              }}
             >
               AI대체
             </Button>

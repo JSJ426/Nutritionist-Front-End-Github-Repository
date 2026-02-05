@@ -41,12 +41,20 @@ type MealMonthlyData = {
 
 interface MealMonthlyCalendarProps {
   mealDataByMonth: Record<string, MealMonthlyData>;
+  currentMonth: string;
+  onPrevMonth: () => void;
+  onNextMonth: () => void;
+  onResetMonth: () => void;
 }
 
-export function MealMonthlyCalendar({ mealDataByMonth }: MealMonthlyCalendarProps) {
+export function MealMonthlyCalendar({
+  mealDataByMonth,
+  currentMonth,
+  onPrevMonth,
+  onNextMonth,
+  onResetMonth,
+}: MealMonthlyCalendarProps) {
   const weekDays = ['월', '화', '수', '목', '금'];
-  const defaultMonth = Object.keys(mealDataByMonth)[0] ?? "2026-01";
-  const [currentMonth, setCurrentMonth] = useState(defaultMonth);
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
   const [detailMeal, setDetailMeal] = useState<{
     week: string;
@@ -64,72 +72,28 @@ export function MealMonthlyCalendar({ mealDataByMonth }: MealMonthlyCalendarProp
     setDetailMeal({ week, day, mealType, data });
   };
 
-  const handlePrevMonth = () => {
-    const currentYear = parseInt(currentMonth.split('-')[0]);
-    const currentMonthNum = parseInt(currentMonth.split('-')[1]);
-    let newMonthNum = currentMonthNum - 1;
-    let newYear = currentYear;
-
-    if (newMonthNum < 1) {
-      newMonthNum = 12;
-      newYear -= 1;
-    }
-
-    const newMonth = `${newYear}-${newMonthNum.toString().padStart(2, '0')}`;
-    
-    // Only change month if data exists
-    if (mealDataByMonth[newMonth]) {
-      setCurrentMonth(newMonth);
-    }
-  };
-
-  const handleNextMonth = () => {
-    const currentYear = parseInt(currentMonth.split('-')[0]);
-    const currentMonthNum = parseInt(currentMonth.split('-')[1]);
-    let newMonthNum = currentMonthNum + 1;
-    let newYear = currentYear;
-
-    if (newMonthNum > 12) {
-      newMonthNum = 1;
-      newYear += 1;
-    }
-
-    const newMonth = `${newYear}-${newMonthNum.toString().padStart(2, '0')}`;
-    
-    // Only change month if data exists
-    if (mealDataByMonth[newMonth]) {
-      setCurrentMonth(newMonth);
-    }
-  };
-
-  const handleResetMonth = () => {
-    setCurrentMonth(defaultMonth);
-  };
-
-  const mealData = mealDataByMonth[currentMonth];
-
-  // If no data for current month, return error message
-  if (!mealData) {
-    return (
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <p className="text-gray-600">해당 월의 식단 데이터가 없습니다.</p>
-      </div>
-    );
-  }
+  const activeMonth = currentMonth || (Object.keys(mealDataByMonth)[0] ?? '');
+  const mealData = activeMonth ? mealDataByMonth[activeMonth] : undefined;
 
   // Filter weeks based on selected week
-  const displayWeeks = selectedWeek !== null 
-    ? mealData.weeks.filter((_, idx) => idx === selectedWeek)
-    : mealData.weeks;
+  const displayWeeks = mealData
+    ? selectedWeek !== null
+      ? mealData.weeks.filter((_, idx) => idx === selectedWeek)
+      : mealData.weeks
+    : [];
 
-  const [yearStr, monthStr] = mealData.month.split('-');
-  const year = Number(yearStr);
-  const month = Number(monthStr);
+  const isValidMonthKey = /^\d{4}-\d{2}$/.test(activeMonth);
+  const monthKey = isValidMonthKey ? activeMonth : '';
+  const [yearStr, monthStr] = monthKey.split('-');
+  const today = new Date();
+  const year = yearStr ? Number(yearStr) : today.getFullYear();
+  const month = monthStr ? Number(monthStr) : today.getMonth() + 1;
 
   const getWeekDateLabels = (weekIndex: number) => {
     const firstDay = new Date(year, month - 1, 1);
     const dayOfWeek = (firstDay.getDay() + 6) % 7; // Monday = 0
-    const firstMonday = new Date(year, month - 1, 1 - dayOfWeek);
+    const daysUntilMonday = (7 - dayOfWeek) % 7;
+    const firstMonday = new Date(year, month - 1, 1 + daysUntilMonday);
     const weekMonday = new Date(firstMonday);
     weekMonday.setDate(firstMonday.getDate() + weekIndex * 7);
 
@@ -151,24 +115,30 @@ export function MealMonthlyCalendar({ mealDataByMonth }: MealMonthlyCalendarProp
             <h2 className="text-xl font-medium">{year}년 {Number(month)}월</h2>
           </div>
           <div className="flex space-x-2">
-            <button className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50" onClick={handlePrevMonth}>
+            <button className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50" onClick={onPrevMonth}>
               이전 달
             </button>
-            <button className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50" onClick={handleNextMonth}>
+            <button className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50" onClick={onNextMonth}>
               다음 달
             </button>
-            <button className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50" onClick={handleResetMonth}>
+            <button className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50" onClick={onResetMonth}>
               원래 달로 돌아가기
             </button>
           </div>
         </div>
       </div>
 
-      <WeekFilterButtons
-        weeks={mealData.weeks}
-        selectedWeek={selectedWeek}
-        onSelect={setSelectedWeek}
-      />
+      {mealData ? (
+        <WeekFilterButtons
+          weeks={mealData.weeks}
+          selectedWeek={selectedWeek}
+          onSelect={setSelectedWeek}
+        />
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
+          <p className="text-gray-600">해당 월의 식단 데이터가 없습니다.</p>
+        </div>
+      )}
 
       {/* Week by Week Layout */}
       <div className="space-y-6">

@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { User, Lock, Eye, EyeOff } from 'lucide-react';
+
 import mealTrayImage from '../../assets/a65a012f8dfb6e34563e688039daec79bf5a2d4c.png';
+import { loginDietitian } from '../data/auth';
+import { useAuth } from '../auth/AuthContext';
 
 type LoginPageProps = {
   onLogin: () => void;
@@ -11,14 +14,26 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { loginWithToken } = useAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username.trim() && password.trim()) {
-      onLogin();
+    if (!username.trim() || !password.trim()) {
+      alert('아이디와 비밀번호를 입력해주세요.');
       return;
     }
-    console.log('Login attempted with:', { username, password });
+    try {
+      setIsSubmitting(true);
+      const response = await loginDietitian({ username: username.trim(), pw: password });
+      loginWithToken(response.accessToken);
+      onLogin();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '로그인에 실패했습니다.';
+      alert(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -105,27 +120,40 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
 
                 <button
                   type="submit"
-                  className="w-full bg-[#00B3A4] text-white py-3.5 rounded-xl font-semibold hover:bg-[#009688] transition-colors shadow-sm hover:shadow-md mt-6"
+                  disabled={isSubmitting}
+                  className="w-full bg-[#00B3A4] text-white py-3.5 rounded-xl font-semibold hover:bg-[#009688] transition-colors shadow-sm hover:shadow-md mt-6 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  로그인
+                  {isSubmitting ? '로그인 중...' : '로그인'}
                 </button>
 
                 <div className="text-center text-sm text-gray-600 mt-4">
                   <button
                     type="button"
-                    onClick={() => onNavigate('find-id')}
                     className="text-[#00B3A4] hover:underline font-medium"
                   >
                     아이디 찾기
                   </button>
+                  {/* <button
+                    type="button"
+                    onClick={() => onNavigate('find-id')}
+                    className="text-[#00B3A4] hover:underline font-medium"
+                  >
+                    아이디 찾기
+                  </button> */}
                   <span className="mx-2">|</span>
                   <button
+                    type="button"
+                    className="text-[#00B3A4] hover:underline font-medium"
+                  >
+                    비밀번호 찾기
+                  </button>
+                  {/* <button
                     type="button"
                     onClick={() => onNavigate('find-password')}
                     className="text-[#00B3A4] hover:underline font-medium"
                   >
                     비밀번호 찾기
-                  </button>
+                  </button> */}
                   <span className="mx-2">|</span>
                   <button
                     type="button"

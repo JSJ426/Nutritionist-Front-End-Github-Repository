@@ -1,41 +1,78 @@
+import { useEffect, useState } from 'react';
+import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
+
+import { deleteAdditionalMenu, getAdditionalMenuDetailResponse } from '../data/additionalMenu';
+
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
-import { AdditionalMenuItem } from '../types/additionalMenu';
+
+import { toAdditionalMenuReadVMFromResponse } from '../viewModels/additionalMenu';
+import type { AdditionalMenuReadVM } from '../viewModels/additionalMenu';
 
 interface AdditionalMenuReadPageProps {
-  items: AdditionalMenuItem[];
   initialParams?: any;
   onNavigate?: (page: string, params?: any) => void;
-  onDelete: (menuId: number) => void;
 }
 
 export function AdditionalMenuReadPage({
-  items,
   initialParams,
   onNavigate,
-  onDelete,
 }: AdditionalMenuReadPageProps) {
-  const menuId = initialParams?.menuId as number | undefined;
-  const menu = items.find((item) => item.id === menuId) || items[0];
-  const menuDetails = menu as any;
-  const allergens: number[] = Array.isArray(menuDetails?.allergens) ? menuDetails.allergens : [];
+  const menuId =
+    initialParams?.menuId !== undefined && initialParams?.menuId !== null
+      ? String(initialParams.menuId)
+      : undefined;
+  const [vm, setVm] = useState<AdditionalMenuReadVM | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isActive = true;
+    const load = async () => {
+      const response = await getAdditionalMenuDetailResponse(menuId);
+      if (!isActive) return;
+      setVm(toAdditionalMenuReadVMFromResponse(response, menuId));
+      setIsLoading(false);
+    };
+    load();
+    return () => {
+      isActive = false;
+    };
+  }, [menuId]);
+
+  const menuIdValue = vm?.id ?? menuId;
 
   const handleEdit = () => {
-    if (menu) {
-      onNavigate?.('additional-menu-edit', { menuId: menu.id });
-    }
+    console.log(`${menuIdValue}`);
+    if (!menuIdValue) return;
+    onNavigate?.('additional-menu-edit', { menuId: menuIdValue });
   };
 
-  const handleDelete = () => {
-    if (!menu) return;
+  const handleDelete = async () => {
     if (confirm('정말 삭제하시겠습니까?')) {
-      onDelete(menu.id);
-      onNavigate?.('additional-menu-list');
+      const result = await deleteAdditionalMenu(menuIdValue);
+      alert(result.message);
+      if (menuIdValue) {
+        onNavigate?.('additional-menu-list', { deletedId: menuIdValue });
+      }
     }
   };
 
-  if (!menu) {
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full bg-gray-50">
+        <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
+          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+            신메뉴
+          </h1>
+        </div>
+        <div className="flex-1 flex items-center justify-center text-gray-500">
+          데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
+
+  if (!vm) {
     return (
       <div className="flex flex-col h-full bg-gray-50">
         <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
@@ -76,18 +113,18 @@ export function AdditionalMenuReadPage({
             <div className="border-b border-gray-200 p-6">
               <div className="flex items-start gap-3 mb-3">
                 <h2 className="text-2xl font-medium flex-1">
-                  {menuDetails?.name ?? menu.title}
+                  {vm.titleText}
                 </h2>
               </div>
               <div className="flex items-center gap-4 text-sm text-gray-600">
                 <span className="flex items-center gap-2">
                   메뉴 카테고리:
                   <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">
-                    {menu.category}
+                    {vm.categoryText}
                   </Badge>
                 </span>
                 <span className="text-gray-300">|</span>
-                <span>작성일: {menu.date}</span>
+                <span>작성일: {vm.dateText}</span>
               </div>
             </div>
 
@@ -95,42 +132,37 @@ export function AdditionalMenuReadPage({
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <p className="text-xs text-gray-500 mb-1">영양 성분 기준</p>
-                  <p className="text-sm font-medium text-gray-800">{menuDetails?.nutrition_basis ?? '-'}</p>
+                  <p className="text-sm font-medium text-gray-800">{vm.nutritionBasisText}</p>
                 </div>
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <p className="text-xs text-gray-500 mb-1">1회 제공량</p>
-                  <p className="text-sm font-medium text-gray-800">{menuDetails?.serving_size ?? '-'}</p>
+                  <p className="text-sm font-medium text-gray-800">{vm.servingSizeText}</p>
                 </div>
               </div>
 
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <h3 className="text-sm font-medium text-gray-700 mb-3">영양 성분</h3>
                 <div className="grid grid-cols-2 gap-3 text-sm text-gray-700">
-                  <div>열량: {menuDetails?.kcal ?? '-'} kcal</div>
-                  <div>탄수화물: {menuDetails?.carb ?? '-'} g</div>
-                  <div>단백질: {menuDetails?.prot ?? '-'} g</div>
-                  <div>지방: {menuDetails?.fat ?? '-'} g</div>
-                  <div>칼슘: {menuDetails?.calcium ?? '-'} mg</div>
-                  <div>철: {menuDetails?.iron ?? '-'} mg</div>
-                  <div>비타민 A: {menuDetails?.vitamin_a ?? '-'} μg</div>
-                  <div>티아민: {menuDetails?.thiamin ?? '-'} mg</div>
-                  <div>리보플라빈: {menuDetails?.riboflavin ?? '-'} mg</div>
-                  <div>비타민 C: {menuDetails?.vitamin_c ?? '-'} mg</div>
+                  {vm.nutritionRows.map((row) => (
+                    <div key={row.label}>
+                      {row.label}: {row.valueText}
+                    </div>
+                  ))}
                 </div>
               </div>
 
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <h3 className="text-sm font-medium text-gray-700 mb-3">원재료 정보</h3>
                 <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {menuDetails?.ingredients_text ?? '-'}
+                  {vm.ingredientsText}
                 </p>
               </div>
 
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <h3 className="text-sm font-medium text-gray-700 mb-3">알레르기 정보</h3>
-                {allergens.length > 0 ? (
+                {vm.allergens.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {allergens.map((num) => (
+                    {vm.allergens.map((num) => (
                       <span
                         key={num}
                         className="px-2 py-1 rounded bg-red-50 text-red-700 text-xs border border-red-100"
@@ -147,7 +179,7 @@ export function AdditionalMenuReadPage({
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <h3 className="text-sm font-medium text-gray-700 mb-3">조리법</h3>
                 <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {menuDetails?.recipe_text ?? menu.description}
+                  {vm.recipeText}
                 </p>
               </div>
             </div>

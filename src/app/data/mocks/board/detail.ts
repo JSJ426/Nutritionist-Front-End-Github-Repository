@@ -1,0 +1,56 @@
+export const mockBoardDetailResponses = {
+  15: {
+    status: 'success',
+    message: '게시글 상세 조회 성공',
+    data: {
+      id: 15,
+      schoolId: 1,
+      category: 'NOTICE',
+      title: '2026년 2월 급식 안내',
+      content: '2월 급식 일정과 변경사항을 안내드립니다.',
+      authorId: 1,
+      authorType: 'DIETITIAN',
+      authorName: '영양사',
+      viewCount: 128,
+      createdAt: '2026-02-01T09:30:00',
+      updatedAt: '2026-02-01T10:15:00',
+      attachments: [
+        {
+          fileId: 11,
+          fileName: 'feb_mealplan.pdf',
+          fileUrl: 'https://cdn.example.com/files/feb_mealplan.pdf',
+          fileSize: 245760,
+        },
+      ],
+      isMine: true,
+      isEditable: true,
+    },
+  },
+  101: {
+    status: 'success',
+    message: '게시글 상세 조회 성공',
+    data: {
+      id: 101,
+      schoolId: 1,
+      category: 'NEW_MENU',
+      title: '신메뉴 요청',
+      content: '두쫀쿠 추가해주세요',
+      authorId: 3,
+      authorType: 'STUDENT',
+      authorName: '학생',
+      viewCount: 0,
+      createdAt: '2026-02-01T10:20:30',
+      updatedAt: '2026-02-01T10:20:30',
+      attachments: [
+        {
+          fileId: 9001,
+          fileName: 'menu.png',
+          fileUrl: 'https://cdn.example.com/files/menu.png',
+          fileSize: 140211,
+        },
+      ],
+      isMine: true,
+      isEditable: true,
+    },
+  },
+} as const;

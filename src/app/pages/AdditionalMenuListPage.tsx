@@ -1,57 +1,55 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Plus } from 'lucide-react';
+
+import { getAdditionalMenuListResponse } from '../data/additionalMenu';
+
 import { Button } from '../components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
 import { Pagination } from '../components/Pagination';
-import { Plus } from 'lucide-react';
-import { AdditionalMenuItem } from '../types/additionalMenu';
+
+import { toAdditionalMenuListVMFromResponse } from '../viewModels/additionalMenu';
+import type { AdditionalMenuListItemVM, AdditionalMenuListVM } from '../viewModels/additionalMenu';
 
 interface AdditionalMenuListPageProps {
-  items: AdditionalMenuItem[];
+  initialParams?: any;
   onNavigate?: (page: string, params?: any) => void;
 }
 
-const categoryOptions = [
-  '전체',
-  '밥류',
-  '국 및 탕류',
-  '스프류',
-  '전·적 및 부침류',
-  '나물·숙채류',
-  '디저트류',
-  '볶음류',
-  '구이류',
-  '생채·무침류',
-  '튀김류',
-  '조림류',
-  '찜류',
-  '면류',
-  '찌개 및 전골류',
-  '죽류',
-  '장아찌·절임류',
-  '김치류',
-  '음료류',
-  '만두류',
-];
-
-const sortOptions = [
-  { value: 'id-asc', label: '번호 (오름차순)' },
-  { value: 'id-desc', label: '번호 (내림차순)' },
-  { value: 'date-asc', label: '등록일 (오름차순)' },
-  { value: 'date-desc', label: '등록일 (내림차순)' },
-  { value: 'title-asc', label: '메뉴명 (오름차순)' },
-  { value: 'title-desc', label: '메뉴명 (내림차순)' },
-  { value: 'category-asc', label: '식품대분류명 (오름차순)' },
-  { value: 'category-desc', label: '식품대분류명 (내림차순)' },
-  { value: 'calories-asc', label: '열량 (오름차순)' },
-  { value: 'calories-desc', label: '열량 (내림차순)' },
-];
-
-export function AdditionalMenuListPage({ items, onNavigate }: AdditionalMenuListPageProps) {
+export function AdditionalMenuListPage({ initialParams, onNavigate }: AdditionalMenuListPageProps) {
+  const [baseVm, setBaseVm] = useState<AdditionalMenuListVM | null>(null);
+  const [items, setItems] = useState<AdditionalMenuListItemVM[]>([]);
   const [categoryFilter, setCategoryFilter] = useState('전체');
   const [sortBy, setSortBy] = useState('id-asc');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 20;
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const load = async () => {
+      const response = await getAdditionalMenuListResponse(currentPage, itemsPerPage);
+      if (!isActive) return;
+      const vm = toAdditionalMenuListVMFromResponse(response);
+      setBaseVm(vm);
+      setItems(vm.items);
+      setTotalPages(response.data.totalPages ?? response.data.total_pages ?? 1);
+    };
+
+    load();
+
+    return () => {
+      isActive = false;
+    };
+  }, [currentPage, itemsPerPage]);
+
+  useEffect(() => {
+    const deletedId = initialParams?.deletedId as string | undefined;
+    if (deletedId) {
+      setItems((prev) => prev.filter((item) => item.id !== deletedId));
+    }
+  }, [initialParams]);
 
   const filteredItems = useMemo(() => {
     const baseItems = categoryFilter === '전체'
@@ -59,18 +57,24 @@ export function AdditionalMenuListPage({ items, onNavigate }: AdditionalMenuList
       : items.filter((item) => item.category === categoryFilter);
 
     const sortedItems = [...baseItems].sort((a, b) => {
-      const extraA = a as AdditionalMenuItem & { calories?: number; createdAt?: string };
-      const extraB = b as AdditionalMenuItem & { calories?: number; createdAt?: string };
-      const createdAtA = extraA.createdAt ?? a.date;
-      const createdAtB = extraB.createdAt ?? b.date;
-      const caloriesA = extraA.calories ?? Number.MAX_SAFE_INTEGER;
-      const caloriesB = extraB.calories ?? Number.MAX_SAFE_INTEGER;
+      const createdAtA = a.dateRaw;
+      const createdAtB = b.dateRaw;
+      const caloriesA = a.calories ?? Number.MAX_SAFE_INTEGER;
+      const caloriesB = b.calories ?? Number.MAX_SAFE_INTEGER;
+      const numericIdA = a.id ? Number(a.id.replace(/\D+/g, '')) : Number.NaN;
+      const numericIdB = b.id ? Number(b.id.replace(/\D+/g, '')) : Number.NaN;
 
       switch (sortBy) {
         case 'id-asc':
-          return a.id - b.id;
+          if (!Number.isNaN(numericIdA) && !Number.isNaN(numericIdB)) {
+            return numericIdA - numericIdB;
+          }
+          return (a.id || '').localeCompare(b.id || '');
         case 'id-desc':
-          return b.id - a.id;
+          if (!Number.isNaN(numericIdA) && !Number.isNaN(numericIdB)) {
+            return numericIdB - numericIdA;
+          }
+          return (b.id || '').localeCompare(a.id || '');
         case 'date-asc':
           return createdAtA.localeCompare(createdAtB);
         case 'date-desc':
@@ -88,20 +92,34 @@ export function AdditionalMenuListPage({ items, onNavigate }: AdditionalMenuList
         case 'calories-desc':
           return caloriesB - caloriesA;
         default:
-          return a.id - b.id;
+          if (!Number.isNaN(numericIdA) && !Number.isNaN(numericIdB)) {
+            return numericIdA - numericIdB;
+          }
+          return (a.id || '').localeCompare(b.id || '');
       }
     });
 
     return sortedItems;
   }, [categoryFilter, items, sortBy]);
 
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentItems = filteredItems.slice(startIndex, startIndex + itemsPerPage);
-
   useEffect(() => {
     setCurrentPage(1);
   }, [categoryFilter, sortBy]);
+
+  if (!baseVm) {
+    return (
+      <div className="flex flex-col h-full bg-gray-50">
+        <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
+          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+            신메뉴
+          </h1>
+        </div>
+        <div className="flex-1 flex items-center justify-center text-gray-500">
+          데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -133,7 +151,7 @@ export function AdditionalMenuListPage({ items, onNavigate }: AdditionalMenuList
                   onChange={(e) => setCategoryFilter(e.target.value)}
                   className="w-48 px-3 py-2 rounded border bg-gray-100 text-sm text-gray-900 focus:outline-none focus:border-[#5dccb4]"
                 >
-                  {categoryOptions.map((option) => (
+                  {baseVm.categoryOptions.map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
@@ -147,7 +165,7 @@ export function AdditionalMenuListPage({ items, onNavigate }: AdditionalMenuList
                   onChange={(e) => setSortBy(e.target.value)}
                   className="w-40 px-3 py-2 rounded border bg-gray-100 text-sm text-gray-900 focus:outline-none focus:border-[#5dccb4]"
                 >
-                  {sortOptions.map((option) => (
+                  {baseVm.sortOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
@@ -170,39 +188,31 @@ export function AdditionalMenuListPage({ items, onNavigate }: AdditionalMenuList
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentItems.length > 0 ? (
-                  currentItems.map((item) => {
-                    const extra = item as AdditionalMenuItem & {
-                      calories?: number;
-                      allergies?: number[];
-                      createdAt?: string;
-                    };
-
-                    return (
-                      <TableRow
-                        key={item.id}
-                        className="cursor-pointer hover:bg-gray-50 transition-colors"
-                        onClick={() => onNavigate?.('additional-menu-read', { menuId: item.id })}
-                      >
-                        <TableCell className="text-center text-sm">{item.id}</TableCell>
-                        <TableCell className="text-center text-sm">
-                          <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">
-                            {item.category}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">{item.title}</TableCell>
-                        <TableCell className="text-center text-sm text-gray-600">
-                          {extra.calories ?? '-'}
-                        </TableCell>
-                        <TableCell className="text-center text-sm text-gray-600">
-                          {extra.allergies && extra.allergies.length > 0 ? extra.allergies.join(', ') : '-'}
-                        </TableCell>
-                        <TableCell className="text-center text-sm text-gray-600">
-                          {extra.createdAt ?? item.date}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
+                {filteredItems.length > 0 ? (
+                  filteredItems.map((item) => (
+                    <TableRow
+                      key={item.id}
+                      className="cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => onNavigate?.('additional-menu-read', { menuId: item.id })}
+                    >
+                      <TableCell className="text-center text-sm">{item.id}</TableCell>
+                      <TableCell className="text-center text-sm">
+                        <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">
+                          {item.category}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-medium">{item.title}</TableCell>
+                      <TableCell className="text-center text-sm text-gray-600">
+                        {item.caloriesText}
+                      </TableCell>
+                      <TableCell className="text-center text-sm text-gray-600">
+                        {item.allergensText}
+                      </TableCell>
+                      <TableCell className="text-center text-sm text-gray-600">
+                        {item.dateText}
+                      </TableCell>
+                    </TableRow>
+                  ))
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center text-gray-500 py-12">

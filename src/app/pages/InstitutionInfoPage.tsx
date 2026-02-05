@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { Building2, Phone, Mail, Users, FileText, Warehouse } from 'lucide-react';
-import { useState } from 'react';
+
+import { getSchoolResponse } from '../data/school';
 
 interface InstitutionInfoPageProps {
   onNavigate?: (page: string, params?: any) => void;
@@ -7,6 +9,41 @@ interface InstitutionInfoPageProps {
 
 export function InstitutionInfoPage({ onNavigate }: InstitutionInfoPageProps) {
   const [activeTab, setActiveTab] = useState<'school' | 'rules'>('school');
+  const [institutionInfo, setInstitutionInfo] = useState({
+    schoolName: '',
+    schoolTypePrimary: '',
+    schoolTypeSecondary: '',
+    phone: '',
+    email: '',
+    studentCount: 0,
+    mealPriceTarget: 0,
+    mealPriceMax: 0,
+    staffCount: 0,
+    equipmentSummary: '',
+    rulesText: '',
+  });
+
+  useEffect(() => {
+    const loadSchoolInfo = async () => {
+      const response = await getSchoolResponse();
+      if (response?.status !== 'success') return;
+      const schoolType = response.data.school_type ?? '';
+      setInstitutionInfo({
+        schoolName: response.data.school_name ?? '',
+        schoolTypePrimary: schoolType,
+        schoolTypeSecondary: '',
+        phone: response.data.phone ?? '',
+        email: response.data.email ?? '',
+        studentCount: response.data.student_count ?? 0,
+        mealPriceTarget: response.data.target_unit_price ?? 0,
+        mealPriceMax: response.data.max_unit_price ?? 0,
+        staffCount: response.data.cook_workers ?? 0,
+        equipmentSummary: response.data.kitchen_equipment ?? '',
+        rulesText: response.data.operation_rules ?? '',
+      });
+    };
+    void loadSchoolInfo();
+  }, []);
 
   return (
     <div className="p-6">
@@ -55,35 +92,35 @@ export function InstitutionInfoPage({ onNavigate }: InstitutionInfoPageProps) {
                   <Building2 size={16} className="mt-1 text-gray-500" />
                   <div>
                     <p className="text-sm text-gray-500">학교 이름</p>
-                    <p className="text-sm font-medium text-gray-800">케이티에이블고등학교</p>
+                    <p className="text-sm font-medium text-gray-800">{institutionInfo.schoolName}</p>
                   </div>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">학교 구분</p>
                   <div className="text-sm font-medium text-gray-800 space-y-1">
-                    <p>구분1: 고등학교</p>
-                    <p>구분2: 남녀공학</p>
+                    <p>구분1: {institutionInfo.schoolTypePrimary}</p>
+                    <p>구분2: {institutionInfo.schoolTypeSecondary}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Phone size={16} className="mt-1 text-gray-500" />
                   <div>
                     <p className="text-sm text-gray-500">학교 전화번호 (대표번호)</p>
-                    <p className="text-sm font-medium text-gray-800">02-1234-5678</p>
+                    <p className="text-sm font-medium text-gray-800">{institutionInfo.phone}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Mail size={16} className="mt-1 text-gray-500" />
                   <div>
                     <p className="text-sm text-gray-500">학교 이메일 (대표메일)</p>
-                    <p className="text-sm font-medium text-gray-800">info@seoulcentral.hs.kr</p>
+                    <p className="text-sm font-medium text-gray-800">{institutionInfo.email}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Users size={16} className="mt-1 text-gray-500" />
                   <div>
                     <p className="text-sm text-gray-500">학생 수</p>
-                    <p className="text-sm font-medium text-gray-800">1,250명</p>
+                    <p className="text-sm font-medium text-gray-800">{institutionInfo.studentCount}</p>
                   </div>
                 </div>
               </div>
@@ -94,11 +131,11 @@ export function InstitutionInfoPage({ onNavigate }: InstitutionInfoPageProps) {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <p className="text-sm text-gray-500">목표 1식 단가</p>
-                  <p className="text-sm font-medium text-gray-800">5,500원</p>
+                  <p className="text-sm font-medium text-gray-800">{institutionInfo.mealPriceTarget}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">1식 단가 상한선</p>
-                  <p className="text-sm font-medium text-gray-800">6,000원</p>
+                  <p className="text-sm font-medium text-gray-800">{institutionInfo.mealPriceMax}</p>
                 </div>
               </div>
             </div>
@@ -110,12 +147,12 @@ export function InstitutionInfoPage({ onNavigate }: InstitutionInfoPageProps) {
                   <Warehouse size={16} className="mt-1 text-gray-500" />
                   <div>
                     <p className="text-sm text-gray-500">조리 인력 수</p>
-                    <p className="text-sm font-medium text-gray-800">8명</p>
+                    <p className="text-sm font-medium text-gray-800">{institutionInfo.staffCount}</p>
                   </div>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">주요 조리 기구 현황</p>
-                  <p className="text-sm font-medium text-gray-800">회전식 조리기 2대, 스팀솥 4대, 냉장고 6대</p>
+                    <p className="text-sm font-medium text-gray-800">{institutionInfo.equipmentSummary}</p>
                 </div>
               </div>
             </div>
@@ -128,13 +165,7 @@ export function InstitutionInfoPage({ onNavigate }: InstitutionInfoPageProps) {
             <div className="flex items-start gap-3">
               <FileText size={16} className="mt-1 text-gray-500" />
               <p className="text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-line">
-                [ 급식 제공 시간 ]
-                {'\n'}• 중식: 12:00 - 13:00 (1학년 11:50, 2학년 12:10, 3학년 12:30 순차 배식)
-                {'\n'}• 석식: 17:30 - 18:30 (자율 배식)
-                {'\n\n'}[ 위생 및 안전 관리 ]
-                {'\n'}• 알레르기 식재료 표시 의무화 (메뉴판 및 앱 공지)
-                {'\n'}• 위생 점검 주 1회 실시 (담당: 영양사, 보건교사)
-                {'\n'}• 식재료 검수 일일 실시 (오전 8시)
+                {institutionInfo.rulesText}
               </p>
             </div>
           </div>

@@ -1,9 +1,104 @@
+import { useEffect, useState } from 'react';
+
+import { fetchMealPlanMonthly, replaceMealPlanWithAI, updateMealPlanManually } from '../data/mealplan';
+
 import { MealMonthlyCalendarEditable } from "../components/MealMonthlyCalendarEditable";
 
-export function MealEditPage() {
-  const handleSubmit = (payload: { reason: string; menus: string[] }) => {
-    console.log('Meal edit payload:', payload);
-    alert('식단표 수정 요청이 전송되었습니다.');
+import { toMealMonthlyDataByMonth, toMealWeeklyEditableVMFromMonthlyData } from '../viewModels/meal';
+import type { MealWeeklyEditableVM } from '../viewModels/meal';
+
+interface MealEditPageProps {
+  initialParams?: { date?: string };
+}
+
+export function MealEditPage({ initialParams }: MealEditPageProps) {
+  const [weeklyEditableVm, setWeeklyEditableVm] = useState<MealWeeklyEditableVM>({ weeks: [] });
+  const [currentMonth, setCurrentMonth] = useState<string>('');
+
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadWeekly = async () => {
+      const dateParam =
+        typeof initialParams?.date === 'string' && initialParams.date
+          ? initialParams.date
+          : (() => {
+            const now = new Date();
+            const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            return formatDate(nextMonth);
+          })();
+
+      const dateObj = new Date(`${dateParam}T00:00:00`);
+      const response = await fetchMealPlanMonthly(dateObj.getFullYear(), dateObj.getMonth() + 1);
+      if (!isActive) return;
+      const dataByMonth = toMealMonthlyDataByMonth(response);
+      const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+      const monthlyData = dataByMonth[monthKey] ?? Object.values(dataByMonth)[0];
+      if (!monthlyData) {
+        setWeeklyEditableVm({ weeks: [] });
+        return;
+      }
+      setCurrentMonth(monthlyData.month);
+      setWeeklyEditableVm(toMealWeeklyEditableVMFromMonthlyData(monthlyData, dateParam));
+    };
+
+    loadWeekly();
+
+    return () => {
+      isActive = false;
+    };
+  }, [initialParams?.date]);
+
+  const handleSubmit = async (payload: {
+    reason: string;
+    menus: string[];
+    menuId?: number;
+    mealPlanId?: number;
+    mealType: 'LUNCH' | 'DINNER';
+  }) => {
+    console.log(`${payload.mealPlanId}, ${payload.menuId}`);
+    if (!payload.menuId || !payload.mealPlanId) {
+      alert('메뉴 식별자를 찾을 수 없습니다. 데이터를 다시 불러오세요.');
+      return;
+    }
+    try {
+      await updateMealPlanManually(payload.mealPlanId, payload.menuId, {
+        reason: payload.reason,
+        menus: payload.menus,
+      });
+      alert('식단표 수정 요청이 전송되었습니다.');
+    } catch (error) {
+      console.error('Failed to update meal plan:', error);
+      alert('식단표 수정 요청에 실패했습니다.');
+    }
+  };
+
+  const handleAiReplace = async (payload: { date: string; mealType: 'LUNCH' | 'DINNER' }) => {
+    try {
+      await replaceMealPlanWithAI(payload);
+      alert('AI 대체가 완료되었습니다.');
+      const dateObj = new Date(`${payload.date}T00:00:00`);
+      const response = await fetchMealPlanMonthly(dateObj.getFullYear(), dateObj.getMonth() + 1);
+      const dataByMonth = toMealMonthlyDataByMonth(response);
+      const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+      const monthlyData = dataByMonth[monthKey] ?? Object.values(dataByMonth)[0];
+      if (!monthlyData) {
+        setWeeklyEditableVm({ weeks: [] });
+        return;
+      }
+      setCurrentMonth(monthlyData.month);
+      setWeeklyEditableVm(toMealWeeklyEditableVMFromMonthlyData(monthlyData, payload.date));
+    } catch (error) {
+      console.error('Failed to replace meal plan with AI:', error);
+      alert('AI 대체에 실패했습니다.');
+    }
   };
 
   return (
@@ -16,7 +111,12 @@ export function MealEditPage() {
       </div>
 
       <div className="flex-1 overflow-hidden px-6 py-6">
-        <MealMonthlyCalendarEditable onSubmit={handleSubmit} />
+        <MealMonthlyCalendarEditable
+          initialWeeks={weeklyEditableVm.weeks}
+          currentMonth={currentMonth}
+          onSubmit={handleSubmit}
+          onAiReplace={handleAiReplace}
+        />
       </div>
     </div>
   );

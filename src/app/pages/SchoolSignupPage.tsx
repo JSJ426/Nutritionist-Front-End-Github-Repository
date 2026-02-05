@@ -1,41 +1,38 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Lock, Mail, Phone, Eye, EyeOff, Building2, MapPin, Search } from 'lucide-react';
+
+import { signupDietitian } from '../data/auth';
+import { searchSchools } from '../data/school';
 import TermsModal from '../components/TermsModal';
 import PrivacyModal from '../components/PrivacyModal';
+import type { SchoolSearchItem } from '../viewModels/school';
 
 type SchoolSignupPageProps = {
   onNavigate: (page: string) => void;
 };
 
-// 학교 목록 (학생 회원가입과 동일)
-const schools = [
-  '부산고등학교',
-  '부산제일고등학교',
-  '부산중앙고등학교',
-  '부산여자고등학교',
-  '해운대고등학교',
-  '동래고등학교',
-  '경남고등학교',
-  '개성고등학교',
-  '부산중학교',
-  '부산제일중학교',
-  '해운대중학교',
-  '동래중학교',
-  '부산초등학교',
-  '해운대초등학교',
-  '동래초등학교',
-];
-
 export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
   const [formData, setFormData] = useState({
+    username: '',
+    name: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
     schoolName: '',
     schoolType: '',
+    regionCode: '',
+    schoolCode: '',
     schoolAddress: '',
     schoolAddressDetail: '',
     schoolPhone: '',
+    schoolEmail: '',
+    studentCount: '',
+    targetUnitPrice: '',
+    maxUnitPrice: '',
+    operationRules: '',
+    cookWorkers: '',
+    kitchenEquipment: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -43,17 +40,20 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
   const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 학교 검색 관련 상태
   const [schoolSearchQuery, setSchoolSearchQuery] = useState('');
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false);
-  const [filteredSchools, setFilteredSchools] = useState<string[]>([]);
+  const [filteredSchools, setFilteredSchools] = useState<SchoolSearchItem[]>([]);
+  const [isSearchingSchools, setIsSearchingSchools] = useState(false);
+  const [schoolSearchError, setSchoolSearchError] = useState('');
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
@@ -66,34 +66,108 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
       return;
     }
 
-    console.log('학교 계정 회원가입 시도:', formData);
-    alert('학교 계정 회원가입이 완료되었습니다!');
-    onNavigate('login');
+    if (!formData.regionCode.trim() || !formData.schoolCode.trim() || !formData.schoolAddress.trim()) {
+      alert('학교 검색 결과를 선택해주세요.');
+      return;
+    }
+
+    const schoolAddress = formData.schoolAddressDetail
+      ? `${formData.schoolAddress} ${formData.schoolAddressDetail}`.trim()
+      : formData.schoolAddress.trim();
+
+    const payload = {
+      username: formData.username.trim(),
+      pw: formData.password,
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      phone: formData.phone.trim(),
+      school_info: {
+        school_name: formData.schoolName.trim(),
+        region_code: formData.regionCode.trim(),
+        school_code: formData.schoolCode.trim(),
+        address: schoolAddress,
+        school_type: formData.schoolType.trim(),
+        phone: formData.schoolPhone.trim() || undefined,
+        email: formData.schoolEmail.trim() || undefined,
+        student_count: formData.studentCount ? Number(formData.studentCount) : undefined,
+        target_unit_price: formData.targetUnitPrice ? Number(formData.targetUnitPrice) : undefined,
+        max_unit_price: formData.maxUnitPrice ? Number(formData.maxUnitPrice) : undefined,
+        operation_rules: formData.operationRules.trim() || undefined,
+        cook_workers: formData.cookWorkers ? Number(formData.cookWorkers) : undefined,
+        kitchen_equipment: formData.kitchenEquipment.trim() || undefined,
+      },
+    };
+
+    try {
+      setIsSubmitting(true);
+      await signupDietitian(payload);
+      alert('학교 계정 회원가입이 완료되었습니다!');
+      onNavigate('login');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '회원가입에 실패했습니다.';
+      alert(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // 학교 검색 핸들러
   const handleSchoolSearch = (query: string) => {
     setSchoolSearchQuery(query);
     setFormData((prev) => ({ ...prev, schoolName: query }));
-
-    if (query) {
-      const filtered = schools.filter((school) =>
-        school.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredSchools(filtered);
-      setShowSchoolDropdown(true);
-    } else {
-      setFilteredSchools([]);
-      setShowSchoolDropdown(false);
-    }
   };
 
-  const handleSchoolSelect = (school: string) => {
-    setFormData((prev) => ({ ...prev, schoolName: school }));
-    setSchoolSearchQuery(school);
+  useEffect(() => {
+    let isActive = true;
+    if (!schoolSearchQuery.trim()) {
+      setFilteredSchools([]);
+      setShowSchoolDropdown(false);
+      setSchoolSearchError('');
+      return;
+    }
+    setIsSearchingSchools(true);
+    setSchoolSearchError('');
+    const handle = window.setTimeout(async () => {
+      try {
+        const response = await searchSchools(schoolSearchQuery.trim());
+        if (!isActive) return;
+        setFilteredSchools(response);
+        setShowSchoolDropdown(true);
+      } catch (error) {
+        if (!isActive) return;
+        setFilteredSchools([]);
+        setShowSchoolDropdown(true);
+        setSchoolSearchError('학교 검색에 실패했습니다.');
+      } finally {
+        if (isActive) {
+          setIsSearchingSchools(false);
+        }
+      }
+    }, 300);
+    return () => {
+      isActive = false;
+      window.clearTimeout(handle);
+    };
+  }, [schoolSearchQuery]);
+
+  const handleSchoolSelect = (school: SchoolSearchItem) => {
+    setFormData((prev) => ({
+      ...prev,
+      schoolName: school.school_name ?? '',
+      regionCode: school.region_code ?? '',
+      schoolCode: school.school_code ?? '',
+      schoolAddress: school.address ?? '',
+    }));
+    setSchoolSearchQuery(school.school_name ?? '');
     setFilteredSchools([]);
     setShowSchoolDropdown(false);
   };
+
+  const isSchoolSelected = Boolean(
+    formData.regionCode.trim() &&
+    formData.schoolCode.trim() &&
+    formData.schoolAddress.trim()
+  );
 
   return (
     <div className="min-h-screen bg-[#F6F7F8]">
@@ -122,6 +196,38 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                 계정 정보
               </h3>
 
+              {/* Username */}
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+                  아이디 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="username"
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) => handleChange('username', e.target.value)}
+                  placeholder="아이디를 입력하세요"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                  required
+                />
+              </div>
+
+              {/* Name */}
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  담당자 이름 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => handleChange('name', e.target.value)}
+                  placeholder="홍길동"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                  required
+                />
+              </div>
+
               {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -137,6 +243,27 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                     value={formData.email}
                     onChange={(e) => handleChange('email', e.target.value)}
                     placeholder="school@example.com"
+                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                  담당자 연락처 <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Phone className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => handleChange('phone', e.target.value)}
+                    placeholder="01012345678"
                     className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
                     required
                   />
@@ -246,28 +373,47 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                     className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
                     required
                   />
-                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center gap-2 pointer-events-none">
+                    {isSchoolSelected && (
+                      <span className="text-xs text-[#00B3A4] bg-[#00B3A4]/10 px-2 py-0.5 rounded-full">
+                        선택됨
+                      </span>
+                    )}
                     <Search className="h-5 w-5 text-gray-400" />
                   </div>
 
                   {/* Dropdown for search results */}
                   {showSchoolDropdown && schoolSearchQuery && (
                     <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-                      {filteredSchools.length > 0 ? (
+                      {isSearchingSchools && (
+                        <div className="px-4 py-3 text-gray-500 text-sm">
+                          검색 중...
+                        </div>
+                      )}
+                      {!isSearchingSchools && schoolSearchError && (
+                        <div className="px-4 py-3 text-red-500 text-sm">
+                          {schoolSearchError}
+                        </div>
+                      )}
+                      {!isSearchingSchools && !schoolSearchError && filteredSchools.length > 0 ? (
                         filteredSchools.map((school) => (
                           <button
-                            key={school}
+                            key={`${school.school_code}-${school.school_name}`}
                             type="button"
                             onClick={() => handleSchoolSelect(school)}
                             className="w-full px-4 py-3 text-left hover:bg-[#00B3A4]/5 transition-colors text-gray-700 border-b border-gray-100 last:border-b-0"
                           >
-                            {school}
+                            <div className="font-medium">{school.school_name}</div>
+                            <div className="text-xs text-gray-500">{school.address}</div>
                           </button>
                         ))
                       ) : (
-                        <div className="px-4 py-3 text-gray-500 text-sm">
-                          검색 결과가 없습니다. 학교명을 직접 입력해주세요.
-                        </div>
+                        !isSearchingSchools &&
+                        !schoolSearchError && (
+                          <div className="px-4 py-3 text-gray-500 text-sm">
+                            검색 결과가 없습니다. 다른 키워드로 검색해주세요.
+                          </div>
+                        )
                       )}
                     </div>
                   )}
@@ -315,6 +461,40 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                     <span className="text-sm text-gray-700">고등학교</span>
                   </label>
                 </div>
+              </div>
+
+              {/* Region Code */}
+              <div>
+                <label htmlFor="regionCode" className="block text-sm font-medium text-gray-700 mb-2">
+                  지역 코드 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="regionCode"
+                  type="text"
+                  value={formData.regionCode}
+                  onChange={(e) => handleChange('regionCode', e.target.value)}
+                  placeholder="예: C10"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                  required
+                  readOnly
+                />
+              </div>
+
+              {/* School Code */}
+              <div>
+                <label htmlFor="schoolCode" className="block text-sm font-medium text-gray-700 mb-2">
+                  학교 코드 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="schoolCode"
+                  type="text"
+                  value={formData.schoolCode}
+                  onChange={(e) => handleChange('schoolCode', e.target.value)}
+                  placeholder="예: 7150090"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                  required
+                  readOnly
+                />
               </div>
 
               {/* School Address */}
@@ -379,6 +559,116 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                   />
                 </div>
               </div>
+
+              {/* School Email */}
+              <div>
+                <label htmlFor="schoolEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                  학교 이메일
+                </label>
+                <input
+                  id="schoolEmail"
+                  type="email"
+                  value={formData.schoolEmail}
+                  onChange={(e) => handleChange('schoolEmail', e.target.value)}
+                  placeholder="admin@school.kr"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Optional School Details */}
+            <div className="space-y-5">
+              <h3 className="font-semibold text-gray-800 text-lg pb-2 border-b-2 border-[#00B3A4]">
+                학교 상세 (선택)
+              </h3>
+
+              <div>
+                <label htmlFor="studentCount" className="block text-sm font-medium text-gray-700 mb-2">
+                  학생 수
+                </label>
+                <input
+                  id="studentCount"
+                  type="number"
+                  min={0}
+                  value={formData.studentCount}
+                  onChange={(e) => handleChange('studentCount', e.target.value)}
+                  placeholder="예: 580"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="targetUnitPrice" className="block text-sm font-medium text-gray-700 mb-2">
+                  목표 단가
+                </label>
+                <input
+                  id="targetUnitPrice"
+                  type="number"
+                  min={0}
+                  value={formData.targetUnitPrice}
+                  onChange={(e) => handleChange('targetUnitPrice', e.target.value)}
+                  placeholder="예: 5800"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="maxUnitPrice" className="block text-sm font-medium text-gray-700 mb-2">
+                  최대 단가
+                </label>
+                <input
+                  id="maxUnitPrice"
+                  type="number"
+                  min={0}
+                  value={formData.maxUnitPrice}
+                  onChange={(e) => handleChange('maxUnitPrice', e.target.value)}
+                  placeholder="예: 6200"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="cookWorkers" className="block text-sm font-medium text-gray-700 mb-2">
+                  조리 종사자 수
+                </label>
+                <input
+                  id="cookWorkers"
+                  type="number"
+                  min={0}
+                  value={formData.cookWorkers}
+                  onChange={(e) => handleChange('cookWorkers', e.target.value)}
+                  placeholder="예: 6"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="operationRules" className="block text-sm font-medium text-gray-700 mb-2">
+                  운영 규칙
+                </label>
+                <textarea
+                  id="operationRules"
+                  value={formData.operationRules}
+                  onChange={(e) => handleChange('operationRules', e.target.value)}
+                  placeholder="운영 규칙을 입력하세요"
+                  rows={3}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="kitchenEquipment" className="block text-sm font-medium text-gray-700 mb-2">
+                  조리 시설
+                </label>
+                <textarea
+                  id="kitchenEquipment"
+                  value={formData.kitchenEquipment}
+                  onChange={(e) => handleChange('kitchenEquipment', e.target.value)}
+                  placeholder="조리 시설 정보를 입력하세요"
+                  rows={3}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                />
+              </div>
             </div>
 
             {/* Terms Agreement */}
@@ -435,9 +725,10 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-[#00B3A4] text-white py-3.5 rounded-xl font-semibold hover:bg-[#009688] transition-colors shadow-sm hover:shadow-md mt-6"
+              className="w-full bg-[#00B3A4] text-white py-3.5 rounded-xl font-semibold hover:bg-[#009688] transition-colors shadow-sm hover:shadow-md mt-6 disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={isSubmitting}
             >
-              회원가입
+              {isSubmitting ? '회원가입 처리 중...' : '회원가입'}
             </button>
 
             {/* Links */}

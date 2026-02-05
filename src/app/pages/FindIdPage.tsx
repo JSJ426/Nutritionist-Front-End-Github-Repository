@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Mail, Phone } from 'lucide-react';
 
+import { mockRecoveredId } from '../data/mocks/auth/recovery';
+
 type FindIdPageProps = {
   onNavigate: (page: string) => void;
 };
@@ -15,7 +17,7 @@ export function FindIdPage({ onNavigate }: FindIdPageProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Mock ID recovery
-    setFoundId('student2024');
+    setFoundId(mockRecoveredId);
   };
 
   return (

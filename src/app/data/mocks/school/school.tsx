@@ -1,0 +1,20 @@
+export const mockSchoolResponse = {
+  status: 'success',
+  message: '학교 정보 조회 성공',
+  data: {
+    school_id: 1,
+    dietitian_id: 10,
+    school_name: '서울아람초등학교',
+    school_type: '초',
+    phone: '02-123-4567',
+    email: 'nutrition@aram-es.kr',
+    student_count: 620,
+    target_unit_price: 4200,
+    max_unit_price: 4800,
+    operation_rules: '알레르기 식단은 주 1회 사전 안내 후 제공합니다.',
+    cook_workers: 6,
+    kitchen_equipment: '스팀오븐 2대, 대형솥 3대, 냉장고 4대',
+    created_at: '2026-01-15T09:30:00Z',
+    updated_at: '2026-02-01T14:20:00Z',
+  },
+} as const;

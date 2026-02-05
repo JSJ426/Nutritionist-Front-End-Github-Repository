@@ -1,44 +1,43 @@
 import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
+
+import { createAdditionalMenu } from '../data/additionalMenu';
+
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
-import { ArrowLeft } from 'lucide-react';
-import { AdditionalMenuDraft, AdditionalMenuItem } from '../types/additionalMenu';
+
+import {
+  getAdditionalMenuCreateForm,
+  toAdditionalMenuRequestBody,
+} from '../viewModels/additionalMenu';
 
 interface AdditionalMenuCreatePageProps {
   onNavigate?: (page: string, params?: any) => void;
-  onCreate: (draft: AdditionalMenuDraft) => AdditionalMenuItem;
 }
 
-export function AdditionalMenuCreatePage({ onNavigate, onCreate }: AdditionalMenuCreatePageProps) {
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('밥류');
-  const [nutritionBasis, setNutritionBasis] = useState('100g');
-  const [servingSize, setServingSize] = useState('');
-  const [kcal, setKcal] = useState('');
-  const [carb, setCarb] = useState('');
-  const [prot, setProt] = useState('');
-  const [fat, setFat] = useState('');
-  const [calcium, setCalcium] = useState('');
-  const [iron, setIron] = useState('');
-  const [vitaminA, setVitaminA] = useState('');
-  const [thiamin, setThiamin] = useState('');
-  const [riboflavin, setRiboflavin] = useState('');
-  const [vitaminC, setVitaminC] = useState('');
-  const [ingredientsText, setIngredientsText] = useState('');
-  const [allergensText, setAllergensText] = useState('');
-  const [recipeText, setRecipeText] = useState('');
+export function AdditionalMenuCreatePage({ onNavigate }: AdditionalMenuCreatePageProps) {
+  const initialForm = getAdditionalMenuCreateForm();
+  const [name, setName] = useState(initialForm.name);
+  const [category, setCategory] = useState(initialForm.category);
+  const [nutritionBasis, setNutritionBasis] = useState(initialForm.nutritionBasis);
+  const [servingSize, setServingSize] = useState(initialForm.servingSize);
+  const [kcal, setKcal] = useState(initialForm.kcal);
+  const [carb, setCarb] = useState(initialForm.carb);
+  const [prot, setProt] = useState(initialForm.prot);
+  const [fat, setFat] = useState(initialForm.fat);
+  const [calcium, setCalcium] = useState(initialForm.calcium);
+  const [iron, setIron] = useState(initialForm.iron);
+  const [vitaminA, setVitaminA] = useState(initialForm.vitaminA);
+  const [thiamin, setThiamin] = useState(initialForm.thiamin);
+  const [riboflavin, setRiboflavin] = useState(initialForm.riboflavin);
+  const [vitaminC, setVitaminC] = useState(initialForm.vitaminC);
+  const [ingredientsText, setIngredientsText] = useState(initialForm.ingredientsText);
+  const [allergensText, setAllergensText] = useState(initialForm.allergensText);
+  const [recipeText, setRecipeText] = useState(initialForm.recipeText);
 
-  const parseAllergens = (value: string) => {
-    if (!value.trim()) return [];
-    return value
-      .split(',')
-      .map((n) => Number(n.trim()))
-      .filter((n) => !Number.isNaN(n));
-  };
-
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!name.trim()) {
       alert('메뉴명을 입력해주세요.');
       return;
@@ -60,33 +59,31 @@ export function AdditionalMenuCreatePage({ onNavigate, onCreate }: AdditionalMen
       return;
     }
 
-    const requestBody = {
-      name: name.trim(),
+    const form = {
+      name,
       category,
-      nutrition_basis: nutritionBasis.trim(),
-      serving_size: servingSize.trim(),
-      kcal: Number(kcal),
-      carb: Number(carb),
-      prot: Number(prot),
-      fat: Number(fat),
-      calcium: Number(calcium),
-      iron: Number(iron),
-      vitamin_a: Number(vitaminA),
-      thiamin: Number(thiamin),
-      riboflavin: Number(riboflavin),
-      vitamin_c: Number(vitaminC),
-      ingredients_text: ingredientsText.trim(),
-      allergens: parseAllergens(allergensText),
-      recipe_text: recipeText.trim(),
+      nutritionBasis,
+      servingSize,
+      kcal,
+      carb,
+      prot,
+      fat,
+      calcium,
+      iron,
+      vitaminA,
+      thiamin,
+      riboflavin,
+      vitaminC,
+      ingredientsText,
+      allergensText,
+      recipeText,
     };
+    const requestBody = toAdditionalMenuRequestBody(form);
 
     console.log('Create additional menu payload:', requestBody);
 
-    onCreate({
-      title: name.trim(),
-      category,
-      description: recipeText.trim(),
-    });
+    const result = await createAdditionalMenu(requestBody);
+    alert(result.message);
     onNavigate?.('additional-menu-list');
   };
 

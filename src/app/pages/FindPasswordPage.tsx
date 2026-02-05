@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Mail, Phone, User, Eye, EyeOff } from 'lucide-react';
 
+import { mockVerifyAccount } from '../data/mocks/auth/recovery';
+
 type FindPasswordPageProps = {
   onNavigate: (page: string) => void;
 };
@@ -20,7 +22,11 @@ export function FindPasswordPage({ onNavigate }: FindPasswordPageProps) {
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
     // Mock verification success
-    setStep('reset');
+    if (mockVerifyAccount()) {
+      setStep('reset');
+      return;
+    }
+    alert('본인 확인에 실패했습니다.');
   };
 
   const handleReset = (e: React.FormEvent) => {

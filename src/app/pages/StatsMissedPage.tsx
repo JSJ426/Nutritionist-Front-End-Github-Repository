@@ -1,74 +1,124 @@
+import { useEffect, useMemo, useState } from 'react';
+import { TrendingDown, TrendingUp } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
-import { useState, useMemo } from 'react';
+
+import { getMissedMetrics } from '../data/metrics';
+
 import { KpiCard } from '../components/KpiCard';
 import { StatsFilterPanel } from '../components/StatsFilterPanel';
 // import { SummaryMissed } from '../components/SummaryMissed';
-import { TrendingDown, TrendingUp } from 'lucide-react';
 
-// 더 풍부한 데이터셋
-const weeklyData = [
-  { date: '1월 6일', rate: 7.2, lunch: 6.8, dinner: 7.6 },
-  { date: '1월 7일', rate: 7.5, lunch: 7.1, dinner: 7.9 },
-  { date: '1월 8일', rate: 8.7, lunch: 8.3, dinner: 9.1 },
-  { date: '1월 9일', rate: 9.1, lunch: 8.8, dinner: 9.4 },
-  { date: '1월 10일', rate: 8.4, lunch: 8.0, dinner: 8.8 },
-  { date: '1월 11일', rate: 7.8, lunch: 7.4, dinner: 8.2 },
-  { date: '1월 12일', rate: 9.2, lunch: 8.9, dinner: 9.5 },
-  { date: '1월 13일', rate: 8.1, lunch: 7.7, dinner: 8.5 },
-  { date: '1월 14일', rate: 9.0, lunch: 8.6, dinner: 9.4 },
-  { date: '1월 15일', rate: 8.6, lunch: 8.2, dinner: 9.0 },
-  { date: '1월 16일', rate: 7.9, lunch: 7.5, dinner: 8.3 },
-  { date: '1월 17일', rate: 8.4, lunch: 8.0, dinner: 8.8 },
-  { date: '1월 18일', rate: 9.3, lunch: 8.9, dinner: 9.7 },
-  { date: '1월 19일', rate: 8.2, lunch: 7.8, dinner: 8.6 },
-  { date: '1월 20일', rate: 8.8, lunch: 8.4, dinner: 9.2 },
-];
-
-const monthlyData = [
-  { date: '12월 16일', rate: 8.1, lunch: 7.7, dinner: 8.5 },
-  { date: '12월 17일', rate: 8.5, lunch: 8.2, dinner: 8.8 },
-  { date: '12월 18일', rate: 7.9, lunch: 7.5, dinner: 8.3 },
-  { date: '12월 19일', rate: 9.2, lunch: 8.9, dinner: 9.5 },
-  { date: '12월 20일', rate: 8.7, lunch: 8.4, dinner: 9.0 },
-  { date: '12월 23일', rate: 7.5, lunch: 7.1, dinner: 7.9 },
-  { date: '12월 24일', rate: 8.3, lunch: 7.9, dinner: 8.7 },
-  { date: '12월 26일', rate: 9.5, lunch: 9.2, dinner: 9.8 },
-  { date: '12월 27일', rate: 8.9, lunch: 8.5, dinner: 9.3 },
-  { date: '12월 30일', rate: 7.8, lunch: 7.4, dinner: 8.2 },
-  { date: '12월 31일', rate: 8.6, lunch: 8.2, dinner: 9.0 },
-  { date: '1월 2일', rate: 9.2, lunch: 8.9, dinner: 9.5 },
-  { date: '1월 3일', rate: 7.8, lunch: 7.4, dinner: 8.2 },
-  { date: '1월 6일', rate: 7.2, lunch: 6.8, dinner: 7.6 },
-  { date: '1월 7일', rate: 7.5, lunch: 7.1, dinner: 7.9 },
-  { date: '1월 8일', rate: 8.7, lunch: 8.3, dinner: 9.1 },
-  { date: '1월 9일', rate: 9.1, lunch: 8.8, dinner: 9.4 },
-  { date: '1월 10일', rate: 8.4, lunch: 8.0, dinner: 8.8 },
-  { date: '1월 11일', rate: 7.8, lunch: 7.4, dinner: 8.2 },
-  { date: '1월 12일', rate: 9.2, lunch: 8.9, dinner: 9.5 },
-];
-
-const customData = [
-  { date: '1월 8일', rate: 8.7, lunch: 8.3, dinner: 9.1 },
-  { date: '1월 9일', rate: 9.1, lunch: 8.8, dinner: 9.4 },
-  { date: '1월 10일', rate: 8.4, lunch: 8.0, dinner: 8.8 },
-  { date: '1월 11일', rate: 7.8, lunch: 7.4, dinner: 8.2 },
-  { date: '1월 12일', rate: 9.2, lunch: 8.9, dinner: 9.5 },
-];
+import {
+  StatsMissedMealType,
+  StatsMissedPeriod,
+  getMissedBaseData,
+  getMissedFilterLabels,
+  getMissedFilteredData,
+  getMissedKpiData,
+  toMissedSeriesByPeriod,
+} from '../viewModels';
+import type { MissedMetricsResponse } from '../viewModels/metrics';
+import { useAuth } from '../auth/AuthContext';
 
 export function StatsMissedPage() {
+  const { claims, isReady } = useAuth();
+  const schoolId = claims?.schoolId;
+  const [metrics, setMetrics] = useState<MissedMetricsResponse | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    if (!isReady || !schoolId) {
+      return;
+    }
+    let isActive = true;
+    const load = async () => {
+      const response = await getMissedMetrics(schoolId);
+      if (!isActive) return;
+      setMetrics(response);
+    };
+    load();
+    return () => {
+      isActive = false;
+    };
+  }, [isReady, schoolId]);
+
+  if (!isReady || !schoolId) {
+    return (
+      <div className="p-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold">결식률</h1>
+        </div>
+        <div className="flex items-center justify-center text-gray-500 py-12">
+          데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
+
+  const fallbackDefaults = {
+    defaultPeriod: 'weekly',
+    defaultMealType: 'all',
+    defaultStartDate: '',
+    defaultEndDate: '',
+    targetRate: 0,
+    prevMonthAvg: 0,
+  };
+  const fallbackLabels = {
+    period: {
+      weekly: '',
+      monthly: '',
+      custom: '',
+    },
+    meal: {
+      all: '',
+      lunch: '',
+      dinner: '',
+    },
+  };
+  const defaults = metrics?.defaults ?? fallbackDefaults;
+  const labels = metrics?.labels ?? fallbackLabels;
+
+  const { defaultPeriod, defaultMealType, defaultStartDate, defaultEndDate, targetRate, prevMonthAvg } = defaults;
+  const missedSeries = useMemo(
+    () => {
+      if (!metrics) {
+        return { weekly: [], monthly: [], custom: [] };
+      }
+      const { weeklyLunch, weeklyDinner, monthlyLunch, monthlyDinner } = metrics;
+      return toMissedSeriesByPeriod({
+        weeklyLunch,
+        weeklyDinner,
+        monthlyLunch,
+        monthlyDinner,
+      });
+    },
+    [metrics]
+  );
+
   // Draft 상태 (사용자가 선택 중인 값)
-  const [draftPeriod, setDraftPeriod] = useState('weekly');
-  const [draftMealType, setDraftMealType] = useState('all');
-  const [draftStartDate, setDraftStartDate] = useState('2026-01-08');
-  const [draftEndDate, setDraftEndDate] = useState('2026-01-12');
+  const [draftPeriod, setDraftPeriod] = useState<StatsMissedPeriod>(defaultPeriod as StatsMissedPeriod);
+  const [draftMealType, setDraftMealType] = useState<StatsMissedMealType>(defaultMealType as StatsMissedMealType);
+  const [draftStartDate, setDraftStartDate] = useState(defaultStartDate);
+  const [draftEndDate, setDraftEndDate] = useState(defaultEndDate);
   
   // Applied 상태 (조회 버튼 클릭 후 실제 적용된 값)
-  const [period, setPeriod] = useState('weekly');
-  const [mealType, setMealType] = useState('all');
-  const [startDate, setStartDate] = useState('2026-01-08');
-  const [endDate, setEndDate] = useState('2026-01-12');
-  
-  const targetRate = 8.0; // 관리 목표 기준선
+  const [period, setPeriod] = useState<StatsMissedPeriod>(defaultPeriod as StatsMissedPeriod);
+  const [mealType, setMealType] = useState<StatsMissedMealType>(defaultMealType as StatsMissedMealType);
+  const [startDate, setStartDate] = useState(defaultStartDate);
+  const [endDate, setEndDate] = useState(defaultEndDate);
+
+  useEffect(() => {
+    if (!metrics || isInitialized) return;
+    setDraftPeriod(metrics.defaults.defaultPeriod as StatsMissedPeriod);
+    setDraftMealType(metrics.defaults.defaultMealType as StatsMissedMealType);
+    setDraftStartDate(metrics.defaults.defaultStartDate);
+    setDraftEndDate(metrics.defaults.defaultEndDate);
+    setPeriod(metrics.defaults.defaultPeriod as StatsMissedPeriod);
+    setMealType(metrics.defaults.defaultMealType as StatsMissedMealType);
+    setStartDate(metrics.defaults.defaultStartDate);
+    setEndDate(metrics.defaults.defaultEndDate);
+    setIsInitialized(true);
+  }, [metrics, isInitialized]);
 
   // 조회 버튼 클릭 핸들러
   const handleSearch = () => {
@@ -80,38 +130,26 @@ export function StatsMissedPage() {
 
   // 필터에 따른 데이터 선택
   const baseData = useMemo(() => {
-    if (period === 'weekly') return weeklyData;
-    if (period === 'monthly') return monthlyData;
-    return customData;
-  }, [period]);
+    return getMissedBaseData(period, {
+      weekly: missedSeries.weekly,
+      monthly: missedSeries.monthly,
+      custom: missedSeries.custom,
+    });
+  }, [period, missedSeries]);
 
   // 식사 구분에 따른 데이터 변환
   const filteredData = useMemo(() => {
-    return baseData.map(item => ({
-      ...item,
-      displayRate: mealType === 'lunch' ? item.lunch : mealType === 'dinner' ? item.dinner : item.rate
-    }));
+    return getMissedFilteredData(baseData, mealType);
   }, [baseData, mealType]);
 
   // KPI 계산
   const kpiData = useMemo(() => {
-    const rates = filteredData.map(d => d.displayRate);
-    const todayRate = rates[rates.length - 1];
-    const yesterdayRate = rates[rates.length - 2] || todayRate;
-    const weekAvg = rates.slice(-7).reduce((a, b) => a + b, 0) / Math.min(7, rates.length);
-    const prevWeekAvg = rates.slice(-14, -7).reduce((a, b) => a + b, 0) / Math.min(7, rates.slice(-14, -7).length) || weekAvg;
-    const monthAvg = rates.reduce((a, b) => a + b, 0) / rates.length;
-    const prevMonthAvg = 9.8; // 전월 평균 (고정값)
+    return getMissedKpiData(filteredData, prevMonthAvg);
+  }, [filteredData, prevMonthAvg]);
 
-    return {
-      today: todayRate,
-      todayChange: todayRate - yesterdayRate,
-      weekAvg,
-      weekChange: weekAvg - prevWeekAvg,
-      monthAvg,
-      monthChange: monthAvg - prevMonthAvg,
-    };
-  }, [filteredData]);
+  const { periodLabel, mealLabel } = useMemo(() => {
+    return getMissedFilterLabels(period, mealType, labels);
+  }, [period, mealType, labels]);
 
   // // 자동 해석 분석
   // const analysis = useMemo(() => {
@@ -142,6 +180,19 @@ export function StatsMissedPage() {
   //     avgRate: avgRate.toFixed(1),
   //   };
   // }, [filteredData, kpiData, targetRate]);
+
+  if (!metrics) {
+    return (
+      <div className="p-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">결식률</h1>
+        </div>
+        <div className="flex items-center justify-center text-gray-500 py-12">
+          데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -200,11 +251,7 @@ export function StatsMissedPage() {
           <div>
             <h2 className="text-xl font-medium">일일 결식률 추이</h2>
             <p className="text-sm text-gray-500 mt-1">
-              기준선 (목표): {targetRate}% | 현재 선택: {
-                period === 'weekly' ? '주간' : period === 'monthly' ? '월간' : '사용자 지정'
-              } / {
-                mealType === 'all' ? '전체' : mealType === 'lunch' ? '중식' : '석식'
-              }
+              기준선 (목표): {targetRate}% | 현재 선택: {periodLabel} / {mealLabel}
             </p>
           </div>
           <div className="flex items-center gap-2 text-sm">

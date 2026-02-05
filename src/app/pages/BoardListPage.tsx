@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Search, Edit } from 'lucide-react';
+
+import { getBoardListResponse } from '../data/board';
+
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import {
@@ -18,79 +22,85 @@ import {
 } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
 import { Pagination } from '../components/Pagination';
-import { Search, Edit } from 'lucide-react';
 
-// 게시물 타입 정의
-type PostCategory = '공지' | '건의' | '신메뉴' | '기타의견';
-
-interface Post {
-  id: number;
-  category: PostCategory;
-  title: string;
-  author: string;
-  date: string;
-  views: number;
-}
+import { toBoardListVMFromResponse } from '../viewModels/board';
+import type { BoardListItemVM } from '../viewModels/board';
 
 interface BoardListPageProps {
+  initialParams?: any;
   onNavigate?: (page: string, params?: any) => void;
 }
 
-// 샘플 데이터
-const mockPosts: Post[] = [
-  { id: 15, category: '공지', title: '2026년 1월 급식 일정 안내', author: '관리자', date: '2026-01-10', views: 245 },
-  { id: 14, category: '공지', title: '식단표 업데이트 안내', author: '관리자', date: '2026-01-08', views: 198 },
-  { id: 13, category: '건의', title: '채식 메뉴 확대 건의드립니다', author: '김학생', date: '2026-01-07', views: 87 },
-  { id: 12, category: '기타의견', title: '알레르기 정보 상세 표시 요청', author: '박학부모', date: '2026-01-05', views: 156 },
-  { id: 11, category: '기타의견', title: '급식 시간 대기 줄이 너무 깁니다', author: '이학생', date: '2026-01-04', views: 203 },
-  { id: 10, category: '기타의견', title: '급식 만족도 조사 참여 후기', author: '최학생', date: '2026-01-03', views: 92 },
-  { id: 9, category: '건의', title: '간식 시간 운영 건의', author: '정학생', date: '2026-01-02', views: 134 },
-  { id: 8, category: '신메뉴', title: '메뉴 다양화 요청드립니다', author: '강학부모', date: '2025-12-28', views: 178 },
-  { id: 7, category: '공지', title: '연말 급식 운영 일정 공지', author: '관리자', date: '2025-12-27', views: 312 },
-  { id: 6, category: '기타의견', title: '식당 온도가 낮습니다', author: '조학생', date: '2025-12-26', views: 145 },
-];
-
-export function BoardListPage({ onNavigate }: BoardListPageProps) {
-  const [posts] = useState<Post[]>(mockPosts);
+export function BoardListPage({ initialParams, onNavigate }: BoardListPageProps) {
+  const [posts, setPosts] = useState<BoardListItemVM[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('전체');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 20;
+  const [totalPages, setTotalPages] = useState(1);
 
-  // 필터링된 게시물
+  useEffect(() => {
+    let isActive = true;
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const response = await getBoardListResponse(currentPage, itemsPerPage, appliedSearchQuery);
+        if (!isActive) return;
+        setPosts(toBoardListVMFromResponse(response));
+        setTotalPages(response.data.total_pages || 1);
+      } catch (error) {
+        console.error('Failed to load board list:', error);
+        if (!isActive) return;
+        setPosts([]);
+        setTotalPages(1);
+      } finally {
+        if (!isActive) return;
+        setIsLoading(false);
+      }
+    };
+    load();
+    return () => {
+      isActive = false;
+    };
+  }, [appliedSearchQuery, currentPage, itemsPerPage, initialParams?.refresh]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAppliedSearchQuery(searchQuery.trim());
+      setCurrentPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // 카테고리 필터 (현재 페이지 기준)
   const filteredPosts = useMemo(() => {
-    return posts.filter(post => {
-      const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           post.author.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = categoryFilter === '전체' || post.category === categoryFilter;
-      return matchesSearch && matchesCategory;
-    });
-  }, [categoryFilter, posts, searchQuery]);
-
-  const totalPages = Math.ceil(filteredPosts.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentPosts = filteredPosts.slice(startIndex, startIndex + itemsPerPage);
+    return categoryFilter === '전체'
+      ? posts
+      : posts.filter((post) => post.category === categoryFilter);
+  }, [categoryFilter, posts]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [categoryFilter, searchQuery]);
+  }, [categoryFilter]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full bg-gray-50">
+        <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
+          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+            게시판
+          </h1>
+        </div>
+        <div className="flex-1 flex items-center justify-center text-gray-500">
+          데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
 
   // 카테고리 뱃지 색상
-  const getCategoryColor = (category: PostCategory) => {
-    switch (category) {
-      case '공지':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case '건의':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case '신메뉴':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case '기타의견':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
   return (
     <div className="flex flex-col h-full bg-gray-50">
       {/* Header */}
@@ -154,8 +164,8 @@ export function BoardListPage({ onNavigate }: BoardListPageProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentPosts.length > 0 ? (
-                  currentPosts.map((post) => (
+                {filteredPosts.length > 0 ? (
+                  filteredPosts.map((post) => (
                     <TableRow 
                       key={post.id}
                       className="cursor-pointer hover:bg-gray-50 transition-colors"
@@ -163,7 +173,7 @@ export function BoardListPage({ onNavigate }: BoardListPageProps) {
                     >
                       <TableCell className="text-center text-sm">{post.id}</TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="outline" className={`${getCategoryColor(post.category)}`}>
+                        <Badge variant="outline" className={`${post.categoryColorClass}`}>
                           {post.category}
                         </Badge>
                       </TableCell>
@@ -174,8 +184,8 @@ export function BoardListPage({ onNavigate }: BoardListPageProps) {
                         {post.title}
                       </TableCell>
                       <TableCell className="text-center text-sm">{post.author}</TableCell>
-                      <TableCell className="text-center text-sm text-gray-600">{post.date}</TableCell>
-                      <TableCell className="text-center text-sm text-gray-600">{post.views}</TableCell>
+                      <TableCell className="text-center text-sm text-gray-600">{post.dateText}</TableCell>
+                      <TableCell className="text-center text-sm text-gray-600">{post.viewsText}</TableCell>
                     </TableRow>
                   ))
                 ) : (

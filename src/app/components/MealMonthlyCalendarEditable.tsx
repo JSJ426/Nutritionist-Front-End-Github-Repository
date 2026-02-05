@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertCircle, Save, XCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { MealDetailModal } from './MealDetailModal';
@@ -16,6 +16,8 @@ interface MealData {
   menu: MenuItem[];
   isAiReplacement: boolean;
   aiReason?: string;
+  menuId?: number;
+  mealPlanId?: number;
 }
 
 interface DayMeals {
@@ -30,59 +32,28 @@ interface WeekData {
   };
 }
 
-// 모의 데이터
-const generateWeekData = (weekNum: number): WeekData => {
-  const days = ['월', '화', '수', '목', '금'];
-  const meals: { [key: string]: DayMeals } = {};
-  
-  days.forEach((day) => {
-    meals[day] = {
-      lunch: {
-        menu: [
-          { name: '흰쌀밥', allergy: [] },
-          { name: '육개장', allergy: [5, 6, 16] },
-          { name: '불고기', allergy: [5, 6] },
-          { name: '콩나물무침', allergy: [5] },
-          { name: '배추김치', allergy: [9] },
-        ],
-        isAiReplacement: true,
-        aiReason: '영양 균형과 알레르기 위험도를 고려해 구성했습니다.',
-      },
-      dinner: {
-        menu: [
-          { name: '현미밥', allergy: [] },
-          { name: '김치찌개', allergy: [5, 9, 10] },
-          { name: '돈까스', allergy: [1, 5, 6, 10] },
-          { name: '깍두기', allergy: [9] },
-          { name: '우유', allergy: [2] },
-        ],
-        isAiReplacement: false,
-      },
-    };
-  });
-
-  return {
-    week: `${weekNum}주차`,
-    meals,
-  };
-};
-
-const initialWeeksData = [
-  generateWeekData(1),
-  generateWeekData(2),
-  generateWeekData(3),
-  generateWeekData(4),
-  generateWeekData(5),
-];
-
 // 요일 카드 컴포넌트
 // 메인 컴포넌트
 interface MealMonthlyCalendarEditableProps {
-  onSubmit: (payload: { reason: string; menus: string[] }) => void;
+  initialWeeks: WeekData[];
+  currentMonth?: string;
+  onSubmit: (payload: {
+    reason: string;
+    menus: string[];
+    menuId?: number;
+    mealPlanId?: number;
+    mealType: 'LUNCH' | 'DINNER';
+  }) => void;
+  onAiReplace: (payload: { date: string; mealType: 'LUNCH' | 'DINNER' }) => void;
 }
 
-export function MealMonthlyCalendarEditable({ onSubmit }: MealMonthlyCalendarEditableProps) {
-  const [weeksData, setWeeksData] = useState<WeekData[]>(initialWeeksData);
+export function MealMonthlyCalendarEditable({
+  initialWeeks,
+  currentMonth,
+  onSubmit,
+  onAiReplace,
+}: MealMonthlyCalendarEditableProps) {
+  const [weeksData, setWeeksData] = useState<WeekData[]>(initialWeeks);
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
   const [editingMeal, setEditingMeal] = useState<{
     weekNum: number;
@@ -96,18 +67,45 @@ export function MealMonthlyCalendarEditable({ onSubmit }: MealMonthlyCalendarEdi
   } | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  const weekDays = ['월', '화', '수', '목', '금'];
-  const getWeekDateLabels = (weekIndex: number) => {
-    const baseMonday = new Date(2026, 0, 6); // 2026-01-06 (월)
-    const weekMonday = new Date(baseMonday);
-    weekMonday.setDate(baseMonday.getDate() + weekIndex * 7);
+  useEffect(() => {
+    setWeeksData(initialWeeks);
+  }, [initialWeeks]);
 
-    return weekDays.reduce<Record<string, string>>((acc, day, idx) => {
+  const weekDays = ['월', '화', '수', '목', '금'];
+  const getWeekDateInfo = (weekIndex: number) => {
+    if (!currentMonth) {
+      return weekDays.reduce<Record<string, { label: string; iso: string }>>((acc, day) => {
+        acc[day] = { label: '', iso: '' };
+        return acc;
+      }, {});
+    }
+
+    const [yearStr, monthStr] = currentMonth.split('-');
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    if (!year || !month) {
+      return weekDays.reduce<Record<string, { label: string; iso: string }>>((acc, day) => {
+        acc[day] = { label: '', iso: '' };
+        return acc;
+      }, {});
+    }
+
+    const firstDay = new Date(year, month - 1, 1);
+    const dayOfWeek = (firstDay.getDay() + 6) % 7; // Monday = 0
+    const daysUntilMonday = (7 - dayOfWeek) % 7;
+    const firstMonday = new Date(year, month - 1, 1 + daysUntilMonday);
+    const weekMonday = new Date(firstMonday);
+    weekMonday.setDate(firstMonday.getDate() + weekIndex * 7);
+
+    return weekDays.reduce<Record<string, { label: string; iso: string }>>((acc, day, idx) => {
       const date = new Date(weekMonday);
       date.setDate(weekMonday.getDate() + idx);
       const labelMonth = String(date.getMonth() + 1).padStart(2, '0');
       const labelDay = String(date.getDate()).padStart(2, '0');
-      acc[day] = `${labelMonth}/${labelDay}`;
+      const isoYear = String(date.getFullYear());
+      const isoMonth = String(date.getMonth() + 1).padStart(2, '0');
+      const isoDay = String(date.getDate()).padStart(2, '0');
+      acc[day] = { label: `${labelMonth}/${labelDay}`, iso: `${isoYear}-${isoMonth}-${isoDay}` };
       return acc;
     }, {});
   };
@@ -129,13 +127,17 @@ export function MealMonthlyCalendarEditable({ onSubmit }: MealMonthlyCalendarEdi
 
     const updatedWeeks = [...weeksData];
     const weekIndex = editingMeal.weekNum - 1;
-    updatedWeeks[weekIndex].meals[editingMeal.day][editingMeal.mealType].menu = payload.menus.map(
-      (name) => ({ name, allergy: [] })
-    );
+    const targetMeal = updatedWeeks[weekIndex].meals[editingMeal.day][editingMeal.mealType];
+    targetMeal.menu = payload.menus.map((name) => ({ name, allergy: [] }));
 
     setWeeksData(updatedWeeks);
     setHasUnsavedChanges(true);
-    onSubmit(payload);
+    onSubmit({
+      ...payload,
+      menuId: targetMeal.menuId,
+      mealPlanId: targetMeal.mealPlanId,
+      mealType: editingMeal.mealType === 'lunch' ? 'LUNCH' : 'DINNER',
+    });
   };
 
   const editingMealData = editingMeal 
@@ -167,6 +169,7 @@ export function MealMonthlyCalendarEditable({ onSubmit }: MealMonthlyCalendarEdi
           {(selectedWeek === null ? weeksData : [weeksData[selectedWeek]]).map((weekData, index) => {
             const actualWeekIndex = selectedWeek === null ? index : selectedWeek;
             const weekNum = actualWeekIndex + 1;
+            const weekDateInfo = getWeekDateInfo(actualWeekIndex);
 
             return (
               <MealWeekSectionEditable
@@ -174,9 +177,17 @@ export function MealMonthlyCalendarEditable({ onSubmit }: MealMonthlyCalendarEdi
                 weekLabel={weekData.week}
                 weekDays={weekDays}
                 mealsByDay={weekData.meals}
-                dateLabels={getWeekDateLabels(actualWeekIndex)}
+                dateLabels={Object.fromEntries(
+                  Object.entries(weekDateInfo).map(([day, info]) => [day, info.label])
+                )}
+                dateIsoLabels={Object.fromEntries(
+                  Object.entries(weekDateInfo).map(([day, info]) => [day, info.iso])
+                )}
                 onEdit={(day, mealType, event) => handleEditMeal(weekNum, day, mealType, event)}
                 onDetail={handleDetailMeal}
+                onAiReplace={(day, mealType, date) =>
+                  onAiReplace({ date, mealType: mealType === 'lunch' ? 'LUNCH' : 'DINNER' })
+                }
                 weekNum={weekNum}
                 hasChanges={false}
               />
@@ -222,7 +233,7 @@ export function MealMonthlyCalendarEditable({ onSubmit }: MealMonthlyCalendarEdi
                 variant="outline"
                 onClick={() => {
                   if (confirm('변경사항을 취소하시겠습니까?')) {
-                    setWeeksData(initialWeeksData);
+                    setWeeksData(initialWeeks);
                     setHasUnsavedChanges(false);
                   }
                 }}

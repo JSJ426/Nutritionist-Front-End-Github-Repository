@@ -1,6 +1,10 @@
-import { useState } from "react";
-import { Button } from "../components/ui/button";
+import { useEffect, useState } from "react";
 import { Upload, FileText, X } from "lucide-react";
+
+import { getSchoolResponse } from "../data/school";
+import { generateMealPlan } from "../data/mealplan";
+
+import { Button } from "../components/ui/button";
 
 interface MealCreatePageProps {
   onNavigate?: (page: string, params?: any) => void;
@@ -9,14 +13,34 @@ interface MealCreatePageProps {
 export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
+  const [schoolInfo, setSchoolInfo] = useState({
+    targetPrice: 0,
+    maxPrice: 0,
+    staffCount: 0,
+    equipmentSummary: "",
+  });
 
-  // 예시: 외부 API 호출
   const handleGenerate = async () => {
     setIsLoading(true);
-
-    setHasGenerated(true);
-    //alert("식단표가 생성되었습니다.");
-    setIsLoading(false);
+    try {
+      const now = new Date();
+      const target = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const payload = {
+        year: target.getFullYear(),
+        month: target.getMonth() + 1,
+        options: {
+          num_generations: 50,
+        },
+      };
+      await generateMealPlan(payload);
+      setHasGenerated(true);
+      onNavigate?.("meal-edit");
+    } catch (error) {
+      console.error("Failed to generate meal plan:", error);
+      alert("식단표 생성에 실패했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // const handleCancel = () => {
@@ -24,10 +48,24 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
   // };
 
   const handleApply = () => {
-    if (hasGenerated)
+    if (hasGenerated) {
       onNavigate?.("meal-edit");
+    }
   };
 
+  useEffect(() => {
+    const loadSchoolInfo = async () => {
+      const response = await getSchoolResponse();
+      if (response?.status !== "success") return;
+      setSchoolInfo({
+        targetPrice: response.data.target_unit_price ?? 0,
+        maxPrice: response.data.max_unit_price ?? 0,
+        staffCount: response.data.cook_workers ?? 0,
+        equipmentSummary: response.data.kitchen_equipment ?? "",
+      });
+    };
+    void loadSchoolInfo();
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -53,7 +91,7 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
                 </label>
                 <div className="flex-1 flex items-center gap-2">
                   <div className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700">
-                    5,500
+                    {schoolInfo.targetPrice}
                   </div>
                   <span className="text-sm text-gray-600">원</span>
                 </div>
@@ -64,7 +102,7 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
                 </label>
                 <div className="flex-1 flex items-center gap-2">
                   <div className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700">
-                    6,000
+                    {schoolInfo.maxPrice}
                   </div>
                   <span className="text-sm text-gray-600">원</span>
                 </div>
@@ -84,7 +122,7 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
                 </label>
                 <div className="flex-1 flex items-center gap-2">
                   <div className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700">
-                    8
+                    {schoolInfo.staffCount}
                   </div>
                   <span className="text-sm text-gray-600">명</span>
                 </div>
@@ -95,7 +133,7 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
                 </label>
                 <div className="flex-1">
                   <div className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700 whitespace-pre-line">
-                    회전식 조리기 2대, 스팀솥 4대, 냉장고 6대 (업소용), 냉동고 3대, 식기세척기 2대, 배식대 10m
+                    {schoolInfo.equipmentSummary}
                   </div>
                 </div>
               </div>

@@ -11,7 +11,33 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    host: '0.0.0.0'
+    host: '0.0.0.0',
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      '/mealplan': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      '/foodinfo': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      '/boards': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      '/newfoodinfo': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      '/metrics': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
   },
   resolve: {
     alias: {
