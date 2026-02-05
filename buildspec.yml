@@ -10,13 +10,13 @@ phases:
       - npm run build
   post_build:
     commands:
-      - aws s3 sync build/ s3://kt-team18-school-prod-web --delete --content-type "text/html" --exclude "*" --include
+      - aws s3 sync dist/ s3://kt-team18-school-prod-web --delete --content-type "text/html" --exclude "*" --include
 "*.html"
-      - aws s3 sync build/ s3://kt-team18-school-prod-web --content-type "application/javascript" --exclude "*"
+      - aws s3 sync dist/ s3://kt-team18-school-prod-web --content-type "application/javascript" --exclude "*"
 --include "*.js"
-      - aws s3 sync build/ s3://kt-team18-school-prod-web --content-type "text/css" --exclude "*" --include "*.css"
-      - aws s3 sync build/ s3://kt-team18-school-prod-web --delete
+      - aws s3 sync dist/ s3://kt-team18-school-prod-web --content-type "text/css" --exclude "*" --include "*.css"
+      - aws s3 sync dist/ s3://kt-team18-school-prod-web --delete
 artifacts:
   files:
     - '**/*'
-  base-directory: build
+  base-directory: dist
