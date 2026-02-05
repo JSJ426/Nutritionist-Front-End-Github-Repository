@@ -37,7 +37,7 @@ import { useAuth } from './auth/AuthContext';
 export default function App() {
   const [currentPage, setCurrentPage] = useState('login');
   const [pageParams, setPageParams] = useState<any>(null);
-  const { isAuthenticated, isReady, logout } = useAuth();
+  const { isAuthenticated, isReady, logout, schoolName } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -154,7 +154,7 @@ export default function App() {
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
-      <Header onLogout={handleLogout} />
+      <Header onLogout={handleLogout} schoolName={schoolName} />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}

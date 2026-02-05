@@ -122,4 +122,4 @@ export const loginDietitian = async (
 ): Promise<DietitianLoginResponse> =>
   http.post<DietitianLoginResponse>('/api/auth/login/dietitian', payload);
 
-export const fetchMyProfile = async <T = unknown>() => http.get<T>('/api/schools/my');
+export const fetchSchoolInfo = async <T = unknown>() => http.get<T>('/api/schools/my');

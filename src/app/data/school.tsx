@@ -2,9 +2,25 @@
 import type { SchoolResponse, SchoolSearchApiItem, SchoolSearchItem } from '../viewModels/school';
 import { http } from './http';
 
+type SchoolResponseOrData = SchoolResponse | SchoolResponse['data'];
+
+const normalizeSchoolResponse = (response: SchoolResponseOrData): SchoolResponse => {
+  if ('data' in response) {
+    return response;
+  }
+  return {
+    status: 'success',
+    message: undefined,
+    school_id: response.school_id,
+    data: response,
+  };
+};
+
 // 학교 기본 정보 조회
-export const getSchoolResponse = async (): Promise<SchoolResponse> =>
-  http.get<SchoolResponse>('/api/schools/my');
+export const getSchoolResponse = async (): Promise<SchoolResponse> => {
+  const response = await http.get<SchoolResponseOrData>('/api/schools/my');
+  return normalizeSchoolResponse(response);
+};
 
 // 학교 정보 가져오기
 const mapSchoolSearchItem = (item: SchoolSearchApiItem): SchoolSearchItem => ({
