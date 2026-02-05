@@ -178,7 +178,7 @@ export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps)
           )}
 
           {/* 이전글/다음글 영역 */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mt-6">
+          {/* <div className="bg-white rounded-lg shadow-sm border border-gray-200 mt-6">
             <div className="border-b border-gray-200 p-4 hover:bg-gray-50 cursor-pointer transition-colors">
               <div className="flex items-center gap-3">
                 <span className="text-sm text-gray-500 w-20">이전글</span>
@@ -191,7 +191,8 @@ export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps)
                 <span className="flex-1 text-sm">채식 메뉴 확대 건의드립니다</span>
               </div>
             </div>
-          </div>
+          </div> */}
+          
         </div>
       </div>
     </div>
