@@ -102,13 +102,42 @@ export const getSatisfactionMetrics = async (): Promise<SatisfactionMetricsRespo
     '/metrics/satisfaction/count/last-30days'
   );
 
+  const normalizeDateParam = (value: string, edge: 'start' | 'end') => {
+    const trimmed = value.trim();
+    if (/^\d{4}-\d{2}$/.test(trimmed)) {
+      if (edge === 'start') {
+        return `${trimmed}-01`;
+      }
+      const [year, month] = trimmed.split('-').map(Number);
+      const lastDay = new Date(year, month, 0).getDate();
+      return `${trimmed}-${String(lastDay).padStart(2, '0')}`;
+    }
+    return trimmed;
+  };
+
+  const periodStart = normalizeDateParam(countLast30Days.data.period.start_date, 'start');
+  const periodEnd = normalizeDateParam(countLast30Days.data.period.end_date, 'end');
+
+  const listParams = new URLSearchParams({
+    page: '1',
+    size: '20',
+  });
+  if (periodStart) {
+    listParams.set('start_date', periodStart);
+  }
+  if (periodEnd) {
+    listParams.set('end_date', periodEnd);
+  }
+
   const [listLast30DaysRaw, positiveCount, negativeCount] = await Promise.all([
-    http.get<MetricSatisListLast30DaysResponse>('/metrics/satisfaction/last-30days?page=1&size=20'),
+    http.get<MetricSatisListLast30DaysResponse>(
+      `/metrics/satisfaction/last-30days?${listParams.toString()}`
+    ),
     http.get<MetricSatisPositiveCountResponse>(
-      `/metrics/satisfaction/positive/count?start_date=${countLast30Days.data.period.start_date}&end_date=${countLast30Days.data.period.end_date}`
+      `/metrics/satisfaction/positive/count?start_date=${periodStart}&end_date=${periodEnd}`
     ),
     http.get<MetricSatisNegativeCountResponse>(
-      `/metrics/satisfaction/negative/count?start_date=${countLast30Days.data.period.start_date}&end_date=${countLast30Days.data.period.end_date}`
+      `/metrics/satisfaction/negative/count?start_date=${periodStart}&end_date=${periodEnd}`
     ),
   ]);
 

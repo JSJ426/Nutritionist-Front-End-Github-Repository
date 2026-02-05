@@ -49,12 +49,21 @@ export const httpRequest = async <T>(url: string, options: HttpRequestOptions = 
     signal: options.signal,
   });
 
+  const text = await response.text();
+
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || `HTTP ${response.status}`);
+    throw new Error(text || `HTTP ${response.status}`);
   }
 
-  return (await response.json()) as T;
+  if (!text) {
+    return {} as T;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(`Invalid JSON response: ${text.slice(0, 200)}`);
+  }
 };
 
 export const http = {
