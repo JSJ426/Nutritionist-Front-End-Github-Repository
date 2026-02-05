@@ -42,6 +42,13 @@ export type MonthlyOpsDocCreateResponse = {
     month: number;
     status: 'PROCESSING' | 'COMPLETED' | 'FAILED';
     created_at: string;
+    files: Array<{
+      id: number;
+      file_name: string;
+      file_type: string;
+      s3_path: string;
+      created_at: string;
+    }>;
   };
 };
 
@@ -64,6 +71,11 @@ export type MonthlyOpsDocListResponse = {
       page_size: number;
     };
   };
+};
+
+export type MonthlyOpsDocListVM = {
+  items: OperationReport[];
+  pagination: MonthlyOpsDocListResponse['data']['pagination'];
 };
 
 export type MonthlyOpsDocDetailResponse = {
@@ -108,6 +120,13 @@ export const toOperationReportsFromMonthlyOps = (
     generatedDate: report.created_at,
     fileSize: report.status === 'COMPLETED' ? '2.0 MB' : '-',
   }));
+
+export const toMonthlyOpsDocListVM = (
+  raw: MonthlyOpsDocListResponse
+): MonthlyOpsDocListVM => ({
+  items: toOperationReportsFromMonthlyOps(raw),
+  pagination: raw.data.pagination,
+});
 
 export const getOperationReportYearOptions = (reports: OperationReport[]): string[] => {
   const years = Array.from(new Set(reports.map((r) => r.year)))

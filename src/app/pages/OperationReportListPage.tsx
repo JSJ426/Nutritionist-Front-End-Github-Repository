@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Download, FileText, Calendar } from 'lucide-react';
 
-import { getMonthlyOpsDocListResponse } from '../data/operation';
+import { createMonthlyOpsDoc, getMonthlyOpsDocListResponse } from '../data/operation';
 
 import { Button } from '../components/ui/button';
 import {
@@ -23,8 +23,8 @@ import { Pagination } from '../components/Pagination';
 
 import {
   getOperationReportYearOptions,
+  toMonthlyOpsDocListVM,
   toOperationReportItemsVM,
-  toOperationReportsFromMonthlyOps,
 } from '../viewModels/operation';
 
 interface Report {
@@ -46,34 +46,50 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
   const [selectedYear, setSelectedYear] = useState('전체');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_pages: 1,
+    total_items: 0,
+    page_size: itemsPerPage,
+  });
 
   useEffect(() => {
     let isActive = true;
     const load = async () => {
-      const response = await getMonthlyOpsDocListResponse();
-      if (!isActive) return;
-      setReports(toOperationReportsFromMonthlyOps(response));
-      setIsLoading(false);
+      try {
+        setIsLoading(true);
+        const year = selectedYear === '전체' ? undefined : Number(selectedYear);
+        const response = await getMonthlyOpsDocListResponse({
+          year,
+          page: currentPage,
+          size: itemsPerPage,
+        });
+        console.log('MonthlyOpsDocListResponse', response);
+        if (!isActive) return;
+        const vm = toMonthlyOpsDocListVM(response);
+        setReports(vm.items);
+        setPagination(vm.pagination);
+      } catch (error) {
+        console.error('MonthlyOpsDocListResponse error', error);
+        alert('월간 운영 보고서 목록을 불러오지 못했습니다.');
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
     };
     load();
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [selectedYear, currentPage]);
 
   // 연도 목록 생성
   const years = getOperationReportYearOptions(reports);
 
-  // 필터링된 보고서
-  const filteredReports = reports.filter(report => {
-    const matchesYear = selectedYear === '전체' || report.year === Number(selectedYear);
-    return matchesYear;
-  });
-
-  const totalPages = Math.ceil(filteredReports.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedReports = filteredReports.slice(startIndex, startIndex + itemsPerPage);
-  const paginatedReportsVm = toOperationReportItemsVM(paginatedReports);
+  const totalPages = pagination.total_pages;
+  const offsetIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedReportsVm = toOperationReportItemsVM(reports);
 
   useEffect(() => {
     if (totalPages === 0) {
@@ -102,7 +118,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
     });
   };
 
-  const handleGenerateMonthlyReport = () => {
+  const handleGenerateMonthlyReport = async () => {
     const now = new Date();
     const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const year = previousMonth.getFullYear();
@@ -114,19 +130,31 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
       return;
     }
 
-    const nextId = reports.reduce((maxId, report) => Math.max(maxId, report.id), 0) + 1;
-    const generatedDate = now.toISOString().slice(0, 10);
-    const newReport: Report = {
-      id: nextId,
-      year,
-      month,
-      title: `${year}년 ${month}월 급식 운영 보고서`,
-      generatedDate,
-      fileSize: '2.0 MB',
-    };
+    try {
+      await createMonthlyOpsDoc({
+        year,
+        month,
+        title: `${year}년 ${month}월 급식 운영 보고서`,
+      });
 
-    setReports([newReport, ...reports]);
-    setCurrentPage(1);
+      setIsLoading(true);
+      const currentYear = selectedYear === '전체' ? undefined : Number(selectedYear);
+      const response = await getMonthlyOpsDocListResponse({
+        year: currentYear,
+        page: 1,
+        size: itemsPerPage,
+      });
+      console.log('MonthlyOpsDocListResponse (after create)', response);
+      const vm = toMonthlyOpsDocListVM(response);
+      setReports(vm.items);
+      setPagination(vm.pagination);
+      setCurrentPage(1);
+    } catch (error) {
+      console.error('MonthlyOpsDocCreate error', error);
+      alert('월간 운영 보고서 생성에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isLoading) {
@@ -185,7 +213,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
                 </Select>
               </div>
               <div className="text-sm text-gray-600">
-                총 <span className="font-medium text-[#5dccb4]">{filteredReports.length}</span>건
+                총 <span className="font-medium text-[#5dccb4]">{pagination.total_items}</span>건
               </div>
               <div className="flex-1"></div>
               <Button
@@ -215,7 +243,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
                   paginatedReportsVm.map((report, index) => (
                     <TableRow key={report.id} className="hover:bg-gray-50 transition-colors">
                       <TableCell className="text-center text-sm">
-                        {startIndex + index + 1}
+                        {offsetIndex + index + 1}
                       </TableCell>
                       <TableCell className="text-center text-sm font-medium">
                         {report.yearText}
@@ -233,7 +261,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleView(paginatedReports[index])}
+                            onClick={() => handleView(reports[index])}
                             className="flex items-center gap-1"
                           >
                             <FileText size={14} />
@@ -241,7 +269,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
                           </Button>
                           <Button
                             size="sm"
-                            onClick={() => handleDownload(paginatedReports[index])}
+                            onClick={() => handleDownload(reports[index])}
                             className="bg-[#5dccb4] hover:bg-[#4db9a3] text-white flex items-center gap-1"
                           >
                             <Download size={14} />

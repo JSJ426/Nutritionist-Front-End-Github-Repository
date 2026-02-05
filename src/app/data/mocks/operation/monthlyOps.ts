@@ -9,6 +9,7 @@ export const mockMonthlyOpsDocCreateResponse = {
     month: 1,
     status: 'PROCESSING',
     created_at: '2026-01-28T10:30:00Z',
+    files: [],
   },
 } as const;
 
