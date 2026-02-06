@@ -51,18 +51,18 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
     setCurrentPage((prev) => Math.min(Math.max(1, prev), numPages));
   }, [numPages]);
 
-  // useEffect(() => {
-  //   console.log('[OperationReportReadPage] reportId:', reportId);
-  // }, [reportId]);
+  useEffect(() => {
+    console.log('[OperationReportReadPage] reportId:', reportId);
+  }, [reportId]);
 
-  // useEffect(() => {
-  //   console.log('[OperationReportReadPage] status:', status, 'error:', error);
-  // }, [status, error]);
+  useEffect(() => {
+    console.log('[OperationReportReadPage] status:', status, 'error:', error);
+  }, [status, error]);
 
-  // useEffect(() => {
-  //   if (!data) return;
-  //   console.log('[OperationReportReadPage] monthly ops doc detail data:', data);
-  // }, [data]);
+  useEffect(() => {
+    if (!data) return;
+    console.log('[OperationReportReadPage] monthly ops doc detail data:', data);
+  }, [data]);
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
