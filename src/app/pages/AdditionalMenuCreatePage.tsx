@@ -316,9 +316,6 @@ export function AdditionalMenuCreatePage({ onNavigate }: AdditionalMenuCreatePag
               </div> */}
 
               <div className="flex justify-end gap-3 pt-4">
-                <Button variant="outline" onClick={handleCallLLM}>
-                  LLM 기반 생성
-                </Button>
                 <Button variant="outline" onClick={handleCancel}>
                   취소
                 </Button>
