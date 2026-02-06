@@ -42,10 +42,20 @@ const buildUrl = (url: string) => {
 };
 
 export const httpRequest = async <T>(url: string, options: HttpRequestOptions = {}): Promise<T> => {
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+  const headers = buildHeaders(options.headers);
+  if (isFormData) {
+    delete headers['Content-Type'];
+  }
+
   const response = await fetch(buildUrl(url), {
     method: options.method ?? 'GET',
-    headers: buildHeaders(options.headers),
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    headers,
+    body: options.body
+      ? isFormData
+        ? options.body
+        : JSON.stringify(options.body)
+      : undefined,
     signal: options.signal,
   });
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ArrowLeft, Paperclip, Upload, X } from 'lucide-react';
 
-import { createBoardPost } from '../data/board';
+import { createBoardPost, uploadBoardFiles } from '../data/board';
 import { useAuth } from '../auth/AuthContext';
 
 import { Button } from '../components/ui/button';
@@ -25,7 +25,10 @@ export function BoardWritePage({ onNavigate }: BoardWritePageProps) {
   const [content, setContent] = useState('');
   const [category] = useState('공지'); // 공지로 고정
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const { token } = useAuth();
+  const MAX_FILES = 3;
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -40,7 +43,39 @@ export function BoardWritePage({ onNavigate }: BoardWritePageProps) {
     if (!files) return;
 
     const nextFiles = Array.from(files);
-    setUploadedFiles((prev) => [...prev, ...nextFiles]);
+    const availableSlots = MAX_FILES - uploadedFiles.length;
+    if (availableSlots <= 0) {
+      alert('첨부파일은 최대 3개까지 가능합니다.');
+      event.target.value = '';
+      return;
+    }
+
+    const validFiles: File[] = [];
+    let hasOversize = false;
+    let hasOverflow = false;
+
+    for (const file of nextFiles) {
+      if (file.size > MAX_FILE_SIZE) {
+        hasOversize = true;
+        continue;
+      }
+      if (validFiles.length >= availableSlots) {
+        hasOverflow = true;
+        continue;
+      }
+      validFiles.push(file);
+    }
+
+    if (hasOversize) {
+      alert('파일 1개당 최대 10MB까지 업로드할 수 있습니다.');
+    }
+    if (hasOverflow) {
+      alert('첨부파일은 최대 3개까지 가능합니다.');
+    }
+
+    if (validFiles.length > 0) {
+      setUploadedFiles((prev) => [...prev, ...validFiles]);
+    }
     event.target.value = '';
   };
 
@@ -59,9 +94,20 @@ export function BoardWritePage({ onNavigate }: BoardWritePageProps) {
       return;
     }
 
-    await createBoardPost({ title, content, category });
-    alert('게시물이 등록되었습니다.');
-    onNavigate?.('board-list');
+    try {
+      setIsUploading(true);
+      const created = await createBoardPost({ title, content, category });
+      if (uploadedFiles.length > 0) {
+        await uploadBoardFiles(uploadedFiles, created.id);
+      }
+      alert('게시물이 등록되었습니다.');
+      onNavigate?.('board-list');
+    } catch (error) {
+      console.error(error);
+      alert('게시물 등록에 실패했습니다.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -160,6 +206,7 @@ export function BoardWritePage({ onNavigate }: BoardWritePageProps) {
                         multiple
                         onChange={handleFileUpload}
                         className="hidden"
+                        disabled={isUploading}
                       />
                     </label>
                   </div>
@@ -204,14 +251,16 @@ export function BoardWritePage({ onNavigate }: BoardWritePageProps) {
                 <Button
                   variant="outline"
                   onClick={handleCancel}
+                  disabled={isUploading}
                 >
                   취소
                 </Button>
                 <Button
                   onClick={handleSubmit}
                   className="bg-[#5dccb4] hover:bg-[#4db9a3] text-white"
+                  disabled={isUploading}
                 >
-                  등록
+                  {isUploading ? '업로드 중...' : '등록'}
                 </Button>
               </div>
             </div>

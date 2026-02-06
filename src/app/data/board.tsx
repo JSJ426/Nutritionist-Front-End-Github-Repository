@@ -1,15 +1,12 @@
 import { http } from './http';
-import { getStoredAuthClaims } from './auth';
-import { mockBoardCreateResponse } from './mocks/board/create';
-import { mockBoardDeleteResponse } from './mocks/board/delete';
 import { mockBoardDetailResponses } from './mocks/board/detail';
-import { mockBoardListResponse } from './mocks/board/list';
-import { mockBoardUpdateResponse } from './mocks/board/update';
 import type {
   BoardDetailResponse,
   BoardDeleteResponse,
   BoardListResponse,
   BoardWriteResponse,
+  FileUploadApiResponse,
+  FileUploadResponse,
 } from '../viewModels/board';
 
 // BoardList 대응
@@ -42,14 +39,19 @@ export type BoardCreatePayload = {
   category: '공지' | '건의' | '신메뉴' | '기타의견';
   title: string;
   content: string;
-  authorId?: number;
-  authorName?: string;
-  authorType?: 'DIETITIAN' | 'STUDENT' | 'TEACHER' | 'STAFF';
   attachments?: Array<{
-    id?: number;
-    name?: string;
-    size?: number;
+    fileName: string;
+    s3Path: string;
+    fileType: string;
   }>;
+};
+
+export type BoardUpdatePayload = {
+  category?: BoardCreatePayload['category'];
+  title?: string;
+  content?: string;
+  files?: File[];
+  deleteFileIds?: number[];
 };
 
 const boardCategoryToApi = (category: BoardCreatePayload['category']) => {
@@ -69,15 +71,10 @@ const boardCategoryToApi = (category: BoardCreatePayload['category']) => {
 export const createBoardPost = async (
   payload: BoardCreatePayload
 ): Promise<BoardWriteResponse> => {
-  const claims = getStoredAuthClaims();
-  const authorId = payload.authorId ?? claims?.id;
   const body = {
     category: boardCategoryToApi(payload.category),
     title: payload.title,
     content: payload.content,
-    ...(authorId ? { authorId } : {}),
-    authorName: payload.authorName ?? '',
-    authorType: payload.authorType ?? 'DIETITIAN',
     attachments: payload.attachments ?? [],
   };
   return http.post<BoardWriteResponse>('/boards', body);
@@ -86,14 +83,25 @@ export const createBoardPost = async (
 // BoardUpdate 대응
 export const updateBoardPost = async (
   postId: number,
-  payload: BoardCreatePayload
+  payload: BoardUpdatePayload
 ): Promise<BoardWriteResponse> => {
-  const body = {
-    category: boardCategoryToApi(payload.category),
-    title: payload.title,
-    content: payload.content,
-  };
-  return http.patch<BoardWriteResponse>(`/boards/${postId}`, body);
+  const form = new FormData();
+  if (payload.category) {
+    form.append('category', boardCategoryToApi(payload.category));
+  }
+  if (payload.title) {
+    form.append('title', payload.title);
+  }
+  if (payload.content) {
+    form.append('content', payload.content);
+  }
+  if (payload.deleteFileIds && payload.deleteFileIds.length > 0) {
+    form.append('deleteFileIds', payload.deleteFileIds.join(','));
+  }
+  (payload.files ?? []).forEach((file) => {
+    form.append('files', file);
+  });
+  return http.patch<BoardWriteResponse>(`/boards/${postId}`, form);
 };
 
 // BoardDelete 대응
@@ -103,6 +111,17 @@ export const deleteBoardPost = async (
   http.delete<BoardDeleteResponse>(`/boards/${postId}`);
 
 // FileUpload 대응
+export const uploadBoardFiles = async (
+  files: File[],
+  relatedId: number
+): Promise<FileUploadResponse[]> => {
+  const form = new FormData();
+  files.forEach((file) => form.append('files', file));
+  form.append('relatedType', 'BOARD');
+  form.append('relatedId', String(relatedId));
+  const response = await http.post<FileUploadApiResponse>('/api/files', form);
+  return response.data;
+};
 
 // FileUpdate 대응
 

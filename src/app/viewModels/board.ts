@@ -113,6 +113,7 @@ export type BoardWriteResponse = {
   title: string;
   content: string;
   authorId: number;
+  authorName: string;
   authorType: BoardAuthorType;
   viewCount: number;
   attachments: Array<{
@@ -126,6 +127,23 @@ export type BoardWriteResponse = {
   }>;
   createdAt: string;
   updatedAt: string;
+};
+
+export type FileUploadResponse = {
+  id: number;
+  related_type: string;
+  related_id: number;
+  file_name: string;
+  file_type: string;
+  file_size: number;
+  s3_path: string;
+  created_at: string;
+};
+
+export type FileUploadApiResponse = {
+  status: string;
+  message: string;
+  data: FileUploadResponse[];
 };
 
 export type BoardDeleteResponse = {

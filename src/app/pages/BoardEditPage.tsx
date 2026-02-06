@@ -37,7 +37,11 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
   const [category, setCategory] = useState('공지');
   const [existingFiles, setExistingFiles] = useState<AttachmentItem[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [deletedFileIds, setDeletedFileIds] = useState<number[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [originalPost, setOriginalPost] = useState<BoardEditVM | null>(null);
+  const MAX_FILES = 3;
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
   useEffect(() => {
     let isActive = true;
@@ -56,6 +60,7 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
           size: file.size,
         }))
       );
+      setDeletedFileIds([]);
       setIsLoading(false);
     };
     load();
@@ -75,13 +80,48 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
+
     const nextFiles = Array.from(files);
-    setUploadedFiles((prev) => [...prev, ...nextFiles]);
+    const remainingSlots = MAX_FILES - existingFiles.length - uploadedFiles.length;
+
+    if (remainingSlots <= 0) {
+      alert('첨부파일은 최대 3개까지 가능합니다.');
+      event.target.value = '';
+      return;
+    }
+
+    const validFiles: File[] = [];
+    let hasOversize = false;
+    let hasOverflow = false;
+
+    for (const file of nextFiles) {
+      if (file.size > MAX_FILE_SIZE) {
+        hasOversize = true;
+        continue;
+      }
+      if (validFiles.length >= remainingSlots) {
+        hasOverflow = true;
+        continue;
+      }
+      validFiles.push(file);
+    }
+
+    if (hasOversize) {
+      alert('파일 1개당 최대 10MB까지 업로드할 수 있습니다.');
+    }
+    if (hasOverflow) {
+      alert('첨부파일은 최대 3개까지 가능합니다.');
+    }
+
+    if (validFiles.length > 0) {
+      setUploadedFiles((prev) => [...prev, ...validFiles]);
+    }
     event.target.value = '';
   };
 
   const handleRemoveExisting = (id: number) => {
     setExistingFiles((prev) => prev.filter((file) => file.id !== id));
+    setDeletedFileIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
   };
 
   const handleRemoveNew = (index: number) => {
@@ -98,9 +138,23 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
       return;
     }
 
-    await updateBoardPost(postId, { title, content, category });
-    alert('게시물이 수정되었습니다.');
-    onNavigate?.('board-read', { postId });
+    try {
+      setIsUploading(true);
+      await updateBoardPost(postId, {
+        title,
+        content,
+        category,
+        files: uploadedFiles,
+        deleteFileIds: deletedFileIds,
+      });
+      alert('게시물이 수정되었습니다.');
+      onNavigate?.('board-read', { postId });
+    } catch (error) {
+      console.error(error);
+      alert('게시물 수정에 실패했습니다.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -209,14 +263,15 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
                     <label className="inline-flex items-center px-3 py-2 text-sm border rounded hover:bg-gray-50 cursor-pointer">
                       <Upload size={16} className="mr-2" />
                       파일 선택
-                      <input
-                        type="file"
-                        multiple
-                        onChange={handleFileUpload}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    disabled={isUploading}
+                  />
+                </label>
+              </div>
 
                   {(existingFiles.length > 0 || uploadedFiles.length > 0) && (
                     <div className="mt-4 space-y-2">
@@ -276,14 +331,16 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
                 <Button
                   variant="outline"
                   onClick={handleCancel}
+                  disabled={isUploading}
                 >
                   취소
                 </Button>
                 <Button
                   onClick={handleSubmit}
                   className="bg-[#5dccb4] hover:bg-[#4db9a3] text-white"
+                  disabled={isUploading}
                 >
-                  수정 완료
+                  {isUploading ? '업로드 중...' : '수정 완료'}
                 </Button>
               </div>
             </div>
