@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Mail } from 'lucide-react';
 
 import { findDietitianId } from '../data/auth';
+import { Footer } from '../components/Footer';
 
 type FindIdPageProps = {
   onNavigate: (page: string) => void;
@@ -54,8 +55,8 @@ export function FindIdPage({ onNavigate }: FindIdPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F7F8]">
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen bg-[#F6F7F8] flex flex-col">
+      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden p-8 lg:p-12">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">아이디 찾기</h2>
           <p className="text-gray-600 mb-8">
@@ -174,6 +175,7 @@ export function FindIdPage({ onNavigate }: FindIdPageProps) {
           )}
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

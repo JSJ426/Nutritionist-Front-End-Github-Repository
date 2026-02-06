@@ -5,6 +5,7 @@ import { signupDietitian } from '../data/auth';
 import { searchSchools } from '../data/school';
 import TermsModal from '../components/TermsModal';
 import PrivacyModal from '../components/PrivacyModal';
+import { Footer } from '../components/Footer';
 import { validatePasswordPolicy } from '../utils/password';
 import type { SchoolSearchItem } from '../viewModels/school';
 
@@ -223,8 +224,8 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
     !formData.schoolTypePrimary || formData.schoolTypePrimary === '초등학교';
 
   return (
-    <div className="min-h-screen bg-[#F6F7F8]">
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen bg-[#F6F7F8] flex flex-col">
+      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden p-8 lg:p-12">
           <div className="flex items-center gap-3 mb-2">
             <button
@@ -819,6 +820,7 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
         onClose={() => setIsPrivacyModalOpen(false)}
         onAgree={() => setAgreedToPrivacy(true)}
       />
+      <Footer />
     </div>
   );
 }

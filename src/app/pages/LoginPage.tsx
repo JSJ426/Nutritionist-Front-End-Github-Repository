@@ -4,6 +4,7 @@ import { User, Lock, Eye, EyeOff } from 'lucide-react';
 import mealTrayImage from '../../assets/a65a012f8dfb6e34563e688039daec79bf5a2d4c.png';
 import { loginDietitian } from '../data/auth';
 import { useAuth } from '../auth/AuthContext';
+import { Footer } from '../components/Footer';
 
 type LoginPageProps = {
   onLogin: () => void;
@@ -37,8 +38,8 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F7F8]">
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen bg-[#F6F7F8] flex flex-col">
+      <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="grid md:grid-cols-2 gap-0">
             <div className="p-8 lg:p-12 bg-gradient-to-br from-gray-50 to-white">
@@ -170,6 +171,7 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }
