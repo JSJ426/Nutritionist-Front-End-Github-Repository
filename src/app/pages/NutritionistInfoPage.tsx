@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { KeyRound, Lock, Phone, User } from 'lucide-react';
 
 import { getNutritionistProfile } from '../data/nutritionist';
+import { validatePasswordPolicy } from '../utils/password';
 
 interface NutritionistInfoPageProps {
   onNavigate?: (page: string, params?: any) => void;
@@ -20,6 +21,8 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const passwordMismatch =
+    Boolean(confirmPassword.trim()) && Boolean(newPassword.trim()) && confirmPassword !== newPassword;
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -89,6 +92,13 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
   const handlePasswordChange = () => {
     if (!currentPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
       setPasswordError('현재 비밀번호와 새 비밀번호를 모두 입력해주세요.');
+      setPasswordSuccess(false);
+      return;
+    }
+
+    const policyResult = validatePasswordPolicy(newPassword);
+    if (!policyResult.isValid) {
+      setPasswordError(policyResult.message);
       setPasswordSuccess(false);
       return;
     }
@@ -215,7 +225,10 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
               <input
                 type="password"
                 value={currentPassword}
-                onChange={(event) => setCurrentPassword(event.target.value)}
+                onChange={(event) => {
+                  setCurrentPassword(event.target.value);
+                  setPasswordSuccess(false);
+                }}
                 className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
                 placeholder="현재 비밀번호 입력"
               />
@@ -225,10 +238,19 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
                 <KeyRound size={16} />
                 새 비밀번호
               </label>
+              <p className="text-xs text-gray-500 mb-2">
+                영문/숫자/특수문자 중 2종 이상 포함. 2종 10~16자, 3종 8~16자 ( ) &lt; &gt; " ' ; 사용 불가.
+              </p>
               <input
                 type="password"
                 value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setNewPassword(value);
+                  const result = validatePasswordPolicy(value);
+                  setPasswordError(result.isValid ? '' : result.message);
+                  setPasswordSuccess(false);
+                }}
                 className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
                 placeholder="새 비밀번호 입력"
               />
@@ -241,10 +263,16 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
               <input
                 type="password"
                 value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
+                onChange={(event) => {
+                  setConfirmPassword(event.target.value);
+                  setPasswordSuccess(false);
+                }}
                 className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
                 placeholder="새 비밀번호 재입력"
               />
+              {passwordMismatch && (
+                <p className="text-sm text-red-500 mt-2">새 비밀번호가 일치하지 않습니다.</p>
+              )}
               {passwordError && <p className="text-sm text-red-500 mt-2">{passwordError}</p>}
               {passwordSuccess && (
                 <p className="text-sm text-green-600 mt-2">비밀번호 변경이 완료되었습니다.</p>

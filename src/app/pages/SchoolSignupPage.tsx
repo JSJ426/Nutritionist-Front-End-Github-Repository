@@ -5,6 +5,7 @@ import { signupDietitian } from '../data/auth';
 import { searchSchools } from '../data/school';
 import TermsModal from '../components/TermsModal';
 import PrivacyModal from '../components/PrivacyModal';
+import { validatePasswordPolicy } from '../utils/password';
 import type { SchoolSearchItem } from '../viewModels/school';
 
 type SchoolSignupPageProps = {
@@ -41,6 +42,7 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [passwordPolicyError, setPasswordPolicyError] = useState('');
 
   // 학교 검색 관련 상태
   const [schoolSearchQuery, setSchoolSearchQuery] = useState('');
@@ -51,6 +53,10 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    if (field === 'password') {
+      const result = validatePasswordPolicy(value);
+      setPasswordPolicyError(result.isValid ? '' : result.message);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,6 +64,13 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
 
     if (formData.password !== formData.confirmPassword) {
       alert('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    const policyResult = validatePasswordPolicy(formData.password);
+    if (!policyResult.isValid) {
+      setPasswordPolicyError(policyResult.message);
+      alert(policyResult.message);
       return;
     }
 
@@ -275,6 +288,9 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                   비밀번호 <span className="text-red-500">*</span>
                 </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  영문/숫자/특수문자 중 2종 이상 포함. 2종 10~16자, 3종 8~16자 ( ) &lt; &gt; " ' ; 사용 불가.
+                </p>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Lock className="h-5 w-5 text-gray-400" />
@@ -286,7 +302,6 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                     onChange={(e) => handleChange('password', e.target.value)}
                     placeholder="영문, 숫자, 특수문자 조합 8자 이상"
                     className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
-                    minLength={8}
                     required
                   />
                   <button
@@ -301,6 +316,9 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                     )}
                   </button>
                 </div>
+                {passwordPolicyError && (
+                  <p className="mt-1.5 text-xs text-red-500">{passwordPolicyError}</p>
+                )}
               </div>
 
               {/* Confirm Password */}
