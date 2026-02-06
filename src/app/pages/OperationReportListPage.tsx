@@ -135,7 +135,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
 
   const handleView = (report: Report) => {
     onNavigate?.('operation-report-read', {
-      reportId: report.id,
+      id: report.id,
       title: report.title,
       year: report.year,
       month: report.month,

@@ -51,6 +51,19 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
     setCurrentPage((prev) => Math.min(Math.max(1, prev), numPages));
   }, [numPages]);
 
+  // useEffect(() => {
+  //   console.log('[OperationReportReadPage] reportId:', reportId);
+  // }, [reportId]);
+
+  // useEffect(() => {
+  //   console.log('[OperationReportReadPage] status:', status, 'error:', error);
+  // }, [status, error]);
+
+  // useEffect(() => {
+  //   if (!data) return;
+  //   console.log('[OperationReportReadPage] monthly ops doc detail data:', data);
+  // }, [data]);
+
   return (
     <div className="flex flex-col h-full bg-gray-50">
       <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
@@ -108,10 +121,10 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
                   <span>생성일: {generatedDate}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              {/* <div className="flex items-center gap-2 text-sm text-gray-600">
                 <FileText size={16} />
                 PDF 뷰어
-              </div>
+              </div> */}
             </div>
           </div>
 
