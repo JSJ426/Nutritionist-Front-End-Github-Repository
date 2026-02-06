@@ -49,6 +49,17 @@ export function MealDayCardEditable({
 }: MealDayCardEditableProps) {
   const [openAiReasonKey, setOpenAiReasonKey] = useState<string | null>(null);
 
+  const normalizeMenu = (menu: MenuItem[]) => {
+    const nonEmpty = menu.filter((item) => item.name.trim().length > 0);
+    const emptyCount = Math.max(0, 7 - nonEmpty.length);
+    const padded = [
+      ...nonEmpty,
+      ...Array.from({ length: emptyCount }, () => ({ name: '', allergy: [] })),
+    ];
+
+    return padded.slice(0, 7);
+  };
+
   useEffect(() => {
     if (!openAiReasonKey) return;
 
@@ -66,6 +77,8 @@ export function MealDayCardEditable({
   const renderMealSection = (mealType: 'lunch' | 'dinner', mealData: MealData) => {
     const aiReasonKey = `${day}-${mealType}`;
     const aiReasonText = mealData.aiReason ?? 'AI 추천 사유가 없습니다.';
+    const normalizedMenu = normalizeMenu(mealData.menu);
+    const isMealEmpty = normalizedMenu.every((item) => item.name.trim().length === 0);
 
     return (
       <div className="flex-1 flex flex-col">
@@ -85,8 +98,9 @@ export function MealDayCardEditable({
             <Button
               size="sm"
               variant="outline"
-              className="h-6 px-3 text-xs text-[#5dccb4] hover:bg-[#5dccb4]/10"
+              className="h-6 px-3 text-xs text-[#5dccb4] hover:bg-[#5dccb4]/10 disabled:text-gray-300 disabled:border-gray-200 disabled:hover:bg-transparent"
               onClick={(e) => onEdit(day, mealType, e)}
+              disabled={isMealEmpty}
             >
               수정
             </Button>
@@ -94,11 +108,12 @@ export function MealDayCardEditable({
             <Button
               size="sm"
               variant="outline"
-              className="h-6 px-3 text-xs text-[#cc5db4] hover:bg-[#cc5db4]/10"
+              className="h-6 px-3 text-xs text-[#cc5db4] hover:bg-[#cc5db4]/10 disabled:text-gray-300 disabled:border-gray-200 disabled:hover:bg-transparent"
               onClick={() => {
                 if (!mealDate) return;
                 onAiReplace(day, mealType, mealDate);
               }}
+              disabled={isMealEmpty || !mealDate}
             >
               AI대체
             </Button>
@@ -107,14 +122,18 @@ export function MealDayCardEditable({
         </div>
 
         <div className="space-y-2 flex-1 mb-2">
-          {mealData.menu.map((item, idx) => (
-            <div key={idx} className="flex items-start justify-between gap-2">
-              <span className="text-sm text-gray-800 flex-1">{item.name}</span>
-              {item.allergy.length > 0 && (
-                <span className="text-xs text-gray-600 bg-[#FCE8E6] px-1 py-0.5 rounded flex-shrink-0">
-                  {item.allergy.join(',')}
-                </span>
-              )}
+          {normalizedMenu.map((item, idx) => (
+            <div key={idx} className="flex items-start justify-between gap-2 min-h-[20px]">
+              {item.name ? (
+                <>
+                  <span className="text-sm text-gray-800 flex-1">{item.name}</span>
+                  {item.allergy.length > 0 && (
+                    <span className="text-xs text-gray-600 bg-[#FCE8E6] px-1 py-0.5 rounded flex-shrink-0">
+                      {item.allergy.join(',')}
+                    </span>
+                  )}
+                </>
+              ) : null}
             </div>
           ))}
         </div>
@@ -122,7 +141,8 @@ export function MealDayCardEditable({
         <div className="flex items-center justify-between gap-2 pt-2">  
           <button
             onClick={() => onDetail(weekNum, day, mealType)}
-            className="flex items-center gap-1 text-xs text-gray-600 hover:text-[#5dccb4] transition-colors"
+            className="flex items-center gap-1 text-xs text-gray-600 hover:text-[#5dccb4] transition-colors disabled:text-gray-300"
+            disabled={isMealEmpty}
           >
             <Info className="w-3.5 h-3.5" />
             상세보기
