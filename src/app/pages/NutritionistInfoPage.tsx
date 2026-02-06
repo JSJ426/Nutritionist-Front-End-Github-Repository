@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { KeyRound, Lock, Mail, Phone, User } from 'lucide-react';
 
-import { getNutritionistProfile, patchNutritionistMe } from '../data/nutritionist';
+import { getNutritionistProfile, patchNutritionistMe, putNutritionistPassword } from '../data/nutritionist';
 import { validatePasswordPolicy } from '../utils/password';
 
 interface NutritionistInfoPageProps {
@@ -23,6 +23,7 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPasswordSaving, setIsPasswordSaving] = useState(false);
   const passwordMismatch =
     Boolean(confirmPassword.trim()) && Boolean(newPassword.trim()) && confirmPassword !== newPassword;
 
@@ -179,7 +180,7 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
     }
   };
 
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async () => {
     if (!currentPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
       setPasswordError('현재 비밀번호와 새 비밀번호를 모두 입력해주세요.');
       setPasswordSuccess(false);
@@ -200,10 +201,22 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
     }
 
     setPasswordError('');
-    setPasswordSuccess(true);
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
+    try {
+      setIsPasswordSaving(true);
+      await putNutritionistPassword({
+        current_password: currentPassword.trim(),
+        new_password: newPassword.trim(),
+      });
+      setPasswordSuccess(true);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      setPasswordSuccess(false);
+      alert(extractErrorMessage(error));
+    } finally {
+      setIsPasswordSaving(false);
+    }
   };
 
   return (
@@ -391,9 +404,10 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
           <div className="flex gap-3 justify-end mt-8">
             <button
               onClick={handlePasswordChange}
-              className="px-6 py-2 bg-[#5dccb4] text-white rounded hover:bg-[#4dbba3]"
+              className="px-6 py-2 bg-[#5dccb4] text-white rounded hover:bg-[#4dbba3] disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={isPasswordSaving}
             >
-              비밀번호 변경
+              {isPasswordSaving ? '변경 중...' : '비밀번호 변경'}
             </button>
           </div>
         </div>

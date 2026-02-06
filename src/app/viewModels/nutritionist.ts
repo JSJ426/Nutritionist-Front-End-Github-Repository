@@ -34,3 +34,8 @@ export type NutritionistUpdateRequest = {
   phone: string;
   email: string;
 };
+
+export type NutritionistPasswordChangeRequest = {
+  current_password: string;
+  new_password: string;
+};
