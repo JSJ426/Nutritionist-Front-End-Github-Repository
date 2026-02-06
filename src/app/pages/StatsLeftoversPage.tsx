@@ -102,6 +102,7 @@ export function StatsLeftoversPage() {
   const [draftMenuType, setDraftMenuType] = useState<StatsLeftoversMenuType>(defaultMenuType as StatsLeftoversMenuType);
   const [draftStartDate, setDraftStartDate] = useState(defaultStartDate);
   const [draftEndDate, setDraftEndDate] = useState(defaultEndDate);
+  const [isCustomEnabled, setIsCustomEnabled] = useState(false);
   
   // Applied 상태 (조회 버튼 클릭 후 실제 적용된 값)
   const [period, setPeriod] = useState<StatsLeftoversPeriod>(defaultPeriod as StatsLeftoversPeriod);
@@ -110,20 +111,35 @@ export function StatsLeftoversPage() {
   const [startDate, setStartDate] = useState(defaultStartDate);
   const [endDate, setEndDate] = useState(defaultEndDate);
 
+  const fallbackPeriodForToggleOff = (defaultPeriod === 'custom' ? 'weekly' : defaultPeriod) as StatsLeftoversPeriod;
+
   useEffect(() => {
     if (!metrics || isInitialized) return;
-    setDraftPeriod(metrics.defaults.defaultPeriod as StatsLeftoversPeriod);
+    const safeDefaultPeriod =
+      metrics.defaults.defaultPeriod === 'custom' ? 'weekly' : metrics.defaults.defaultPeriod;
+    setDraftPeriod(safeDefaultPeriod as StatsLeftoversPeriod);
     setDraftMealType(metrics.defaults.defaultMealType as StatsLeftoversMealType);
     setDraftMenuType(metrics.defaults.defaultMenuType as StatsLeftoversMenuType);
     setDraftStartDate(metrics.defaults.defaultStartDate);
     setDraftEndDate(metrics.defaults.defaultEndDate);
-    setPeriod(metrics.defaults.defaultPeriod as StatsLeftoversPeriod);
+    setPeriod(safeDefaultPeriod as StatsLeftoversPeriod);
     setMealType(metrics.defaults.defaultMealType as StatsLeftoversMealType);
     setMenuType(metrics.defaults.defaultMenuType as StatsLeftoversMenuType);
     setStartDate(metrics.defaults.defaultStartDate);
     setEndDate(metrics.defaults.defaultEndDate);
+    setIsCustomEnabled(false);
     setIsInitialized(true);
   }, [metrics, isInitialized]);
+
+  useEffect(() => {
+    if (isCustomEnabled) {
+      setDraftPeriod('custom');
+      return;
+    }
+    if (draftPeriod === 'custom') {
+      setDraftPeriod(fallbackPeriodForToggleOff);
+    }
+  }, [isCustomEnabled, draftPeriod, fallbackPeriodForToggleOff]);
 
   // 조회 버튼 클릭 핸들러
   const handleSearch = () => {
@@ -231,6 +247,13 @@ export function StatsLeftoversPage() {
         onPeriodChange={setDraftPeriod}
         mealType={draftMealType}
         onMealTypeChange={setDraftMealType}
+        onSearch={handleSearch}
+      />
+      {/* <StatsFilterPanel
+        period={draftPeriod}
+        onPeriodChange={setDraftPeriod}
+        mealType={draftMealType}
+        onMealTypeChange={setDraftMealType}
         menuType={draftMenuType}
         onMenuTypeChange={setDraftMenuType}
         showMenuType
@@ -240,7 +263,7 @@ export function StatsLeftoversPage() {
         onStartDateChange={setDraftStartDate}
         onEndDateChange={setDraftEndDate}
         onSearch={handleSearch}
-      />
+      /> */}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-6 mb-6">
