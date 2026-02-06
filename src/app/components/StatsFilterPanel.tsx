@@ -1,6 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { Switch } from './ui/switch';
 
 type Option = { value: string; label: string };
 
@@ -22,6 +23,9 @@ interface StatsFilterPanelProps {
   mealOptions?: Option[];
   menuTypeOptions?: Option[];
   customValue?: string;
+  customEnabled?: boolean;
+  onCustomEnabledChange?: (value: boolean) => void;
+  customToggleLabel?: string;
 }
 
 const defaultPeriodOptions: Option[] = [
@@ -61,22 +65,39 @@ export function StatsFilterPanel({
   mealOptions = defaultMealOptions,
   menuTypeOptions = defaultMenuTypeOptions,
   customValue = 'custom',
+  customEnabled = false,
+  onCustomEnabledChange,
+  customToggleLabel = '사용자 지정',
 }: StatsFilterPanelProps) {
   const isCustomPeriod = showCustomDates && period === customValue;
   const gridColsClass = showMenuType ? 'md:grid-cols-4' : 'md:grid-cols-3';
+  const resolvedPeriodOptions = customEnabled
+    ? periodOptions
+    : periodOptions.filter((option) => option.value !== customValue);
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
       <h3 className="text-sm font-medium text-gray-700 mb-4">조회 조건</h3>
       <div className={`grid grid-cols-1 ${gridColsClass} gap-4`}>
         <div>
-          <label className="text-sm text-gray-600 mb-2 block">기간 선택</label>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-sm text-gray-600">기간 선택</label>
+            {onCustomEnabledChange && (
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <span>{customToggleLabel}</span>
+                <Switch
+                  checked={customEnabled}
+                  onCheckedChange={onCustomEnabledChange}
+                />
+              </div>
+            )}
+          </div>
           <Select value={period} onValueChange={onPeriodChange}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {periodOptions.map((option) => (
+              {resolvedPeriodOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
