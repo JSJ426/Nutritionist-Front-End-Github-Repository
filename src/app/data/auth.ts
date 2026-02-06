@@ -1,4 +1,4 @@
-import { http, setAuthToken } from './http';
+import { http, httpRequest, setAuthToken } from './http';
 
 export type DietitianSignupSchoolInfo = {
   school_name: string;
@@ -123,3 +123,14 @@ export const loginDietitian = async (
   http.post<DietitianLoginResponse>('/api/auth/login/dietitian', payload);
 
 export const fetchSchoolInfo = async <T = unknown>() => http.get<T>('/api/schools/my');
+
+export type DietitianWithdrawalRequest = {
+  pw: string;
+};
+
+export const withdrawDietitian = async (payload: DietitianWithdrawalRequest): Promise<string> =>
+  httpRequest<string>('/api/auth/withdraw/dietitian', {
+    method: 'DELETE',
+    body: payload,
+    responseType: 'text',
+  });

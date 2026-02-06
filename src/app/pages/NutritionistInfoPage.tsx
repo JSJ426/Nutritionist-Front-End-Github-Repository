@@ -411,6 +411,21 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
             </button>
           </div>
         </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-medium mb-4">회원탈퇴</h2>
+          <p className="text-sm text-gray-600">
+            탈퇴를 진행하면 계정 정보가 삭제되며 복구할 수 없습니다.
+          </p>
+          <div className="flex justify-end mt-6">
+            <button
+              onClick={() => onNavigate?.('nutritionist-withdrawal')}
+              className="px-6 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              회원탈퇴 페이지로 이동
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

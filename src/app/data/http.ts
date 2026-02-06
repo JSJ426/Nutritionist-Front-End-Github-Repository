@@ -5,6 +5,7 @@ type HttpRequestOptions = {
   body?: unknown;
   headers?: Record<string, string>;
   signal?: AbortSignal;
+  responseType?: 'json' | 'text';
 };
 
 let authToken: string | null = null;
@@ -48,6 +49,7 @@ export const httpRequest = async <T>(url: string, options: HttpRequestOptions = 
     delete headers['Content-Type'];
   }
 
+  const responseType = options.responseType ?? 'json';
   const response = await fetch(buildUrl(url), {
     method: options.method ?? 'GET',
     headers,
@@ -67,6 +69,10 @@ export const httpRequest = async <T>(url: string, options: HttpRequestOptions = 
 
   if (!text) {
     return {} as T;
+  }
+
+  if (responseType === 'text') {
+    return text as T;
   }
 
   try {

@@ -25,6 +25,7 @@ import { BoardReadPage } from './pages/BoardReadPage';
 import { BoardWritePage } from './pages/BoardWritePage';
 import { BoardEditPage } from './pages/BoardEditPage';
 import { NutritionistInfoPage } from './pages/NutritionistInfoPage';
+import { NutritionistWithdrawalPage } from './pages/NutritionistWithdrawalPage';
 import { InstitutionInfoPage } from './pages/InstitutionInfoPage';
 import { InstitutionInfoEditPage } from './pages/InstitutionInfoEditPage';
 
@@ -121,6 +122,8 @@ export default function App() {
         return <InstitutionInfoEditPage onNavigate={handleNavigate} />;
       case 'nutritionist-info':
         return <NutritionistInfoPage onNavigate={handleNavigate} />;
+      case 'nutritionist-withdrawal':
+        return <NutritionistWithdrawalPage onNavigate={handleNavigate} />;
       default:
         return <HomePage />;
     }
