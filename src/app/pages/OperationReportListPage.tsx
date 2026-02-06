@@ -3,7 +3,6 @@ import { Download, FileText, Calendar } from 'lucide-react';
 
 import {
   createMonthlyOpsDoc,
-  downloadMonthlyOpsDoc,
   getMonthlyOpsDocDetail,
   getMonthlyOpsDocListResponse,
 } from '../data/operation';
@@ -114,24 +113,20 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
     try {
       const detail = await getMonthlyOpsDocDetail(report.id);
       const detailVm = toMonthlyOpsDocDetailVM(detail);
-      const fileType = detailVm.fileType?.toLowerCase() ?? '';
-
-      if (!fileType || fileType !== 'application/pdf') {
-        alert('PDF 파일만 다운로드할 수 있습니다.');
+      const url = detailVm.pdfUrl;
+      if (!url) {
+        alert('다운로드할 파일 정보가 없습니다.');
         return;
       }
-
-      const blob = await downloadMonthlyOpsDoc(report.id);
-      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
+      link.rel = 'noopener';
       if (detailVm.fileName) {
         link.download = detailVm.fileName;
       }
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(url);
     } catch (error) {
       console.error('MonthlyOpsDocDownload error', error);
       alert('PDF 다운로드에 실패했습니다.');

@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   Download,
   FileText,
-  Loader2,
   ZoomIn,
   ZoomOut,
   ChevronLeft,
@@ -12,7 +11,6 @@ import {
 import { toast } from 'sonner';
 
 import { Button } from '../components/ui/button';
-import { downloadMonthlyOpsDoc } from '../data/operation';
 import { useMonthlyOpsDocDetail } from '../hooks/useMonthlyOpsDocDetail';
 
 interface OperationReportReadPageProps {
@@ -23,7 +21,6 @@ interface OperationReportReadPageProps {
 export function OperationReportReadPage({ initialParams, onNavigate }: OperationReportReadPageProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(100);
-  const [isDownloading, setIsDownloading] = useState(false);
 
   const reportId = typeof initialParams?.id === 'number' ? initialParams.id : undefined;
   const { status, data, error } = useMonthlyOpsDocDetail(reportId);
@@ -34,7 +31,6 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
   const displayMonth = data?.month ?? initialParams?.month;
   const generatedDate = data?.generatedDateText ?? initialParams?.generatedDate ?? '-';
   const downloadFileName = data?.fileName;
-  const downloadFileType = data?.fileType?.toLowerCase() ?? '';
   const hasPdf = Boolean(pdfUrl);
 
   return (
@@ -55,51 +51,25 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
             </Button>
             <Button
               className="bg-[#5dccb4] hover:bg-[#4db9a3] text-white flex items-center gap-2"
-              disabled={isDownloading || !reportId}
-              onClick={async () => {
-                if (!reportId) {
-                  toast.error('다운로드할 보고서 정보가 없습니다.');
+              disabled={!hasPdf}
+              onClick={() => {
+                if (!pdfUrl) {
+                  toast.error('다운로드할 파일 정보가 없습니다.');
                   return;
                 }
-                if (!downloadFileType || downloadFileType !== 'application/pdf') {
-                  toast.error('PDF 파일만 다운로드할 수 있습니다.');
-                  return;
+                const link = document.createElement('a');
+                link.href = pdfUrl;
+                link.rel = 'noopener';
+                if (downloadFileName) {
+                  link.download = downloadFileName;
                 }
-                try {
-                  setIsDownloading(true);
-                  const blob = await downloadMonthlyOpsDoc(reportId);
-                  const url = URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  if (downloadFileName) {
-                    link.download = downloadFileName;
-                  }
-                  document.body.appendChild(link);
-                  link.click();
-                  link.remove();
-                  URL.revokeObjectURL(url);
-                } catch (downloadError) {
-                  const message =
-                    downloadError instanceof Error
-                      ? downloadError.message
-                      : 'PDF 다운로드에 실패했습니다.';
-                  toast.error(message);
-                } finally {
-                  setIsDownloading(false);
-                }
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
               }}
             >
-              {isDownloading ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  다운로드 중...
-                </>
-              ) : (
-                <>
-                  <Download size={16} />
-                  PDF 다운로드
-                </>
-              )}
+              <Download size={16} />
+              PDF 다운로드
             </Button>
           </div>
         </div>
