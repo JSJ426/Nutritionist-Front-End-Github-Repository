@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   Download,
@@ -9,6 +9,10 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Document, Page, pdfjs } from 'react-pdf';
+
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 
 import { Button } from '../components/ui/button';
 import { useMonthlyOpsDocDetail } from '../hooks/useMonthlyOpsDocDetail';
@@ -21,6 +25,7 @@ interface OperationReportReadPageProps {
 export function OperationReportReadPage({ initialParams, onNavigate }: OperationReportReadPageProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(100);
+  const [numPages, setNumPages] = useState(0);
 
   const reportId = typeof initialParams?.id === 'number' ? initialParams.id : undefined;
   const { status, data, error } = useMonthlyOpsDocDetail(reportId);
@@ -32,6 +37,19 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
   const generatedDate = data?.generatedDateText ?? initialParams?.generatedDate ?? '-';
   const downloadFileName = data?.fileName;
   const hasPdf = Boolean(pdfUrl);
+  const scale = useMemo(() => zoom / 100, [zoom]);
+
+  useEffect(() => {
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+      'pdfjs-dist/build/pdf.worker.min.mjs',
+      import.meta.url
+    ).toString();
+  }, []);
+
+  useEffect(() => {
+    if (!numPages) return;
+    setCurrentPage((prev) => Math.min(Math.max(1, prev), numPages));
+  }, [numPages]);
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -110,12 +128,15 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
                 </Button>
                 <div className="text-sm text-gray-700">
                   페이지 {currentPage}
+                  {numPages ? ` / ${numPages}` : ''}
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={!hasPdf}
-                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                  disabled={!hasPdf || (numPages ? currentPage >= numPages : false)}
+                  onClick={() =>
+                    setCurrentPage((prev) => (numPages ? Math.min(numPages, prev + 1) : prev + 1))
+                  }
                 >
                   <ChevronRight size={16} />
                 </Button>
@@ -153,12 +174,23 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
                   <div className="text-sm">{error ?? 'PDF를 불러오지 못했습니다.'}</div>
                 </div>
               ) : hasPdf ? (
-                <iframe
-                  title="operation-report-pdf"
-                  src={pdfUrl}
-                  className="w-full h-[70vh]"
-                  style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top left' }}
-                />
+                <div className="h-[70vh] overflow-auto">
+                  <div className="flex justify-center py-6">
+                    <Document
+                      file={pdfUrl}
+                      onLoadSuccess={({ numPages: loadedPages }) => setNumPages(loadedPages)}
+                      onLoadError={() => toast.error('PDF를 불러오지 못했습니다.')}
+                      loading=""
+                    >
+                      <Page
+                        pageNumber={currentPage}
+                        scale={scale}
+                        renderTextLayer
+                        renderAnnotationLayer
+                      />
+                    </Document>
+                  </div>
+                </div>
               ) : (
                 <div className="h-[70vh] flex flex-col items-center justify-center text-gray-500 gap-3">
                   <FileText size={36} />
