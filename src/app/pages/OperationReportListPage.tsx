@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Download, FileText, Calendar } from 'lucide-react';
 
-import { createMonthlyOpsDoc, getMonthlyOpsDocListResponse } from '../data/operation';
+import {
+  createMonthlyOpsDoc,
+  downloadMonthlyOpsDoc,
+  getMonthlyOpsDocDetail,
+  getMonthlyOpsDocListResponse,
+} from '../data/operation';
 
 import { Button } from '../components/ui/button';
 import {
@@ -23,6 +28,7 @@ import { Pagination } from '../components/Pagination';
 
 import {
   getOperationReportYearOptions,
+  toMonthlyOpsDocDetailVM,
   toMonthlyOpsDocListVM,
   toOperationReportItemsVM,
 } from '../viewModels/operation';
@@ -104,9 +110,32 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
     }
   }, [currentPage, totalPages]);
 
-  const handleDownload = (report: Report) => {
-    // 실제로는 파일 다운로드 API 호출
-    alert(`${report.title}을(를) 다운로드합니다.`);
+  const handleDownload = async (report: Report) => {
+    try {
+      const detail = await getMonthlyOpsDocDetail(report.id);
+      const detailVm = toMonthlyOpsDocDetailVM(detail);
+      const fileType = detailVm.fileType?.toLowerCase() ?? '';
+
+      if (!fileType || fileType !== 'application/pdf') {
+        alert('PDF 파일만 다운로드할 수 있습니다.');
+        return;
+      }
+
+      const blob = await downloadMonthlyOpsDoc(report.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      if (detailVm.fileName) {
+        link.download = detailVm.fileName;
+      }
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('MonthlyOpsDocDownload error', error);
+      alert('PDF 다운로드에 실패했습니다.');
+    }
   };
 
   const handleView = (report: Report) => {

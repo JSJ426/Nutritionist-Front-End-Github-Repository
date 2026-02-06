@@ -52,6 +52,20 @@ export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps)
     }
   };
 
+  const handleDownload = (file: { name: string; url: string }) => {
+    if (!file.url) {
+      alert('다운로드할 파일 정보가 없습니다.');
+      return;
+    }
+    const link = document.createElement('a');
+    link.href = file.url;
+    link.download = file.name;
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
   if (isLoading || !post) {
     return (
       <div className="flex flex-col h-full bg-gray-50">
@@ -138,7 +152,7 @@ export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps)
                     </div>
                     <button
                       type="button"
-                      onClick={() => alert('다운로드 기능은 준비 중입니다.')}
+                      onClick={() => handleDownload({ name: file.name, url: file.url })}
                       className="inline-flex items-center px-3 py-1.5 text-xs border rounded hover:bg-gray-50"
                     >
                       <Download size={14} className="mr-1" />

@@ -27,6 +27,7 @@ export type BoardReadAttachmentVM = {
   id: number;
   name: string;
   sizeText: string;
+  url: string;
 };
 
 export type BoardReadVM = {
@@ -239,6 +240,7 @@ export const toBoardReadVM = (post: BoardPost): BoardReadVM => {
       id: file.id,
       name: file.name,
       sizeText: formatFileSizeText(file.size),
+      url: '',
     })),
     canEdit: post.author === '관리자',
     canDelete: post.author === '관리자',
@@ -260,6 +262,7 @@ export const toBoardReadVMFromResponse = (raw: BoardDetailResponse): BoardReadVM
       id: file.fileId,
       name: file.fileName,
       sizeText: formatFileSizeText(file.fileSize),
+      url: file.fileUrl,
     })),
     canEdit: raw.data.isEditable,
     canDelete: raw.data.isMine,
