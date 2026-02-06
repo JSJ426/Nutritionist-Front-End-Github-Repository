@@ -31,8 +31,8 @@ import { InstitutionInfoEditPage } from './pages/InstitutionInfoEditPage';
 
 import { LoginPage } from './pages/LoginPage';
 import { SchoolSignupPage } from './pages/SchoolSignupPage';
-//import { FindIdPage } from './pages/FindIdPage';
-//import { FindPasswordPage } from './pages/FindPasswordPage';
+import { FindIdPage } from './pages/FindIdPage';
+import { FindPasswordPage } from './pages/FindPasswordPage';
 import { useAuth } from './auth/AuthContext';
 import { Toaster } from 'sonner';
 
@@ -154,12 +154,12 @@ export default function App() {
         </>
       );
     }
-    // if (currentPage === 'find-id') {
-    //   return <FindIdPage onNavigate={handleNavigate} />;
-    // }
-    // if (currentPage === 'find-password') {
-    //   return <FindPasswordPage onNavigate={handleNavigate} />;
-    // }
+    if (currentPage === 'find-id') {
+      return <FindIdPage onNavigate={handleNavigate} />;
+    }
+    if (currentPage === 'find-password') {
+      return <FindPasswordPage onNavigate={handleNavigate} />;
+    }
     return (
       <>
         <LoginPage onLogin={handleLoginSuccess} onNavigate={handleNavigate} />

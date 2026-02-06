@@ -1,23 +1,56 @@
 import { useState } from 'react';
-import { Mail, Phone } from 'lucide-react';
+import { Mail } from 'lucide-react';
 
-import { mockRecoveredId } from '../data/mocks/auth/recovery';
+import { findDietitianId } from '../data/auth';
 
 type FindIdPageProps = {
   onNavigate: (page: string) => void;
 };
 
 export function FindIdPage({ onNavigate }: FindIdPageProps) {
-  const [method, setMethod] = useState<'email' | 'phone'>('email');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [foundId, setFoundId] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const extractErrorMessage = (error: unknown) => {
+    if (error instanceof Error) {
+      const raw = error.message;
+      try {
+        const parsed = JSON.parse(raw) as {
+          message?: string;
+          error?: string;
+          detail?: string;
+          errors?: Array<{ message?: string }>;
+        };
+        if (parsed.message) return parsed.message;
+        if (parsed.error) return parsed.error;
+        if (parsed.detail) return parsed.detail;
+        if (parsed.errors?.length) {
+          return parsed.errors.map((item) => item.message).filter(Boolean).join('\n');
+        }
+      } catch {
+        return raw;
+      }
+      return raw;
+    }
+    return '아이디 찾기에 실패했습니다.';
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock ID recovery
-    setFoundId(mockRecoveredId);
+    try {
+      setIsSubmitting(true);
+      setErrorMessage('');
+      const response = await findDietitianId({ name: name.trim(), email: email.trim() });
+      setFoundId(response.username);
+    } catch (error) {
+      setFoundId('');
+      setErrorMessage(extractErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -28,32 +61,6 @@ export function FindIdPage({ onNavigate }: FindIdPageProps) {
           <p className="text-gray-600 mb-8">
             가입 시 입력한 정보로 아이디를 찾을 수 있습니다.
           </p>
-
-          {/* Method Selection */}
-          <div className="flex gap-3 mb-8">
-            <button
-              type="button"
-              onClick={() => setMethod('email')}
-              className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                method === 'email'
-                  ? 'bg-[#00B3A4] text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              이메일로 찾기
-            </button>
-            <button
-              type="button"
-              onClick={() => setMethod('phone')}
-              className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                method === 'phone'
-                  ? 'bg-[#00B3A4] text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              휴대폰으로 찾기
-            </button>
-          </div>
 
           {foundId ? (
             /* Result Display */
@@ -117,56 +124,36 @@ export function FindIdPage({ onNavigate }: FindIdPageProps) {
                 />
               </div>
 
-              {method === 'email' ? (
-                /* Email Input */
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    이메일
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Mail className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="example@school.com"
-                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
-                      required
-                    />
+              {/* Email Input */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                  이메일
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-gray-400" />
                   </div>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="example@school.com"
+                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                    required
+                  />
                 </div>
-              ) : (
-                /* Phone Input */
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                    휴대폰 번호
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <Phone className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="phone"
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="010-1234-5678"
-                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
-                      required
-                    />
-                  </div>
-                </div>
-              )}
+              </div>
+
+              {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
 
               {/* Submit Button */}
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full bg-[#00B3A4] text-white py-3.5 rounded-xl font-semibold hover:bg-[#009688] transition-colors shadow-sm hover:shadow-md mt-6"
               >
-                아이디 찾기
+                {isSubmitting ? '조회 중...' : '아이디 찾기'}
               </button>
 
               {/* Links */}

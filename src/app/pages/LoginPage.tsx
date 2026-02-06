@@ -129,6 +129,7 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
                 <div className="text-center text-sm text-gray-600 mt-4">
                   <button
                     type="button"
+                    onClick={() => onNavigate('find-id')}
                     className="text-[#00B3A4] hover:underline font-medium"
                   >
                     아이디 찾기
@@ -143,6 +144,7 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
                   <span className="mx-2">|</span>
                   <button
                     type="button"
+                    onClick={() => onNavigate('find-password')}
                     className="text-[#00B3A4] hover:underline font-medium"
                   >
                     비밀번호 찾기

@@ -1,42 +1,62 @@
 import { useState } from 'react';
-import { Mail, Phone, User, Eye, EyeOff } from 'lucide-react';
+import { Mail, User } from 'lucide-react';
 
-import { mockVerifyAccount } from '../data/mocks/auth/recovery';
+import { findDietitianPassword } from '../data/auth';
 
 type FindPasswordPageProps = {
   onNavigate: (page: string) => void;
 };
 
 export function FindPasswordPage({ onNavigate }: FindPasswordPageProps) {
-  const [step, setStep] = useState<'verify' | 'reset'>('verify');
-  const [method, setMethod] = useState<'email' | 'phone'>('email');
   const [userId, setUserId] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [message, setMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleVerify = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Mock verification success
-    if (mockVerifyAccount()) {
-      setStep('reset');
-      return;
+  const extractErrorMessage = (error: unknown) => {
+    if (error instanceof Error) {
+      const raw = error.message;
+      try {
+        const parsed = JSON.parse(raw) as {
+          message?: string;
+          error?: string;
+          detail?: string;
+          errors?: Array<{ message?: string }>;
+        };
+        if (parsed.message) return parsed.message;
+        if (parsed.error) return parsed.error;
+        if (parsed.detail) return parsed.detail;
+        if (parsed.errors?.length) {
+          return parsed.errors.map((item) => item.message).filter(Boolean).join('\n');
+        }
+      } catch {
+        return raw;
+      }
+      return raw;
     }
-    alert('본인 확인에 실패했습니다.');
+    return '비밀번호 찾기에 실패했습니다.';
   };
 
-  const handleReset = (e: React.FormEvent) => {
+  const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      alert('비밀번호가 일치하지 않습니다.');
-      return;
+    try {
+      setIsSubmitting(true);
+      setErrorMessage('');
+      setMessage('');
+      const response = await findDietitianPassword({
+        username: userId.trim(),
+        name: name.trim(),
+        email: email.trim(),
+      });
+      setMessage(response.message);
+    } catch (error) {
+      setMessage('');
+      setErrorMessage(extractErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
     }
-    alert('비밀번호가 성공적으로 변경되었습니다.');
-    onNavigate('login');
   };
 
   return (
@@ -45,241 +65,94 @@ export function FindPasswordPage({ onNavigate }: FindPasswordPageProps) {
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden p-8 lg:p-12">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">비밀번호 찾기</h2>
           <p className="text-gray-600 mb-8">
-            {step === 'verify'
-              ? '가입 시 입력한 정보로 본인 확인을 진행합니다.'
-              : '새로운 비밀번호를 설정해주세요.'}
+            가입 시 입력한 정보로 본인 확인을 진행합니다.
           </p>
 
-          {step === 'verify' ? (
-            <>
-              {/* Method Selection */}
-              <div className="flex gap-3 mb-8">
-                <button
-                  type="button"
-                  onClick={() => setMethod('email')}
-                  className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                    method === 'email'
-                      ? 'bg-[#00B3A4] text-white shadow-sm'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  이메일로 찾기
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMethod('phone')}
-                  className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                    method === 'phone'
-                      ? 'bg-[#00B3A4] text-white shadow-sm'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  휴대폰으로 찾기
-                </button>
+          <form onSubmit={handleVerify} className="space-y-5">
+            {/* User ID Input */}
+            <div>
+              <label htmlFor="userId" className="block text-sm font-medium text-gray-700 mb-2">
+                아이디
+              </label>
+              <input
+                id="userId"
+                type="text"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                placeholder="아이디를 입력하세요"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                required
+              />
+            </div>
+
+            {/* Name Input */}
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                이름
+              </label>
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="이름을 입력하세요"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                required
+              />
+            </div>
+
+            {/* Email Input */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                이메일
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="example@school.com"
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                  required
+                />
               </div>
+            </div>
 
-              {/* Verification Form */}
-              <form onSubmit={handleVerify} className="space-y-5">
-                {/* User ID Input */}
-                <div>
-                  <label htmlFor="userId" className="block text-sm font-medium text-gray-700 mb-2">
-                    아이디
-                  </label>
-                  <input
-                    id="userId"
-                    type="text"
-                    value={userId}
-                    onChange={(e) => setUserId(e.target.value)}
-                    placeholder="아이디를 입력하세요"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
-                    required
-                  />
-                </div>
-
-                {/* Name Input */}
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    이름
-                  </label>
-                  <input
-                    id="name"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="이름을 입력하세요"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
-                    required
-                  />
-                </div>
-
-                {method === 'email' ? (
-                  /* Email Input */
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                      이메일
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Mail className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="example@school.com"
-                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
-                        required
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  /* Phone Input */
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                      휴대폰 번호
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Phone className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="phone"
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="010-1234-5678"
-                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
-                        required
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  className="w-full bg-[#00B3A4] text-white py-3.5 rounded-xl font-semibold hover:bg-[#009688] transition-colors shadow-sm hover:shadow-md mt-6"
-                >
-                  본인 확인
-                </button>
-
-                {/* Links */}
-                <div className="text-center text-sm text-gray-600 mt-4">
-                  <button onClick={() => onNavigate('login')} className="hover:text-[#00B3A4] transition-colors">
-                    로그인
-                  </button>
-                  <span className="mx-2">|</span>
-                  <button onClick={() => onNavigate('find-id')} className="hover:text-[#00B3A4] transition-colors">
-                    아이디 찾기
-                  </button>
-                  <span className="mx-2">|</span>
-                  <button onClick={() => onNavigate('school-signup')} className="hover:text-[#00B3A4] transition-colors">
-                    회원가입
-                  </button>
-                </div>
-              </form>
-            </>
-          ) : (
-            /* Password Reset Form */
-            <form onSubmit={handleReset} className="space-y-5">
-              {/* New Password Input */}
-              <div>
-                <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                  새 비밀번호
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="newPassword"
-                    type={showPassword ? 'text' : 'password'}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="새 비밀번호 (8자 이상)"
-                    className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
-                    minLength={8}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" />
-                    ) : (
-                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" />
-                    )}
-                  </button>
-                </div>
-                <p className="mt-1.5 text-xs text-gray-500">
-                  영문, 숫자, 특수문자를 조합하여 8자 이상 입력해주세요.
-                </p>
+            {message && (
+              <div className="rounded-lg border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-700">
+                {message}
               </div>
+            )}
+            {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
 
-              {/* Confirm Password Input */}
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                  비밀번호 확인
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="비밀번호 재입력"
-                    className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" />
-                    ) : (
-                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" />
-                    )}
-                  </button>
-                </div>
-                {confirmPassword && newPassword !== confirmPassword && (
-                  <p className="mt-1.5 text-xs text-red-500">
-                    비밀번호가 일치하지 않습니다.
-                  </p>
-                )}
-              </div>
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-[#00B3A4] text-white py-3.5 rounded-xl font-semibold hover:bg-[#009688] transition-colors shadow-sm hover:shadow-md mt-6 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? '요청 중...' : '임시 비밀번호 발급 요청'}
+            </button>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="w-full bg-[#00B3A4] text-white py-3.5 rounded-xl font-semibold hover:bg-[#009688] transition-colors shadow-sm hover:shadow-md mt-6"
-              >
-                비밀번호 변경
+            {/* Links */}
+            <div className="text-center text-sm text-gray-600 mt-4">
+              <button onClick={() => onNavigate('login')} className="hover:text-[#00B3A4] transition-colors">
+                로그인
               </button>
-
-              {/* Links */}
-              <div className="text-center text-sm text-gray-600 mt-4">
-                <button onClick={() => onNavigate('login')} className="hover:text-[#00B3A4] transition-colors">
-                  로그인
-                </button>
-                <span className="mx-2">|</span>
-                <button onClick={() => onNavigate('find-id')} className="hover:text-[#00B3A4] transition-colors">
-                  아이디 찾기
-                </button>
-                <span className="mx-2">|</span>
-                <button onClick={() => onNavigate('school-signup')} className="hover:text-[#00B3A4] transition-colors">
-                  회원가입
-                </button>
-              </div>
-            </form>
-          )}
+              <span className="mx-2">|</span>
+              <button onClick={() => onNavigate('find-id')} className="hover:text-[#00B3A4] transition-colors">
+                아이디 찾기
+              </button>
+              <span className="mx-2">|</span>
+              <button onClick={() => onNavigate('school-signup')} className="hover:text-[#00B3A4] transition-colors">
+                회원가입
+              </button>
+            </div>
+          </form>
         </div>
       </main>
     </div>

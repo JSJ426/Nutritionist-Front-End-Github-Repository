@@ -68,6 +68,25 @@ export type DietitianLoginResponse = {
   accessToken: string;
 };
 
+export type DietitianFindIdRequest = {
+  name: string;
+  email: string;
+};
+
+export type DietitianFindIdResponse = {
+  username: string;
+};
+
+export type DietitianFindPasswordRequest = {
+  username: string;
+  name: string;
+  email: string;
+};
+
+export type DietitianFindPasswordResponse = {
+  message: string;
+};
+
 export type AuthClaims = {
   sub: string;
   id: number;
@@ -121,6 +140,16 @@ export const loginDietitian = async (
   payload: DietitianLoginRequest
 ): Promise<DietitianLoginResponse> =>
   http.post<DietitianLoginResponse>('/api/auth/login/dietitian', payload);
+
+export const findDietitianId = async (
+  payload: DietitianFindIdRequest
+): Promise<DietitianFindIdResponse> =>
+  http.post<DietitianFindIdResponse>('/api/auth/dietitian/find-id', payload);
+
+export const findDietitianPassword = async (
+  payload: DietitianFindPasswordRequest
+): Promise<DietitianFindPasswordResponse> =>
+  http.post<DietitianFindPasswordResponse>('/api/auth/dietitian/find-pw', payload);
 
 export const fetchSchoolInfo = async <T = unknown>() => http.get<T>('/api/schools/my');
 
