@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { KeyRound, Lock, Phone, User } from 'lucide-react';
+import { KeyRound, Lock, Mail, Phone, User } from 'lucide-react';
 
-import { getNutritionistProfile } from '../data/nutritionist';
+import { getNutritionistProfile, patchNutritionistMe } from '../data/nutritionist';
 import { validatePasswordPolicy } from '../utils/password';
 
 interface NutritionistInfoPageProps {
@@ -14,42 +14,83 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
     phoneArea: '',
     phoneMiddle: '',
     phoneLine: '',
+    email: '',
   });
-  const [errors, setErrors] = useState<{ name?: string; phone?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; phone?: string; email?: string }>({});
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const passwordMismatch =
     Boolean(confirmPassword.trim()) && Boolean(newPassword.trim()) && confirmPassword !== newPassword;
 
+  const parsePhoneParts = (phoneRaw: string) => {
+    let phoneArea = '';
+    let phoneMiddle = '';
+    let phoneLine = '';
+
+    if (phoneRaw.includes('-')) {
+      [phoneArea, phoneMiddle, phoneLine] = phoneRaw.split('-');
+    } else {
+      const digitsOnly = phoneRaw.replace(/\D/g, '');
+      if (digitsOnly.startsWith('02') && digitsOnly.length === 10) {
+        phoneArea = digitsOnly.slice(0, 2);
+        phoneMiddle = digitsOnly.slice(2, 6);
+        phoneLine = digitsOnly.slice(6, 10);
+      } else if (digitsOnly.length === 10) {
+        phoneArea = digitsOnly.slice(0, 3);
+        phoneMiddle = digitsOnly.slice(3, 6);
+        phoneLine = digitsOnly.slice(6, 10);
+      } else if (digitsOnly.length === 11) {
+        phoneArea = digitsOnly.slice(0, 3);
+        phoneMiddle = digitsOnly.slice(3, 7);
+        phoneLine = digitsOnly.slice(7, 11);
+      }
+    }
+
+    return { phoneArea, phoneMiddle, phoneLine };
+  };
+
   useEffect(() => {
     const loadProfile = async () => {
-      const response = await getNutritionistProfile();
-      if (response?.status !== 'success') return;
-      const phoneRaw = response.data.phone ?? '';
-      const [phoneArea, phoneMiddle, phoneLine] = phoneRaw.split('-');
-      setFormState({
-        name: response.data.name ?? '',
-        phoneArea: phoneArea ?? '',
-        phoneMiddle: phoneMiddle ?? '',
-        phoneLine: phoneLine ?? '',
-      });
+      try {
+        const response = await getNutritionistProfile();
+        const { phoneArea, phoneMiddle, phoneLine } = parsePhoneParts(response.phone ?? '');
+
+        setFormState({
+          name: response.name ?? '',
+          phoneArea: phoneArea ?? '',
+          phoneMiddle: phoneMiddle ?? '',
+          phoneLine: phoneLine ?? '',
+          email: response.email ?? '',
+        });
+      } catch {
+        return;
+      }
     };
     void loadProfile();
   }, []);
 
   const validate = () => {
-    const nextErrors: { name?: string; phone?: string } = {};
+    const nextErrors: { name?: string; phone?: string; email?: string } = {};
     const trimmedName = formState.name.trim();
     const trimmedArea = formState.phoneArea.trim();
     const trimmedMiddle = formState.phoneMiddle.trim();
     const trimmedLine = formState.phoneLine.trim();
+    const trimmedEmail = formState.email.trim();
     const allDigits = /^[0-9]+$/;
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!trimmedName) {
       nextErrors.name = '영양사 이름을 입력해주세요.';
+    }
+
+    if (!trimmedEmail) {
+      nextErrors.email = '이메일을 입력해주세요.';
+    } else if (!emailPattern.test(trimmedEmail)) {
+      nextErrors.email = '이메일 형식을 확인해주세요.';
     }
 
     if (!trimmedArea || !trimmedMiddle || !trimmedLine) {
@@ -71,7 +112,31 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSave = () => {
+  const extractErrorMessage = (error: unknown) => {
+    if (error instanceof Error) {
+      const raw = error.message;
+      try {
+        const parsed = JSON.parse(raw) as {
+          message?: string;
+          error?: string;
+          detail?: string;
+          errors?: Array<{ message?: string }>;
+        };
+        if (parsed.message) return parsed.message;
+        if (parsed.error) return parsed.error;
+        if (parsed.detail) return parsed.detail;
+        if (parsed.errors?.length) {
+          return parsed.errors.map((item) => item.message).filter(Boolean).join('\n');
+        }
+      } catch {
+        return raw;
+      }
+      return raw;
+    }
+    return '저장에 실패했습니다.';
+  };
+
+  const handleSave = async () => {
     if (!validate()) {
       return;
     }
@@ -80,13 +145,38 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
     const trimmedArea = formState.phoneArea.trim();
     const trimmedMiddle = formState.phoneMiddle.trim();
     const trimmedLine = formState.phoneLine.trim();
+    const trimmedEmail = formState.email.trim();
+    const phone = `${trimmedArea}-${trimmedMiddle}-${trimmedLine}`;
 
     setFormState({
       name: trimmedName,
       phoneArea: trimmedArea,
       phoneMiddle: trimmedMiddle,
       phoneLine: trimmedLine,
+      email: trimmedEmail,
     });
+
+    try {
+      setIsSaving(true);
+      const response = await patchNutritionistMe({
+        name: trimmedName,
+        phone,
+        email: trimmedEmail,
+      });
+      const nextPhone = parsePhoneParts(response.phone ?? phone);
+      setFormState({
+        name: response.name ?? trimmedName,
+        phoneArea: nextPhone.phoneArea,
+        phoneMiddle: nextPhone.phoneMiddle,
+        phoneLine: nextPhone.phoneLine,
+        email: response.email ?? trimmedEmail,
+      });
+      alert('저장되었습니다.');
+    } catch (error) {
+      alert(extractErrorMessage(error));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handlePasswordChange = () => {
@@ -203,13 +293,32 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
                 </div>
               </div>
             </div>
+            <div className="flex items-start gap-3">
+              <Mail size={16} className="mt-1 text-gray-500" />
+              <div>
+                <p className="text-sm text-gray-500">이메일</p>
+                <div className="mt-2">
+                  <input
+                    type="email"
+                    value={formState.email}
+                    onChange={(event) =>
+                      setFormState((prev) => ({ ...prev, email: event.target.value }))
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
+                    placeholder="name@example.com"
+                  />
+                  {errors.email && <p className="text-sm text-red-500 mt-2">{errors.email}</p>}
+                </div>
+              </div>
+            </div>
           </div>
           <div className="flex gap-3 justify-end mt-8">
             <button
               onClick={handleSave}
-              className="px-6 py-2 bg-[#5dccb4] text-white rounded hover:bg-[#4dbba3]"
+              className="px-6 py-2 bg-[#5dccb4] text-white rounded hover:bg-[#4dbba3] disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={isSaving}
             >
-              저장
+              {isSaving ? '저장 중...' : '저장'}
             </button>
           </div>
         </div>

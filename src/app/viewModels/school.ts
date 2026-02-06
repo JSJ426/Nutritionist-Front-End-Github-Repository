@@ -1,22 +1,51 @@
+export type SchoolDetail = {
+  school_name: string;
+  region_code: string;
+  school_code: string;
+  address: string;
+  school_type: string;
+  phone: string;
+  email?: string;
+  student_count: number;
+  target_unit_price: number;
+  max_unit_price: number;
+  operation_rules?: string;
+  cook_workers: number;
+  kitchen_equipment?: string;
+};
+
 export type SchoolResponse = {
   status: string;
   message?: string;
   school_id: number;
-  data: {
+  data: SchoolDetail & {
     dietitian_id: number;
-    school_name: string;
-    school_type: string;
-    phone: string;
-    email: string;
-    student_count: number;
-    target_unit_price: number;
-    max_unit_price: number;
-    operation_rules?: string;
-    cook_workers: number;
-    kitchen_equipment?: string;
     created_at: string;
     updated_at: string;
   };
+};
+
+export type SchoolUpsertRequest = {
+  school_name: string;
+  region_code: string;
+  school_code: string;
+  address: string;
+  school_type: string;
+  phone: string;
+  email?: string;
+  student_count?: number;
+  target_unit_price?: number;
+  max_unit_price?: number;
+  operation_rules?: string;
+  cook_workers?: number;
+  kitchen_equipment?: string;
+};
+
+export type SchoolUpsertResponse = SchoolDetail & {
+  school_id: number;
+  dietitian_id: number;
+  created_at: string;
+  updated_at: string;
 };
 
 export type SchoolSearchApiItem = {

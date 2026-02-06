@@ -18,6 +18,7 @@ type AuthContextValue = {
   isReady: boolean;
   loginWithToken: (token: string) => void;
   logout: () => void;
+  refreshSchoolInfo: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -37,26 +38,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!token) {
-      setSchoolName(null);
-      return;
-    }
-
     let isActive = true;
-    void fetchSchoolInfo<SchoolResponse | SchoolResponse['data']>()
-      .then((profile) => {
+
+    const loadSchoolName = async () => {
+      if (!token) {
+        setSchoolName(null);
+        return;
+      }
+      try {
+        const profile = await fetchSchoolInfo<SchoolResponse | SchoolResponse['data']>();
         if (!isActive) return;
         if ('data' in profile) {
           setSchoolName(profile.data?.school_name ?? null);
           return;
         }
         setSchoolName(profile?.school_name ?? null);
-      })
-      .catch((error) => {
+      } catch (error) {
         if (!isActive) return;
         setSchoolName(null);
         console.warn('[auth] fetchSchoolInfo failed', error);
-      });
+      }
+    };
+
+    void loadSchoolName();
 
     return () => {
       isActive = false;
@@ -87,6 +91,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isReady,
       loginWithToken,
       logout,
+      refreshSchoolInfo: async () => {
+        if (!token) {
+          setSchoolName(null);
+          return;
+        }
+        try {
+          const profile = await fetchSchoolInfo<SchoolResponse | SchoolResponse['data']>();
+          if ('data' in profile) {
+            setSchoolName(profile.data?.school_name ?? null);
+            return;
+          }
+          setSchoolName(profile?.school_name ?? null);
+        } catch (error) {
+          setSchoolName(null);
+          console.warn('[auth] fetchSchoolInfo failed', error);
+        }
+      },
     }),
     [token, claims, schoolName, isReady]
   );

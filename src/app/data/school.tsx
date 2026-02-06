@@ -1,5 +1,11 @@
 //import { mockSchoolResponse } from './mocks/school/school';
-import type { SchoolResponse, SchoolSearchApiItem, SchoolSearchItem } from '../viewModels/school';
+import type {
+  SchoolResponse,
+  SchoolSearchApiItem,
+  SchoolSearchItem,
+  SchoolUpsertRequest,
+  SchoolUpsertResponse,
+} from '../viewModels/school';
 import { http } from './http';
 
 type SchoolResponseOrData = SchoolResponse | SchoolResponse['data'];
@@ -52,3 +58,7 @@ export const searchSchools = async (keyword: string): Promise<SchoolSearchItem[]
   );
   return response.map(mapSchoolSearchItem);
 };
+
+// 학교 정보 등록/수정
+export const patchSchoolMe = async (payload: SchoolUpsertRequest): Promise<SchoolUpsertResponse> =>
+  http.patch<SchoolUpsertResponse>('/api/schools/my', payload);

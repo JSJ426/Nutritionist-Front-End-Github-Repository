@@ -23,15 +23,36 @@ export function InstitutionInfoPage({ onNavigate }: InstitutionInfoPageProps) {
     rulesText: '',
   });
 
+  const mapSchoolTypeToForm = (schoolTypeRaw: string) => {
+    switch (schoolTypeRaw) {
+      case 'ELEMENTARY':
+        return { primary: '초등학교', secondary: '' };
+      case 'MIDDLE_MALE':
+        return { primary: '중학교', secondary: '남학교' };
+      case 'MIDDLE_FEMALE':
+        return { primary: '중학교', secondary: '여학교' };
+      case 'MIDDLE_COED':
+        return { primary: '중학교', secondary: '남녀공학' };
+      case 'HIGH_MALE':
+        return { primary: '고등학교', secondary: '남학교' };
+      case 'HIGH_FEMALE':
+        return { primary: '고등학교', secondary: '여학교' };
+      case 'HIGH_COED':
+        return { primary: '고등학교', secondary: '남녀공학' };
+      default:
+        return { primary: schoolTypeRaw, secondary: '' };
+    }
+  };
+
   useEffect(() => {
     const loadSchoolInfo = async () => {
       const response = await getSchoolResponse();
       if (response?.status !== 'success') return;
-      const schoolType = response.data.school_type ?? '';
+      const { primary, secondary } = mapSchoolTypeToForm(response.data.school_type ?? '');
       setInstitutionInfo({
         schoolName: response.data.school_name ?? '',
-        schoolTypePrimary: schoolType,
-        schoolTypeSecondary: '',
+        schoolTypePrimary: primary,
+        schoolTypeSecondary: secondary,
         phone: response.data.phone ?? '',
         email: response.data.email ?? '',
         studentCount: response.data.student_count ?? 0,
@@ -99,7 +120,9 @@ export function InstitutionInfoPage({ onNavigate }: InstitutionInfoPageProps) {
                   <p className="text-sm text-gray-500">학교 구분</p>
                   <div className="text-sm font-medium text-gray-800 space-y-1">
                     <p>구분1: {institutionInfo.schoolTypePrimary}</p>
-                    <p>구분2: {institutionInfo.schoolTypeSecondary}</p>
+                    {institutionInfo.schoolTypeSecondary && (
+                      <p>구분2: {institutionInfo.schoolTypeSecondary}</p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -126,19 +149,29 @@ export function InstitutionInfoPage({ onNavigate }: InstitutionInfoPageProps) {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-medium mb-6">단가</h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-sm text-gray-500">목표 1식 단가</p>
-                  <p className="text-sm font-medium text-gray-800">{institutionInfo.mealPriceTarget}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">1식 단가 상한선</p>
-                  <p className="text-sm font-medium text-gray-800">{institutionInfo.mealPriceMax}</p>
+            {(institutionInfo.mealPriceTarget > 0 || institutionInfo.mealPriceMax > 0) && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-medium mb-6">단가</h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <p className="text-sm text-gray-500">목표 1식 단가</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      {institutionInfo.mealPriceTarget > 0
+                        ? `${institutionInfo.mealPriceTarget.toLocaleString()}원`
+                        : '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">1식 단가 상한선</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      {institutionInfo.mealPriceMax > 0
+                        ? `${institutionInfo.mealPriceMax.toLocaleString()}원`
+                        : '-'}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-xl font-medium mb-6">급식시설현황</h2>

@@ -21,13 +21,14 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
     password: '',
     confirmPassword: '',
     schoolName: '',
-    schoolType: '',
     regionCode: '',
     schoolCode: '',
     schoolAddress: '',
     schoolAddressDetail: '',
     schoolPhone: '',
     schoolEmail: '',
+    schoolTypePrimary: '',
+    schoolTypeSecondary: '',
     studentCount: '',
     targetUnitPrice: '',
     maxUnitPrice: '',
@@ -84,6 +85,15 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
       return;
     }
 
+    const schoolType = mapFormToSchoolType(
+      formData.schoolTypePrimary.trim(),
+      formData.schoolTypeSecondary.trim()
+    );
+    if (!schoolType) {
+      alert('학교 구분을 정확히 선택해주세요.');
+      return;
+    }
+
     const schoolAddress = formData.schoolAddressDetail
       ? `${formData.schoolAddress} ${formData.schoolAddressDetail}`.trim()
       : formData.schoolAddress.trim();
@@ -99,7 +109,7 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
         region_code: formData.regionCode.trim(),
         school_code: formData.schoolCode.trim(),
         address: schoolAddress,
-        school_type: formData.schoolType.trim(),
+        school_type: schoolType,
         phone: formData.schoolPhone.trim() || undefined,
         email: formData.schoolEmail.trim() || undefined,
         student_count: formData.studentCount ? Number(formData.studentCount) : undefined,
@@ -176,11 +186,41 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
     setShowSchoolDropdown(false);
   };
 
+  const mapFormToSchoolType = (primary: string, secondary: string) => {
+    if (primary === '초등학교') return 'ELEMENTARY';
+    if (primary === '중학교') {
+      if (secondary === '남학교') return 'MIDDLE_MALE';
+      if (secondary === '여학교') return 'MIDDLE_FEMALE';
+      if (secondary === '남녀공학') return 'MIDDLE_COED';
+    }
+    if (primary === '고등학교') {
+      if (secondary === '남학교') return 'HIGH_MALE';
+      if (secondary === '여학교') return 'HIGH_FEMALE';
+      if (secondary === '남녀공학') return 'HIGH_COED';
+    }
+    return '';
+  };
+
+  const handleSchoolTypePrimaryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      schoolTypePrimary: value,
+      schoolTypeSecondary: value === '초등학교' ? '' : prev.schoolTypeSecondary,
+    }));
+  };
+
+  const handleSchoolTypeSecondaryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData((prev) => ({ ...prev, schoolTypeSecondary: event.target.value }));
+  };
+
   const isSchoolSelected = Boolean(
     formData.regionCode.trim() &&
     formData.schoolCode.trim() &&
     formData.schoolAddress.trim()
   );
+  const isSecondaryDisabled =
+    !formData.schoolTypePrimary || formData.schoolTypePrimary === '초등학교';
 
   return (
     <div className="min-h-screen bg-[#F6F7F8]">
@@ -441,16 +481,16 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
               {/* School Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  학교 구분 <span className="text-red-500">*</span>
+                  학교 구분1 <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="radio"
-                      name="schoolType"
+                      name="schoolTypePrimary"
                       value="초등학교"
-                      checked={formData.schoolType === '초등학교'}
-                      onChange={(e) => handleChange('schoolType', e.target.value)}
+                      checked={formData.schoolTypePrimary === '초등학교'}
+                      onChange={handleSchoolTypePrimaryChange}
                       className="h-4 w-4 text-[#00B3A4] focus:ring-[#00B3A4] border-gray-300"
                       required
                     />
@@ -459,10 +499,10 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="radio"
-                      name="schoolType"
+                      name="schoolTypePrimary"
                       value="중학교"
-                      checked={formData.schoolType === '중학교'}
-                      onChange={(e) => handleChange('schoolType', e.target.value)}
+                      checked={formData.schoolTypePrimary === '중학교'}
+                      onChange={handleSchoolTypePrimaryChange}
                       className="h-4 w-4 text-[#00B3A4] focus:ring-[#00B3A4] border-gray-300"
                     />
                     <span className="text-sm text-gray-700">중학교</span>
@@ -470,15 +510,31 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="radio"
-                      name="schoolType"
+                      name="schoolTypePrimary"
                       value="고등학교"
-                      checked={formData.schoolType === '고등학교'}
-                      onChange={(e) => handleChange('schoolType', e.target.value)}
+                      checked={formData.schoolTypePrimary === '고등학교'}
+                      onChange={handleSchoolTypePrimaryChange}
                       className="h-4 w-4 text-[#00B3A4] focus:ring-[#00B3A4] border-gray-300"
                     />
                     <span className="text-sm text-gray-700">고등학교</span>
                   </label>
                 </div>
+              </div>
+
+              {/* School Type - Coed */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">학교 구분2</label>
+                <select
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                  value={formData.schoolTypeSecondary}
+                  onChange={handleSchoolTypeSecondaryChange}
+                  disabled={isSecondaryDisabled}
+                >
+                  <option value="">선택</option>
+                  <option>남녀공학</option>
+                  <option>남학교</option>
+                  <option>여학교</option>
+                </select>
               </div>
 
               {/* Region Code */}
@@ -536,16 +592,6 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                       readOnly
                     />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      alert('주소 검색 기능은 실제 환경에서 Daum 우편번호 서비스 등을 연동하여 구현됩니다.');
-                      // 실제로는 Daum 우편번호 API 등을 호출
-                    }}
-                    className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors whitespace-nowrap"
-                  >
-                    주소 검색
-                  </button>
                 </div>
                 <input
                   type="text"

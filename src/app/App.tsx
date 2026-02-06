@@ -117,7 +117,7 @@ export default function App() {
       case 'institution-info':
         return <InstitutionInfoPage onNavigate={handleNavigate} />;
       case 'institution-info-edit':
-        return <InstitutionInfoEditPage />;
+        return <InstitutionInfoEditPage onNavigate={handleNavigate} />;
       case 'nutritionist-info':
         return <NutritionistInfoPage onNavigate={handleNavigate} />;
       default:
