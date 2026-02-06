@@ -47,6 +47,7 @@ export type MonthlyOpsDocCreateResponse = {
       file_name: string;
       file_type: string;
       s3_path: string;
+      s3_url?: string;
       created_at: string;
     }>;
   };
@@ -93,9 +94,22 @@ export type MonthlyOpsDocDetailResponse = {
       file_name: string;
       file_type: string;
       s3_path: string;
+      s3_url?: string;
       created_at: string;
     }>;
   };
+};
+
+export type MonthlyOpsDocDetailVM = {
+  id: number;
+  title: string;
+  year: number;
+  month: number;
+  status: 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  generatedDateText: string;
+  pdfUrl: string;
+  fileName: string;
+  fileType: string;
 };
 
 export const toOperationReportItemsVM = (reports: OperationReport[]): OperationReportItemVM[] => {
@@ -126,6 +140,20 @@ export const toMonthlyOpsDocListVM = (
 ): MonthlyOpsDocListVM => ({
   items: toOperationReportsFromMonthlyOps(raw),
   pagination: raw.data.pagination,
+});
+
+export const toMonthlyOpsDocDetailVM = (
+  raw: MonthlyOpsDocDetailResponse
+): MonthlyOpsDocDetailVM => ({
+  id: raw.data.id,
+  title: raw.data.title,
+  year: raw.data.year,
+  month: raw.data.month,
+  status: raw.data.status,
+  generatedDateText: formatDateYmd(raw.data.created_at),
+  pdfUrl: raw.data.files?.[0]?.s3_url ?? '',
+  fileName: raw.data.files?.[0]?.file_name ?? '',
+  fileType: raw.data.files?.[0]?.file_type ?? '',
 });
 
 export const getOperationReportYearOptions = (reports: OperationReport[]): string[] => {

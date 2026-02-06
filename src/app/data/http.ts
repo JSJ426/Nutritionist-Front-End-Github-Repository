@@ -66,6 +66,24 @@ export const httpRequest = async <T>(url: string, options: HttpRequestOptions = 
   }
 };
 
+export const httpDownload = async (
+  url: string,
+  options: Omit<HttpRequestOptions, 'method' | 'body'> = {}
+): Promise<Blob> => {
+  const response = await fetch(buildUrl(url), {
+    method: 'GET',
+    headers: buildHeaders(options.headers),
+    signal: options.signal,
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `HTTP ${response.status}`);
+  }
+
+  return response.blob();
+};
+
 export const http = {
   get: <T>(url: string, options?: Omit<HttpRequestOptions, 'method' | 'body'>) =>
     httpRequest<T>(url, { ...options, method: 'GET' }),

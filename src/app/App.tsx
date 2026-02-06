@@ -33,6 +33,7 @@ import { SchoolSignupPage } from './pages/SchoolSignupPage';
 //import { FindIdPage } from './pages/FindIdPage';
 //import { FindPasswordPage } from './pages/FindPasswordPage';
 import { useAuth } from './auth/AuthContext';
+import { Toaster } from 'sonner';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('login');
@@ -127,20 +128,28 @@ export default function App() {
 
   if (!isReady) {
     return (
-      <div className="p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">HOME</h1>
+      <>
+        <div className="p-6">
+          <div className="mb-6">
+            <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">HOME</h1>
+          </div>
+          <div className="flex items-center justify-center text-gray-500 py-12">
+            데이터를 불러오는 중입니다.
+          </div>
         </div>
-        <div className="flex items-center justify-center text-gray-500 py-12">
-          데이터를 불러오는 중입니다.
-        </div>
-      </div>
+        <Toaster position="top-right" richColors />
+      </>
     );
   }
 
   if (!isAuthenticated) {
     if (currentPage === 'school-signup') {
-      return <SchoolSignupPage onNavigate={handleNavigate} />;
+      return (
+        <>
+          <SchoolSignupPage onNavigate={handleNavigate} />
+          <Toaster position="top-right" richColors />
+        </>
+      );
     }
     // if (currentPage === 'find-id') {
     //   return <FindIdPage onNavigate={handleNavigate} />;
@@ -148,26 +157,34 @@ export default function App() {
     // if (currentPage === 'find-password') {
     //   return <FindPasswordPage onNavigate={handleNavigate} />;
     // }
-    return <LoginPage onLogin={handleLoginSuccess} onNavigate={handleNavigate} />;
+    return (
+      <>
+        <LoginPage onLogin={handleLoginSuccess} onNavigate={handleNavigate} />
+        <Toaster position="top-right" richColors />
+      </>
+    );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      {/* Header */}
-      <Header onLogout={handleLogout} schoolName={schoolName} />
+    <>
+      <div className="flex flex-col h-screen bg-gray-50">
+        {/* Header */}
+        <Header onLogout={handleLogout} schoolName={schoolName} />
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} />
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar */}
+          <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} />
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-auto flex flex-col">
-          <div className="flex-1">
-            {renderPage()}
+          {/* Content Area */}
+          <div className="flex-1 overflow-auto flex flex-col">
+            <div className="flex-1">
+              {renderPage()}
+            </div>
+            <Footer />
           </div>
-          <Footer />
         </div>
       </div>
-    </div>
+      <Toaster position="top-right" richColors />
+    </>
   );
 }

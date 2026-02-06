@@ -3,13 +3,17 @@ import {
   ArrowLeft,
   Download,
   FileText,
+  Loader2,
   ZoomIn,
   ZoomOut,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '../components/ui/button';
+import { downloadMonthlyOpsDoc } from '../data/operation';
+import { useMonthlyOpsDocDetail } from '../hooks/useMonthlyOpsDocDetail';
 
 interface OperationReportReadPageProps {
   initialParams?: any;
@@ -19,12 +23,18 @@ interface OperationReportReadPageProps {
 export function OperationReportReadPage({ initialParams, onNavigate }: OperationReportReadPageProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(100);
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  const pdfUrl = initialParams?.pdfUrl ?? '';
-  const displayTitle = initialParams?.title ? String(initialParams.title) : '월간 운영 보고서';
-  const displayYear = initialParams?.year;
-  const displayMonth = initialParams?.month;
-  const generatedDate = initialParams?.generatedDate ?? '-';
+  const reportId = typeof initialParams?.id === 'number' ? initialParams.id : undefined;
+  const { status, data, error } = useMonthlyOpsDocDetail(reportId);
+
+  const pdfUrl = data?.pdfUrl ?? initialParams?.pdfUrl ?? '';
+  const displayTitle = data?.title ?? (initialParams?.title ? String(initialParams.title) : '월간 운영 보고서');
+  const displayYear = data?.year ?? initialParams?.year;
+  const displayMonth = data?.month ?? initialParams?.month;
+  const generatedDate = data?.generatedDateText ?? initialParams?.generatedDate ?? '-';
+  const downloadFileName = data?.fileName;
+  const downloadFileType = data?.fileType?.toLowerCase() ?? '';
   const hasPdf = Boolean(pdfUrl);
 
   return (
@@ -45,16 +55,51 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
             </Button>
             <Button
               className="bg-[#5dccb4] hover:bg-[#4db9a3] text-white flex items-center gap-2"
-              onClick={() => {
-                if (!hasPdf) {
-                  alert('PDF 다운로드는 준비 중입니다.');
+              disabled={isDownloading || !reportId}
+              onClick={async () => {
+                if (!reportId) {
+                  toast.error('다운로드할 보고서 정보가 없습니다.');
                   return;
                 }
-                window.open(pdfUrl, '_blank');
+                if (!downloadFileType || downloadFileType !== 'application/pdf') {
+                  toast.error('PDF 파일만 다운로드할 수 있습니다.');
+                  return;
+                }
+                try {
+                  setIsDownloading(true);
+                  const blob = await downloadMonthlyOpsDoc(reportId);
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  link.href = url;
+                  if (downloadFileName) {
+                    link.download = downloadFileName;
+                  }
+                  document.body.appendChild(link);
+                  link.click();
+                  link.remove();
+                  URL.revokeObjectURL(url);
+                } catch (downloadError) {
+                  const message =
+                    downloadError instanceof Error
+                      ? downloadError.message
+                      : 'PDF 다운로드에 실패했습니다.';
+                  toast.error(message);
+                } finally {
+                  setIsDownloading(false);
+                }
               }}
             >
-              <Download size={16} />
-              PDF 다운로드
+              {isDownloading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  다운로드 중...
+                </>
+              ) : (
+                <>
+                  <Download size={16} />
+                  PDF 다운로드
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -127,7 +172,17 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
             </div>
 
             <div className="bg-gray-100">
-              {hasPdf ? (
+              {status === 'loading' ? (
+                <div className="h-[70vh] flex flex-col items-center justify-center text-gray-500 gap-3">
+                  <FileText size={36} />
+                  <div className="text-sm">PDF를 불러오는 중입니다.</div>
+                </div>
+              ) : status === 'error' ? (
+                <div className="h-[70vh] flex flex-col items-center justify-center text-gray-500 gap-3">
+                  <FileText size={36} />
+                  <div className="text-sm">{error ?? 'PDF를 불러오지 못했습니다.'}</div>
+                </div>
+              ) : hasPdf ? (
                 <iframe
                   title="operation-report-pdf"
                   src={pdfUrl}

@@ -1,7 +1,8 @@
-import { http } from './http';
+import { http, httpDownload } from './http';
 import type {
   DailyRecordsResponse,
   MonthlyOpsDocCreateResponse,
+  MonthlyOpsDocDetailResponse,
   MonthlyOpsDocListResponse,
 } from '../viewModels/operation';
 
@@ -96,5 +97,33 @@ export const getMonthlyOpsDocListResponse = async (
 };
 
 // MonthlyOpsDocDetail 대응
+export const getMonthlyOpsDocDetail = async (
+  reportId: number
+): Promise<MonthlyOpsDocDetailResponse> => {
+  const response = await http.get<MonthlyOpsDocDetailResponse>(`/reports/monthly/${reportId}`);
+
+  return {
+    status: response.status,
+    data: {
+      id: response.data.id,
+      school_id: response.data.school_id,
+      title: response.data.title,
+      year: response.data.year,
+      month: response.data.month,
+      status: response.data.status,
+      created_at: response.data.created_at,
+      files: response.data.files.map((file) => ({
+        id: file.id,
+        file_name: file.file_name,
+        file_type: file.file_type,
+        s3_path: file.s3_path,
+        s3_url: file.s3_url,
+        created_at: file.created_at,
+      })),
+    },
+  };
+};
 
 // MonthlyOpsDocDownload 대응
+export const downloadMonthlyOpsDoc = async (reportId: number): Promise<Blob> =>
+  httpDownload(`/reports/monthly/${reportId}/download`);
