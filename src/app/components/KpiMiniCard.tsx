@@ -1,12 +1,9 @@
-type KpiMiniCardProps = {
+import { KpiDiffProps, KpiDiffText } from './KpiDiffText';
+
+type KpiMiniCardProps = KpiDiffProps & {
   title: string;
   value: string | number;
   unit: string;
-  diff?: string;
-  trend?: 'up' | 'down' | 'same';
-  showDiff?: boolean;
-  showDiffLabel?: boolean;
-  diffPrefix?: string;
   isEmpty?: boolean;
   emptyLabel?: string;
 };
@@ -17,9 +14,9 @@ export function KpiMiniCard({
   unit,
   diff,
   trend,
-  showDiff = false,
-  showDiffLabel = false,
-  diffPrefix = '전일',
+  showDiff,
+  showDiffLabel,
+  diffPrefix,
   isEmpty = false,
   emptyLabel = '데이터 없음',
 }: KpiMiniCardProps) {
@@ -29,15 +26,6 @@ export function KpiMiniCard({
     same: 'text-gray-500',
   };
   const displayValue = isEmpty ? '—' : value;
-  const diffSuffix =
-    typeof diff === 'string'
-      ? diff.startsWith('+')
-        ? ' 증가'
-        : diff.startsWith('-')
-          ? ' 감소'
-          : ''
-      : '';
-
   return (
     <div className="border rounded-lg p-4 bg-white">
       <div className="flex items-center justify-between text-sm text-gray-500 mb-1">
@@ -56,11 +44,13 @@ export function KpiMiniCard({
 
       {!isEmpty && showDiff && diff && trend && (
         <div className={`text-sm ${trendStyle[trend]}`}>
-          {trend === 'same'
-            ? '-'
-            : showDiffLabel
-              ? `${diffPrefix} 대비 ${diff}${diffSuffix}`
-              : `${diff}${diffSuffix}`}
+          <KpiDiffText
+            diff={diff}
+            trend={trend}
+            showDiff={showDiff}
+            showDiffLabel={showDiffLabel}
+            diffPrefix={diffPrefix}
+          />
         </div>
       )}
     </div>

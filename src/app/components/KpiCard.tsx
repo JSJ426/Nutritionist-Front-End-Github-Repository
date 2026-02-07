@@ -1,4 +1,6 @@
-type KpiCardProps = {
+import { KpiDiffProps, KpiDiffText } from './KpiDiffText';
+
+type KpiCardProps = KpiDiffProps & {
   icon?: React.ReactNode;
   title: string;
   value: string | number;
@@ -15,6 +17,11 @@ export function KpiCard({
   value,
   unit,
   sub,
+  diff,
+  trend,
+  showDiff,
+  showDiffLabel,
+  diffPrefix,
   color,
   isEmpty = false,
   emptyLabel = '데이터 없음',
@@ -45,9 +52,19 @@ export function KpiCard({
         {!isEmpty && unit && <span className="text-gray-500">{unit}</span>}
       </div>
 
-      {!isEmpty && sub && (
+      {!isEmpty && (sub || (showDiff && diff && trend)) && (
         <div className={`text-sm ${color ? colorMap[color] : 'text-gray-500'}`}>
-          {sub}
+          {showDiff && diff && trend ? (
+            <KpiDiffText
+              diff={diff}
+              trend={trend}
+              showDiff={showDiff}
+              showDiffLabel={showDiffLabel}
+              diffPrefix={diffPrefix}
+            />
+          ) : (
+            sub
+          )}
         </div>
       )}
     </div>
