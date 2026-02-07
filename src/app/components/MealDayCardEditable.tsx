@@ -34,6 +34,7 @@ interface MealDayCardEditableProps {
   onDetail: (weekNum: number, day: string, mealType: 'lunch' | 'dinner') => void;
   onAiReplace: (day: string, mealType: 'lunch' | 'dinner', date: string) => void;
   hasChanges?: boolean;
+  isOutOfMonth: boolean;
 }
 
 export function MealDayCardEditable({
@@ -46,6 +47,7 @@ export function MealDayCardEditable({
   onDetail,
   onAiReplace,
   hasChanges,
+  isOutOfMonth,
 }: MealDayCardEditableProps) {
   const [openAiReasonKey, setOpenAiReasonKey] = useState<string | null>(null);
 
@@ -191,6 +193,19 @@ export function MealDayCardEditable({
       </div>
     );
   };
+
+  if (isOutOfMonth) {
+    return (
+      <div className="bg-gray-50 rounded-xl border-2 border-gray-200 p-5 min-h-[400px]">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+          <div>
+            <h3 className="text-lg font-medium text-gray-400">{day}요일</h3>
+            <p className="text-s text-gray-400 mt-1">{dateLabel}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`bg-white rounded-xl border-2 p-5 transition-all ${

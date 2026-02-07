@@ -23,6 +23,7 @@ interface MealDayCardProps {
     dinner?: { menu: Array<{ name: string; allergy: number[] }>; detail?: MealDetailPayload };
   } | undefined;
   weekLabel: string;
+  isOutOfMonth: boolean;
   onDetail: (
     week: string,
     day: string,
@@ -31,7 +32,7 @@ interface MealDayCardProps {
   ) => void;
 }
 
-export function MealDayCard({ day, dateLabel, mealInfo, weekLabel, onDetail }: MealDayCardProps) {
+export function MealDayCard({ day, dateLabel, mealInfo, weekLabel, isOutOfMonth, onDetail }: MealDayCardProps) {
   const normalizeMenu = (menu: Array<{ name: string; allergy: number[] }>) => {
     const nonEmpty = menu.filter((item) => item.name.trim().length > 0);
     const emptyCount = Math.max(0, 7 - nonEmpty.length);
@@ -49,6 +50,17 @@ export function MealDayCard({ day, dateLabel, mealInfo, weekLabel, onDetail }: M
     && normalizedLunchMenu.every((item) => item.name.trim().length === 0);
   const isDinnerEmpty = normalizedDinnerMenu.length > 0
     && normalizedDinnerMenu.every((item) => item.name.trim().length === 0);
+
+  if (isOutOfMonth) {
+    return (
+      <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-gray-100 text-gray-400 text-center py-2 font-medium">
+          {day}요일 <span className="text-xs text-gray-400">({dateLabel})</span>
+        </div>
+        <div className="bg-gray-50 min-h-[280px]" />
+      </div>
+    );
+  }
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden">

@@ -20,6 +20,7 @@ interface MealWeekSectionProps {
   weekDays: string[];
   mealsByDay: Record<string, { lunch?: { menu: Array<{ name: string; allergy: number[] }>; detail?: MealDetailPayload }; dinner?: { menu: Array<{ name: string; allergy: number[] }>; detail?: MealDetailPayload } }>;
   dateLabels: Record<string, string>;
+  dateInMonth: Record<string, boolean>;
   onDetail: (
     week: string,
     day: string,
@@ -28,7 +29,7 @@ interface MealWeekSectionProps {
   ) => void;
 }
 
-export function MealWeekSection({ weekLabel, weekDays, mealsByDay, dateLabels, onDetail }: MealWeekSectionProps) {
+export function MealWeekSection({ weekLabel, weekDays, mealsByDay, dateLabels, dateInMonth, onDetail }: MealWeekSectionProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h3 className="text-lg font-medium mb-4 pb-2 border-b border-gray-200">
@@ -41,9 +42,10 @@ export function MealWeekSection({ weekLabel, weekDays, mealsByDay, dateLabels, o
             key={day}
             day={day}
             dateLabel={dateLabels[day]}
-            mealInfo={mealsByDay[day]}
+            mealInfo={dateInMonth[day] ? mealsByDay[day] : undefined}
             weekLabel={weekLabel}
             onDetail={onDetail}
+            isOutOfMonth={!dateInMonth[day]}
           />
         ))}
       </div>

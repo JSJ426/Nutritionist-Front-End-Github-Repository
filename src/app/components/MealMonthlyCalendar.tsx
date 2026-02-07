@@ -89,20 +89,20 @@ export function MealMonthlyCalendar({
   const year = yearStr ? Number(yearStr) : today.getFullYear();
   const month = monthStr ? Number(monthStr) : today.getMonth() + 1;
 
-  const getWeekDateLabels = (weekIndex: number) => {
+  const getWeekDateMeta = (weekIndex: number) => {
     const firstDay = new Date(year, month - 1, 1);
     const dayOfWeek = (firstDay.getDay() + 6) % 7; // Monday = 0
-    const daysUntilMonday = (7 - dayOfWeek) % 7;
-    const firstMonday = new Date(year, month - 1, 1 + daysUntilMonday);
+    const firstMonday = new Date(year, month - 1, 1 - dayOfWeek);
     const weekMonday = new Date(firstMonday);
     weekMonday.setDate(firstMonday.getDate() + weekIndex * 7);
 
-    return weekDays.reduce<Record<string, string>>((acc, day, idx) => {
+    return weekDays.reduce<Record<string, { label: string; inMonth: boolean }>>((acc, day, idx) => {
       const date = new Date(weekMonday);
       date.setDate(weekMonday.getDate() + idx);
       const labelMonth = String(date.getMonth() + 1).padStart(2, '0');
       const labelDay = String(date.getDate()).padStart(2, '0');
-      acc[day] = `${labelMonth}-${labelDay}`;
+      const inMonth = date.getFullYear() === year && date.getMonth() + 1 === month;
+      acc[day] = { label: `${labelMonth}-${labelDay}`, inMonth };
       return acc;
     }, {});
   };
@@ -144,13 +144,19 @@ export function MealMonthlyCalendar({
       <div className="space-y-6">
         {displayWeeks.map((weekData, weekIdx) => {
           const actualWeekIndex = selectedWeek === null ? weekIdx : selectedWeek;
+          const dateMeta = getWeekDateMeta(actualWeekIndex);
           return (
             <MealWeekSection
               key={weekData.week}
               weekLabel={weekData.week}
               weekDays={weekDays}
               mealsByDay={weekData.meals}
-              dateLabels={getWeekDateLabels(actualWeekIndex)}
+              dateLabels={Object.fromEntries(
+                Object.entries(dateMeta).map(([day, meta]) => [day, meta.label])
+              )}
+              dateInMonth={Object.fromEntries(
+                Object.entries(dateMeta).map(([day, meta]) => [day, meta.inMonth])
+              )}
               onDetail={handleDetailMeal}
             />
           );

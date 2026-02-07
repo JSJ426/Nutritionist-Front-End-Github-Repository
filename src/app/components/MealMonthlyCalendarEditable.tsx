@@ -99,12 +99,11 @@ export function MealMonthlyCalendarEditable({
 
     const firstDay = new Date(year, month - 1, 1);
     const dayOfWeek = (firstDay.getDay() + 6) % 7; // Monday = 0
-    const daysUntilMonday = (7 - dayOfWeek) % 7;
-    const firstMonday = new Date(year, month - 1, 1 + daysUntilMonday);
+    const firstMonday = new Date(year, month - 1, 1 - dayOfWeek);
     const weekMonday = new Date(firstMonday);
     weekMonday.setDate(firstMonday.getDate() + weekIndex * 7);
 
-    return weekDays.reduce<Record<string, { label: string; iso: string }>>((acc, day, idx) => {
+    return weekDays.reduce<Record<string, { label: string; iso: string; inMonth: boolean }>>((acc, day, idx) => {
       const date = new Date(weekMonday);
       date.setDate(weekMonday.getDate() + idx);
       const labelMonth = String(date.getMonth() + 1).padStart(2, '0');
@@ -112,7 +111,12 @@ export function MealMonthlyCalendarEditable({
       const isoYear = String(date.getFullYear());
       const isoMonth = String(date.getMonth() + 1).padStart(2, '0');
       const isoDay = String(date.getDate()).padStart(2, '0');
-      acc[day] = { label: `${labelMonth}/${labelDay}`, iso: `${isoYear}-${isoMonth}-${isoDay}` };
+      const inMonth = date.getFullYear() === year && date.getMonth() + 1 === month;
+      acc[day] = {
+        label: `${labelMonth}/${labelDay}`,
+        iso: `${isoYear}-${isoMonth}-${isoDay}`,
+        inMonth,
+      };
       return acc;
     }, {});
   };
@@ -198,6 +202,9 @@ export function MealMonthlyCalendarEditable({
                 )}
                 dateIsoLabels={Object.fromEntries(
                   Object.entries(weekDateInfo).map(([day, info]) => [day, info.iso])
+                )}
+                dateInMonth={Object.fromEntries(
+                  Object.entries(weekDateInfo).map(([day, info]) => [day, info.inMonth])
                 )}
                 onEdit={(day, mealType, event) => handleEditMeal(weekNum, day, mealType, event)}
                 onDetail={handleDetailMeal}

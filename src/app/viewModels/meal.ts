@@ -264,8 +264,7 @@ export type MealPlanAIReasonResponse = {
 export const getWeekIndex = (date: Date) => {
   const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
   const dayOfWeek = (firstDay.getDay() + 6) % 7; // Monday = 0
-  const daysUntilMonday = (7 - dayOfWeek) % 7;
-  const firstMonday = new Date(date.getFullYear(), date.getMonth(), 1 + daysUntilMonday);
+  const firstMonday = new Date(date.getFullYear(), date.getMonth(), 1 - dayOfWeek);
   const diffDays = Math.floor((date.getTime() - firstMonday.getTime()) / (1000 * 60 * 60 * 24));
   return Math.max(0, Math.floor(diffDays / 7));
 };

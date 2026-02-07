@@ -22,6 +22,7 @@ interface MealWeekSectionEditableProps {
   mealsByDay: Record<string, DayMeals>;
   dateLabels: Record<string, string>;
   dateIsoLabels: Record<string, string>;
+  dateInMonth: Record<string, boolean>;
   onEdit: (day: string, mealType: 'lunch' | 'dinner', event: React.MouseEvent) => void;
   onDetail: (weekNum: number, day: string, mealType: 'lunch' | 'dinner') => void;
   onAiReplace: (day: string, mealType: 'lunch' | 'dinner', date: string) => void;
@@ -35,6 +36,7 @@ export function MealWeekSectionEditable({
   mealsByDay,
   dateLabels,
   dateIsoLabels,
+  dateInMonth,
   onEdit,
   onDetail,
   onAiReplace,
@@ -50,6 +52,25 @@ export function MealWeekSectionEditable({
       <div className="grid grid-cols-5 gap-4">
         {weekDays.map((day) => {
           const dayMeals = mealsByDay[day];
+          const inMonth = dateInMonth[day];
+          if (!inMonth) {
+            return (
+              <MealDayCardEditable
+                key={day}
+                day={day}
+                dateLabel={dateLabels[day]}
+                mealDate={dateIsoLabels[day]}
+                weekNum={weekNum}
+                meals={dayMeals}
+                onEdit={onEdit}
+                onDetail={onDetail}
+                onAiReplace={onAiReplace}
+                hasChanges={false}
+                isOutOfMonth={true}
+              />
+            );
+          }
+
           return dayMeals ? (
             <MealDayCardEditable
               key={day}
@@ -62,6 +83,7 @@ export function MealWeekSectionEditable({
               onDetail={onDetail}
               onAiReplace={onAiReplace}
               hasChanges={hasChanges}
+              isOutOfMonth={false}
             />
           ) : (
             <div
