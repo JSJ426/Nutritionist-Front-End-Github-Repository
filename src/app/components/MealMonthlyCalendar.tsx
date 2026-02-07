@@ -7,6 +7,8 @@ import {
   WEEKDAY_INDICES_MON_FRI,
   WEEKDAY_LABELS_MON_FRI,
 } from '../utils/calendar';
+import { fetchMealPlanMenuDetail } from '../data/mealplan';
+import type { MealPlanDetailResponse } from '../viewModels/meal';
 
 type MealDetailPayload = {
   nutrition: {
@@ -79,13 +81,35 @@ export function MealMonthlyCalendar({
     data: { menu: Array<{ name: string; allergy: number[] }>; detail?: MealDetailPayload };
   } | null>(null);
 
-  const handleDetailMeal = (
+  const buildDetailFromResponse = (raw: MealPlanDetailResponse): MealDetailPayload => ({
+    nutrition: raw.data.nutrition,
+    cost: raw.data.cost,
+    aiComment: raw.data.ai_comment ?? '',
+    allergenSummary: {
+      uniqueAllergens: raw.data.allergen_summary?.unique_allergens ?? [],
+      byMenu: raw.data.allergen_summary?.by_menu ?? {},
+    },
+    menuItems: raw.data.menu_items,
+  });
+
+  const handleDetailMeal = async (
     week: string,
     day: string,
     mealType: 'lunch' | 'dinner',
-    data: { menu: Array<{ name: string; allergy: number[] }>; detail?: MealDetailPayload }
+    data: { menu: Array<{ name: string; allergy: number[] }>; detail?: MealDetailPayload },
+    dateIso: string
   ) => {
-    setDetailMeal({ week, day, mealType, data });
+    try {
+      const response = await fetchMealPlanMenuDetail(
+        dateIso,
+        mealType === 'lunch' ? 'LUNCH' : 'DINNER'
+      );
+      const detail = buildDetailFromResponse(response);
+      setDetailMeal({ week, day, mealType, data: { ...data, detail } });
+    } catch (error) {
+      console.error('Failed to fetch meal plan detail:', error);
+      setDetailMeal({ week, day, mealType, data });
+    }
   };
 
   const activeMonth = currentMonth || (Object.keys(mealDataByMonth)[0] ?? '');
@@ -107,11 +131,12 @@ export function MealMonthlyCalendar({
       weekStartsOnMonday: true,
     });
 
-    return weekDays.reduce<Record<string, { label: string; inMonth: boolean }>>((acc, day, idx) => {
+    return weekDays.reduce<Record<string, { label: string; inMonth: boolean; iso: string }>>((acc, day, idx) => {
       const { date, inMonth } = weekDates[idx];
       const labelMonth = String(date.getMonth() + 1).padStart(2, '0');
       const labelDay = String(date.getDate()).padStart(2, '0');
-      acc[day] = { label: `${labelMonth}-${labelDay}`, inMonth };
+      const iso = `${date.getFullYear()}-${labelMonth}-${labelDay}`;
+      acc[day] = { label: `${labelMonth}-${labelDay}`, inMonth, iso };
       return acc;
     }, {});
   };
@@ -172,6 +197,9 @@ export function MealMonthlyCalendar({
               )}
               dateInMonth={Object.fromEntries(
                 Object.entries(dateMeta).map(([day, meta]) => [day, meta.inMonth])
+              )}
+              dateIso={Object.fromEntries(
+                Object.entries(dateMeta).map(([day, meta]) => [day, meta.iso])
               )}
               onDetail={handleDetailMeal}
             />

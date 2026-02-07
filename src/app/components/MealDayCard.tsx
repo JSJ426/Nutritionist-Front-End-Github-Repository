@@ -35,15 +35,17 @@ interface MealDayCardProps {
   } | undefined;
   weekLabel: string;
   isOutOfMonth: boolean;
+  dateIso: string;
   onDetail: (
     week: string,
     day: string,
     mealType: 'lunch' | 'dinner',
-    data: { menu: Array<{ name: string; allergy: number[] }>; detail?: MealDetailPayload }
+    data: { menu: Array<{ name: string; allergy: number[] }>; detail?: MealDetailPayload },
+    dateIso: string
   ) => void;
 }
 
-export function MealDayCard({ day, dateLabel, mealInfo, weekLabel, isOutOfMonth, onDetail }: MealDayCardProps) {
+export function MealDayCard({ day, dateLabel, mealInfo, weekLabel, isOutOfMonth, onDetail, dateIso }: MealDayCardProps) {
   const normalizeMenu = (menu: Array<{ name: string; allergy: number[] }>) => {
     const nonEmpty = menu.filter((item) => item.name.trim().length > 0);
     const emptyCount = Math.max(0, 7 - nonEmpty.length);
@@ -107,7 +109,7 @@ export function MealDayCard({ day, dateLabel, mealInfo, weekLabel, isOutOfMonth,
               ))}
             </div>
             <button
-              onClick={() => mealInfo.lunch && onDetail(weekLabel, day, 'lunch', mealInfo.lunch)}
+              onClick={() => mealInfo.lunch && onDetail(weekLabel, day, 'lunch', mealInfo.lunch, dateIso)}
               className="flex items-center justify-center gap-1 py-1.5 text-xs text-gray-600 hover:text-[#5dccb4] hover:bg-[#5dccb4]/5 rounded transition-colors flex-shrink-0 disabled:text-gray-300"
               disabled={isLunchEmpty}
             >
@@ -140,7 +142,7 @@ export function MealDayCard({ day, dateLabel, mealInfo, weekLabel, isOutOfMonth,
               ))}
             </div>
             <button
-              onClick={() => mealInfo.dinner && onDetail(weekLabel, day, 'dinner', mealInfo.dinner)}
+              onClick={() => mealInfo.dinner && onDetail(weekLabel, day, 'dinner', mealInfo.dinner, dateIso)}
               className="flex items-center justify-center gap-1 py-1.5 text-xs text-gray-600 hover:text-[#5dccb4] hover:bg-[#5dccb4]/5 rounded transition-colors flex-shrink-0 disabled:text-gray-300"
               disabled={isDinnerEmpty}
             >

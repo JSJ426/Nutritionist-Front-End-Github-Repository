@@ -10,6 +10,8 @@ import {
   WEEKDAY_INDICES_MON_FRI,
   WEEKDAY_LABELS_MON_FRI,
 } from '../utils/calendar';
+import { fetchMealPlanMenuDetail } from '../data/mealplan';
+import type { MealPlanDetailResponse } from '../viewModels/meal';
 
 // 식단 데이터 타입
 interface MenuItem {
@@ -23,6 +25,31 @@ interface MealData {
   aiReason?: string;
   menuId?: number;
   mealPlanId?: number;
+  detail?: {
+    nutrition: {
+      kcal: number;
+      carb: number;
+      prot: number;
+      fat: number;
+    };
+    cost: number;
+    aiComment: string;
+    allergenSummary: {
+      uniqueAllergens: number[];
+      byMenu: Record<string, number[]>;
+    };
+    menuItems?: Record<
+      string,
+      {
+        id: string;
+        name: string;
+        display?: string;
+        allergens: number[];
+        recipe?: string;
+        ingredients?: string;
+      } | null
+    >;
+  };
 }
 
 interface DayMeals {
@@ -69,6 +96,7 @@ export function MealMonthlyCalendarEditable({
     weekNum: number;
     day: string;
     mealType: 'lunch' | 'dinner';
+    detail?: MealData['detail'];
   } | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -134,8 +162,38 @@ export function MealMonthlyCalendarEditable({
     });
   };
 
-  const handleDetailMeal = (weekNum: number, day: string, mealType: 'lunch' | 'dinner') => {
-    setDetailMeal({ weekNum, day, mealType });
+  const buildDetailFromResponse = (raw: MealPlanDetailResponse): MealData['detail'] => ({
+    nutrition: raw.data.nutrition,
+    cost: raw.data.cost,
+    aiComment: raw.data.ai_comment ?? '',
+    allergenSummary: {
+      uniqueAllergens: raw.data.allergen_summary?.unique_allergens ?? [],
+      byMenu: raw.data.allergen_summary?.by_menu ?? {},
+    },
+    menuItems: raw.data.menu_items,
+  });
+
+  const handleDetailMeal = async (
+    weekNum: number,
+    day: string,
+    mealType: 'lunch' | 'dinner',
+    dateIso: string
+  ) => {
+    if (!dateIso) {
+      setDetailMeal({ weekNum, day, mealType });
+      return;
+    }
+    try {
+      const response = await fetchMealPlanMenuDetail(
+        dateIso,
+        mealType === 'lunch' ? 'LUNCH' : 'DINNER'
+      );
+      const detail = buildDetailFromResponse(response);
+      setDetailMeal({ weekNum, day, mealType, detail });
+    } catch (error) {
+      console.error('Failed to fetch meal plan detail:', error);
+      setDetailMeal({ weekNum, day, mealType });
+    }
   };
 
   const handleSaveMeal = (payload: { reason: string; menus: string[] }) => {
@@ -245,6 +303,7 @@ export function MealMonthlyCalendarEditable({
             week={`${detailMeal.weekNum}주차`}
             mealType={detailMeal.mealType}
             mealData={detailMealData}
+            detail={detailMeal.detail}
             onClose={() => setDetailMeal(null)}
           />
         )}

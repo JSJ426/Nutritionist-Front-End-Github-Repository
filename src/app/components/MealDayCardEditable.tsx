@@ -31,7 +31,7 @@ interface MealDayCardEditableProps {
   weekNum: number;
   meals: DayMeals;
   onEdit: (day: string, mealType: 'lunch' | 'dinner', event: React.MouseEvent) => void;
-  onDetail: (weekNum: number, day: string, mealType: 'lunch' | 'dinner') => void;
+  onDetail: (weekNum: number, day: string, mealType: 'lunch' | 'dinner', dateIso: string) => void;
   onAiReplace: (day: string, mealType: 'lunch' | 'dinner', date: string) => void;
   hasChanges?: boolean;
   isOutOfMonth: boolean;
@@ -150,7 +150,7 @@ export function MealDayCardEditable({
 
         <div className="flex items-center justify-between gap-2 pt-2">  
           <button
-            onClick={() => onDetail(weekNum, day, mealType)}
+            onClick={() => onDetail(weekNum, day, mealType, mealDate)}
             className="flex items-center gap-1 text-xs text-gray-600 hover:text-[#5dccb4] transition-colors disabled:text-gray-300"
             disabled={isMealEmpty}
           >

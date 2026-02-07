@@ -32,15 +32,17 @@ interface MealWeekSectionProps {
   mealsByDay: Record<string, { lunch?: { menu: Array<{ name: string; allergy: number[] }>; detail?: MealDetailPayload }; dinner?: { menu: Array<{ name: string; allergy: number[] }>; detail?: MealDetailPayload } }>;
   dateLabels: Record<string, string>;
   dateInMonth: Record<string, boolean>;
+  dateIso: Record<string, string>;
   onDetail: (
     week: string,
     day: string,
     mealType: 'lunch' | 'dinner',
-    data: { menu: Array<{ name: string; allergy: number[] }>; detail?: MealDetailPayload }
+    data: { menu: Array<{ name: string; allergy: number[] }>; detail?: MealDetailPayload },
+    dateIso: string
   ) => void;
 }
 
-export function MealWeekSection({ weekLabel, weekDays, mealsByDay, dateLabels, dateInMonth, onDetail }: MealWeekSectionProps) {
+export function MealWeekSection({ weekLabel, weekDays, mealsByDay, dateLabels, dateInMonth, dateIso, onDetail }: MealWeekSectionProps) {
   const isEmptyWeek = !weekDays.some((day) => {
     if (!dateInMonth[day]) return false;
     const dayMeals = mealsByDay[day];
@@ -64,6 +66,7 @@ export function MealWeekSection({ weekLabel, weekDays, mealsByDay, dateLabels, d
             weekLabel={weekLabel}
             onDetail={onDetail}
             isOutOfMonth={!dateInMonth[day]}
+            dateIso={dateIso[day]}
           />
         ))}
       </div>
