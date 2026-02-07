@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 
 import { getAdditionalMenuListResponse } from '../data/additionalMenu';
@@ -20,20 +20,49 @@ export function AdditionalMenuListPage({ initialParams, onNavigate }: Additional
   const [baseVm, setBaseVm] = useState<AdditionalMenuListVM | null>(null);
   const [items, setItems] = useState<AdditionalMenuListItemVM[]>([]);
   const [categoryFilter, setCategoryFilter] = useState('전체');
-  const [sortBy, setSortBy] = useState('id-asc');
+  const [categoryOptions, setCategoryOptions] = useState<string[]>(['전체']);
+  const [sortBy, setSortBy] = useState('date-desc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
   const [totalPages, setTotalPages] = useState(1);
+  const offsetIndex = (currentPage - 1) * itemsPerPage;
 
   useEffect(() => {
     let isActive = true;
 
     const load = async () => {
-      const response = await getAdditionalMenuListResponse(currentPage, itemsPerPage);
+      const mapSortParams = (value: string) => {
+        switch (value) {
+          case 'date-asc':
+            return { sort: 'created_at', order: 'asc' };
+          case 'date-desc':
+            return { sort: 'created_at', order: 'desc' };
+          case 'title-asc':
+            return { sort: 'name', order: 'asc' };
+          case 'title-desc':
+            return { sort: 'name', order: 'desc' };
+          case 'calories-asc':
+            return { sort: 'kcal', order: 'asc' };
+          case 'calories-desc':
+            return { sort: 'kcal', order: 'desc' };
+          default:
+            return { sort: 'created_at', order: 'desc' };
+        }
+      };
+      const { sort, order } = mapSortParams(sortBy);
+      const category = categoryFilter === '전체' ? undefined : categoryFilter;
+      const response = await getAdditionalMenuListResponse(
+        currentPage,
+        itemsPerPage,
+        category,
+        sort,
+        order
+      );
       if (!isActive) return;
       const vm = toAdditionalMenuListVMFromResponse(response);
       setBaseVm(vm);
       setItems(vm.items);
+      setCategoryOptions((prev) => (prev.length <= 1 ? vm.categoryOptions : prev));
       setTotalPages(response.data.totalPages ?? response.data.total_pages ?? 1);
     };
 
@@ -42,7 +71,7 @@ export function AdditionalMenuListPage({ initialParams, onNavigate }: Additional
     return () => {
       isActive = false;
     };
-  }, [currentPage, itemsPerPage]);
+  }, [currentPage, itemsPerPage, categoryFilter, sortBy]);
 
   useEffect(() => {
     const deletedId = initialParams?.deletedId as string | undefined;
@@ -50,57 +79,6 @@ export function AdditionalMenuListPage({ initialParams, onNavigate }: Additional
       setItems((prev) => prev.filter((item) => item.id !== deletedId));
     }
   }, [initialParams]);
-
-  const filteredItems = useMemo(() => {
-    const baseItems = categoryFilter === '전체'
-      ? items
-      : items.filter((item) => item.category === categoryFilter);
-
-    const sortedItems = [...baseItems].sort((a, b) => {
-      const createdAtA = a.dateRaw;
-      const createdAtB = b.dateRaw;
-      const caloriesA = a.calories ?? Number.MAX_SAFE_INTEGER;
-      const caloriesB = b.calories ?? Number.MAX_SAFE_INTEGER;
-      const numericIdA = a.id ? Number(a.id.replace(/\D+/g, '')) : Number.NaN;
-      const numericIdB = b.id ? Number(b.id.replace(/\D+/g, '')) : Number.NaN;
-
-      switch (sortBy) {
-        case 'id-asc':
-          if (!Number.isNaN(numericIdA) && !Number.isNaN(numericIdB)) {
-            return numericIdA - numericIdB;
-          }
-          return (a.id || '').localeCompare(b.id || '');
-        case 'id-desc':
-          if (!Number.isNaN(numericIdA) && !Number.isNaN(numericIdB)) {
-            return numericIdB - numericIdA;
-          }
-          return (b.id || '').localeCompare(a.id || '');
-        case 'date-asc':
-          return createdAtA.localeCompare(createdAtB);
-        case 'date-desc':
-          return createdAtB.localeCompare(createdAtA);
-        case 'title-asc':
-          return a.title.localeCompare(b.title);
-        case 'title-desc':
-          return b.title.localeCompare(a.title);
-        case 'category-asc':
-          return a.category.localeCompare(b.category);
-        case 'category-desc':
-          return b.category.localeCompare(a.category);
-        case 'calories-asc':
-          return caloriesA - caloriesB;
-        case 'calories-desc':
-          return caloriesB - caloriesA;
-        default:
-          if (!Number.isNaN(numericIdA) && !Number.isNaN(numericIdB)) {
-            return numericIdA - numericIdB;
-          }
-          return (a.id || '').localeCompare(b.id || '');
-      }
-    });
-
-    return sortedItems;
-  }, [categoryFilter, items, sortBy]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -151,7 +129,7 @@ export function AdditionalMenuListPage({ initialParams, onNavigate }: Additional
                   onChange={(e) => setCategoryFilter(e.target.value)}
                   className="w-48 px-3 py-2 rounded border bg-gray-100 text-sm text-gray-900 focus:outline-none focus:border-[#5dccb4]"
                 >
-                  {baseVm.categoryOptions.map((option) => (
+                  {categoryOptions.map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
@@ -165,11 +143,11 @@ export function AdditionalMenuListPage({ initialParams, onNavigate }: Additional
                   onChange={(e) => setSortBy(e.target.value)}
                   className="w-40 px-3 py-2 rounded border bg-gray-100 text-sm text-gray-900 focus:outline-none focus:border-[#5dccb4]"
                 >
-                  {baseVm.sortOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
+                {baseVm.sortOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
                 </select>
               </div>
             </div>
@@ -182,20 +160,22 @@ export function AdditionalMenuListPage({ initialParams, onNavigate }: Additional
                   <TableHead className="w-20 text-center">번호</TableHead>
                   <TableHead className="w-44 text-center">식품대분류명</TableHead>
                   <TableHead>메뉴명</TableHead>
-                  <TableHead className="w-32 text-center">열량</TableHead>
+                  <TableHead className="w-32 text-center">열량(Kcal)</TableHead>
                   <TableHead className="text-center">알레르기정보</TableHead>
                   <TableHead className="w-32 text-center">등록일</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredItems.length > 0 ? (
-                  filteredItems.map((item) => (
+                {items.length > 0 ? (
+                  items.map((item, index) => (
                     <TableRow
                       key={item.id}
                       className="cursor-pointer hover:bg-gray-50 transition-colors"
                       onClick={() => onNavigate?.('additional-menu-read', { menuId: item.id })}
                     >
-                      <TableCell className="text-center text-sm">{item.id}</TableCell>
+                      <TableCell className="text-center text-sm">
+                        {offsetIndex + index + 1}
+                      </TableCell>
                       <TableCell className="text-center text-sm">
                         <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">
                           {item.category}

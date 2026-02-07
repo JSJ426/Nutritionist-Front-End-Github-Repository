@@ -15,12 +15,24 @@ import type {
 // GetNewFoodInfo 대응
 export const getAdditionalMenuListResponse = async (
   page = 1,
-  size = 20
+  size = 20,
+  category?: string,
+  sort?: string,
+  order?: string
 ): Promise<AdditionalMenuListResponse> => {
   const params = new URLSearchParams({
     page: String(page),
     size: String(size),
   });
+  if (category) {
+    params.set('category', category);
+  }
+  if (sort) {
+    params.set('sort', sort);
+  }
+  if (order) {
+    params.set('order', order);
+  }
   return http.get<AdditionalMenuListResponse>(`/newfoodinfo?${params.toString()}`);
 };
 

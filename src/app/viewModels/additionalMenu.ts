@@ -216,14 +216,10 @@ export const additionalMenuCategoryOptions = [
 ];
 
 export const additionalMenuSortOptions = [
-  { value: 'id-asc', label: '번호 (오름차순)' },
-  { value: 'id-desc', label: '번호 (내림차순)' },
   { value: 'date-asc', label: '등록일 (오름차순)' },
   { value: 'date-desc', label: '등록일 (내림차순)' },
   { value: 'title-asc', label: '메뉴명 (오름차순)' },
   { value: 'title-desc', label: '메뉴명 (내림차순)' },
-  { value: 'category-asc', label: '식품대분류명 (오름차순)' },
-  { value: 'category-desc', label: '식품대분류명 (내림차순)' },
   { value: 'calories-asc', label: '열량 (오름차순)' },
   { value: 'calories-desc', label: '열량 (내림차순)' },
 ];
