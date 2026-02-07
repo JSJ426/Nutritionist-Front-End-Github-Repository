@@ -495,6 +495,7 @@ export function HomePage() {
                 value={kpi.value}
                 unit={kpi.unit}
                 sub={kpi.sub}
+                subMode="sub"
                 color={kpi.color}
                 isEmpty={isSatisfactionEmpty}
               />

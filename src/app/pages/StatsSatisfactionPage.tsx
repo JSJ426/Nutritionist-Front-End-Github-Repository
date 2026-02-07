@@ -287,6 +287,7 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
             value={kpi.value}
             unit={kpi.unit}
             sub={kpi.sub}
+            subMode="sub"
             color={kpi.color}
           />
         ))}

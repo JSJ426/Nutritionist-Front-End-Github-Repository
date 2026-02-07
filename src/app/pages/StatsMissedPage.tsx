@@ -229,6 +229,7 @@ export function StatsMissedPage() {
           showDiff
           showDiffLabel
           diffPrefix="전일"
+          subMode="diff"
           color={kpiData.todayChange > 0 ? 'red' : 'green'}
         />
         <KpiCard
@@ -241,6 +242,7 @@ export function StatsMissedPage() {
           showDiff
           showDiffLabel
           diffPrefix="전주"
+          subMode="diff"
           color={kpiData.weekChange > 0 ? 'red' : 'green'}
         />
         <KpiCard
@@ -253,6 +255,7 @@ export function StatsMissedPage() {
           showDiff
           showDiffLabel
           diffPrefix="전월"
+          subMode="diff"
           color={kpiData.monthChange > 0 ? 'red' : 'green'}
         />
       </div>
