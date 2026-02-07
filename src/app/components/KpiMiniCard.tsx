@@ -17,14 +17,13 @@ export function KpiMiniCard({
   showDiff,
   showDiffLabel,
   diffPrefix,
+  positiveDirection,
+  positiveClassName,
+  negativeClassName,
+  neutralClassName,
   isEmpty = false,
   emptyLabel = '데이터 없음',
 }: KpiMiniCardProps) {
-  const trendStyle: Record<NonNullable<KpiMiniCardProps['trend']>, string> = {
-    up: 'text-red-600',
-    down: 'text-green-600',
-    same: 'text-gray-500',
-  };
   const displayValue = isEmpty ? '—' : value;
   return (
     <div className="border rounded-lg p-4 bg-white">
@@ -43,13 +42,17 @@ export function KpiMiniCard({
       </div>
 
       {!isEmpty && showDiff && diff && trend && (
-        <div className={`text-sm ${trendStyle[trend]}`}>
+        <div className="text-sm">
           <KpiDiffText
             diff={diff}
             trend={trend}
             showDiff={showDiff}
             showDiffLabel={showDiffLabel}
             diffPrefix={diffPrefix}
+            positiveDirection={positiveDirection}
+            positiveClassName={positiveClassName}
+            negativeClassName={negativeClassName}
+            neutralClassName={neutralClassName}
           />
         </div>
       )}

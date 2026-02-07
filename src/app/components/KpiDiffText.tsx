@@ -4,6 +4,10 @@ export type KpiDiffProps = {
   showDiff?: boolean;
   showDiffLabel?: boolean;
   diffPrefix?: string;
+  positiveDirection?: 'up' | 'down';
+  positiveClassName?: string;
+  negativeClassName?: string;
+  neutralClassName?: string;
 };
 
 type KpiDiffTextProps = KpiDiffProps & {
@@ -16,6 +20,10 @@ export function KpiDiffText({
   showDiff = false,
   showDiffLabel = false,
   diffPrefix = '전일',
+  positiveDirection = 'down',
+  positiveClassName = 'text-green-600',
+  negativeClassName = 'text-red-600',
+  neutralClassName = 'text-gray-500',
   className,
 }: KpiDiffTextProps) {
   if (!showDiff || !diff || !trend) return null;
@@ -36,5 +44,15 @@ export function KpiDiffText({
         ? `${diffPrefix} 대비 ${diff}${diffSuffix}`
         : `${diff}${diffSuffix}`;
 
-  return <span className={className}>{content}</span>;
+  const isPositive =
+    trend !== 'same' &&
+    (positiveDirection === 'up' ? trend === 'up' : trend === 'down');
+  const toneClass =
+    trend === 'same'
+      ? neutralClassName
+      : isPositive
+        ? positiveClassName
+        : negativeClassName;
+
+  return <span className={[toneClass, className].filter(Boolean).join(' ')}>{content}</span>;
 }

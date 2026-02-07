@@ -6,6 +6,7 @@ type KpiCardProps = KpiDiffProps & {
   value: string | number;
   unit?: string;
   sub?: string;
+  subMode?: 'none' | 'diff' | 'sub';
   color?: 'green' | 'red' | 'yellow';
   isEmpty?: boolean;
   emptyLabel?: string;
@@ -22,6 +23,11 @@ export function KpiCard({
   showDiff,
   showDiffLabel,
   diffPrefix,
+  positiveDirection,
+  positiveClassName,
+  negativeClassName,
+  neutralClassName,
+  subMode = 'sub',
   color,
   isEmpty = false,
   emptyLabel = '데이터 없음',
@@ -52,19 +58,25 @@ export function KpiCard({
         {!isEmpty && unit && <span className="text-gray-500">{unit}</span>}
       </div>
 
-      {!isEmpty && (sub || (showDiff && diff && trend)) && (
+      {!isEmpty && subMode !== 'none' && (
         <div className={`text-sm ${color ? colorMap[color] : 'text-gray-500'}`}>
-          {showDiff && diff && trend ? (
-            <KpiDiffText
-              diff={diff}
-              trend={trend}
-              showDiff={showDiff}
-              showDiffLabel={showDiffLabel}
-              diffPrefix={diffPrefix}
-            />
-          ) : (
-            sub
-          )}
+          {subMode === 'diff' ? (
+            showDiff && diff && trend ? (
+              <KpiDiffText
+                diff={diff}
+                trend={trend}
+                showDiff={showDiff}
+                showDiffLabel={showDiffLabel}
+                diffPrefix={diffPrefix}
+                positiveDirection={positiveDirection}
+                positiveClassName={positiveClassName}
+                negativeClassName={negativeClassName}
+                neutralClassName={neutralClassName}
+              />
+            ) : null
+          ) : subMode === 'sub' ? (
+            sub ?? null
+          ) : null}
         </div>
       )}
     </div>
