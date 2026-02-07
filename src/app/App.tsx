@@ -172,7 +172,11 @@ export default function App() {
     <>
       <div className="flex flex-col h-screen bg-gray-50">
         {/* Header */}
-        <Header onLogout={handleLogout} schoolName={schoolName} />
+        <Header
+          onLogout={handleLogout}
+          schoolName={schoolName}
+          onLogoClick={() => handleNavigate('home')}
+        />
 
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar */}

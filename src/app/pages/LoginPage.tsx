@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { User, Lock, Eye, EyeOff } from 'lucide-react';
 
-import mealTrayImage from '../../assets/a65a012f8dfb6e34563e688039daec79bf5a2d4c.png';
+import mealTrayImage from '@/assets/AppLogo.png';
 import { loginDietitian } from '../data/auth';
 import { useAuth } from '../auth/AuthContext';
 import { Footer } from '../components/Footer';
