@@ -48,6 +48,16 @@ export function AdditionalMenuEditPage({
   const [recipeText, setRecipeText] = useState('');
   const [createdAtText, setCreatedAtText] = useState('');
 
+  const sanitizeNumericInput = (value: string, allowDecimal: boolean) => {
+    if (!allowDecimal) {
+      return value.replace(/[^\d]/g, '');
+    }
+    const sanitized = value.replace(/[^\d.]/g, '');
+    const parts = sanitized.split('.');
+    if (parts.length <= 2) return sanitized;
+    return `${parts[0]}.${parts.slice(1).join('')}`;
+  };
+
   useEffect(() => {
     let isActive = true;
 
@@ -232,26 +242,34 @@ export function AdditionalMenuEditPage({
                 <Label htmlFor="nutritionBasis" className="text-sm font-medium mb-2 block">
                   영양 성분 기준 <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="nutritionBasis"
-                  type="text"
-                  placeholder="예: 100g"
-                  value={nutritionBasis}
-                  onChange={(e) => setNutritionBasis(e.target.value)}
-                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="nutritionBasis"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="예: 100"
+                    value={nutritionBasis}
+                    onChange={(e) => setNutritionBasis(sanitizeNumericInput(e.target.value, false))}
+                  />
+                  <span className="text-sm text-gray-600">ml</span>
+                </div>
               </div>
 
               <div>
                 <Label htmlFor="servingSize" className="text-sm font-medium mb-2 block">
                   1회 제공량 <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="servingSize"
-                  type="text"
-                  placeholder="예: 180g"
-                  value={servingSize}
-                  onChange={(e) => setServingSize(e.target.value)}
-                />
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="servingSize"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="예: 400"
+                    value={servingSize}
+                    onChange={(e) => setServingSize(sanitizeNumericInput(e.target.value, false))}
+                  />
+                  <span className="text-sm text-gray-600">ml</span>
+                </div>
               </div>
 
               <div>
@@ -259,76 +277,116 @@ export function AdditionalMenuEditPage({
                   영양 성분
                 </Label>
                 <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    id="kcal"
-                    type="number"
-                    placeholder="kcal"
-                    value={kcal}
-                    onChange={(e) => setKcal(e.target.value)}
-                  />
-                  <Input
-                    id="carb"
-                    type="number"
-                    placeholder="탄수화물(g)"
-                    value={carb}
-                    onChange={(e) => setCarb(e.target.value)}
-                  />
-                  <Input
-                    id="prot"
-                    type="number"
-                    placeholder="단백질(g)"
-                    value={prot}
-                    onChange={(e) => setProt(e.target.value)}
-                  />
-                  <Input
-                    id="fat"
-                    type="number"
-                    placeholder="지방(g)"
-                    value={fat}
-                    onChange={(e) => setFat(e.target.value)}
-                  />
-                  <Input
-                    id="calcium"
-                    type="number"
-                    placeholder="칼슘(mg)"
-                    value={calcium}
-                    onChange={(e) => setCalcium(e.target.value)}
-                  />
-                  <Input
-                    id="iron"
-                    type="number"
-                    placeholder="철(mg)"
-                    value={iron}
-                    onChange={(e) => setIron(e.target.value)}
-                  />
-                  <Input
-                    id="vitaminA"
-                    type="number"
-                    placeholder="비타민A(μg)"
-                    value={vitaminA}
-                    onChange={(e) => setVitaminA(e.target.value)}
-                  />
-                  <Input
-                    id="thiamin"
-                    type="number"
-                    placeholder="티아민(mg)"
-                    value={thiamin}
-                    onChange={(e) => setThiamin(e.target.value)}
-                  />
-                  <Input
-                    id="riboflavin"
-                    type="number"
-                    placeholder="리보플라빈(mg)"
-                    value={riboflavin}
-                    onChange={(e) => setRiboflavin(e.target.value)}
-                  />
-                  <Input
-                    id="vitaminC"
-                    type="number"
-                    placeholder="비타민C(mg)"
-                    value={vitaminC}
-                    onChange={(e) => setVitaminC(e.target.value)}
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="kcal"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="열량"
+                      value={kcal}
+                      onChange={(e) => setKcal(sanitizeNumericInput(e.target.value, true))}
+                    />
+                    <span className="text-sm text-gray-600">kcal</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="carb"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="탄수화물"
+                      value={carb}
+                      onChange={(e) => setCarb(sanitizeNumericInput(e.target.value, true))}
+                    />
+                    <span className="text-sm text-gray-600">g</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="prot"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="단백질"
+                      value={prot}
+                      onChange={(e) => setProt(sanitizeNumericInput(e.target.value, true))}
+                    />
+                    <span className="text-sm text-gray-600">g</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="fat"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="지방"
+                      value={fat}
+                      onChange={(e) => setFat(sanitizeNumericInput(e.target.value, true))}
+                    />
+                    <span className="text-sm text-gray-600">g</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="calcium"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="칼슘"
+                      value={calcium}
+                      onChange={(e) => setCalcium(sanitizeNumericInput(e.target.value, true))}
+                    />
+                    <span className="text-sm text-gray-600">mg</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="iron"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="철"
+                      value={iron}
+                      onChange={(e) => setIron(sanitizeNumericInput(e.target.value, true))}
+                    />
+                    <span className="text-sm text-gray-600">mg</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="vitaminA"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="비타민 A"
+                      value={vitaminA}
+                      onChange={(e) => setVitaminA(sanitizeNumericInput(e.target.value, true))}
+                    />
+                    <span className="text-sm text-gray-600">μg</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="thiamin"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="티아민"
+                      value={thiamin}
+                      onChange={(e) => setThiamin(sanitizeNumericInput(e.target.value, true))}
+                    />
+                    <span className="text-sm text-gray-600">mg</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="riboflavin"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="리보플라빈"
+                      value={riboflavin}
+                      onChange={(e) => setRiboflavin(sanitizeNumericInput(e.target.value, true))}
+                    />
+                    <span className="text-sm text-gray-600">mg</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="vitaminC"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="비타민 C"
+                      value={vitaminC}
+                      onChange={(e) => setVitaminC(sanitizeNumericInput(e.target.value, true))}
+                    />
+                    <span className="text-sm text-gray-600">mg</span>
+                  </div>
                 </div>
               </div>
 

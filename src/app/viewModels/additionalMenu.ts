@@ -192,6 +192,14 @@ export type AdditionalMenuDeleteResponse = {
   };
 };
 
+const stripMl = (value: string) => value.replace(/\s*ml\s*$/i, '').trim();
+
+const appendMl = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  return /ml$/i.test(trimmed) ? trimmed : `${trimmed}ml`;
+};
+
 export const additionalMenuCategoryOptions = [
   '전체',
   '밥류',
@@ -256,8 +264,8 @@ export const toAdditionalMenuReadVM = (menu: AdditionalMenuRaw): AdditionalMenuR
     titleText: details.name ?? menu.title,
     categoryText: menu.category,
     dateText: formatDateYmd(details.createdAt ?? menu.date),
-    nutritionBasisText: details.nutrition_basis ?? '-',
-    servingSizeText: details.serving_size ?? '-',
+    nutritionBasisText: details.nutrition_basis ? appendMl(details.nutrition_basis) : '-',
+    servingSizeText: details.serving_size ? appendMl(details.serving_size) : '-',
     nutritionRows: [
       { label: '열량', valueText: `${details.kcal ?? '-'} kcal` },
       { label: '탄수화물', valueText: `${details.carb ?? '-'} g` },
@@ -279,7 +287,7 @@ export const toAdditionalMenuReadVM = (menu: AdditionalMenuRaw): AdditionalMenuR
 export const getAdditionalMenuCreateForm = (): AdditionalMenuFormState => ({
   name: '',
   category: '밥류',
-  nutritionBasis: '100g',
+  nutritionBasis: '100',
   servingSize: '',
   kcal: '',
   carb: '',
@@ -304,8 +312,8 @@ export const toAdditionalMenuEditVM = (menu: AdditionalMenuRaw): AdditionalMenuE
     form: {
       name: details.name ?? menu.title ?? '',
       category: menu.category ?? '밥류',
-      nutritionBasis: details.nutrition_basis ?? '100g',
-      servingSize: details.serving_size ?? '',
+      nutritionBasis: stripMl(details.nutrition_basis ?? '100'),
+      servingSize: stripMl(details.serving_size ?? ''),
       kcal: details.kcal?.toString?.() ?? '',
       carb: details.carb?.toString?.() ?? '',
       prot: details.prot?.toString?.() ?? '',
@@ -426,8 +434,8 @@ export const toAdditionalMenuRequestBody = (form: AdditionalMenuFormState) => {
   return {
     name: form.name.trim(),
     category: form.category,
-    nutrition_basis: form.nutritionBasis.trim(),
-    serving_size: form.servingSize.trim(),
+    nutrition_basis: appendMl(form.nutritionBasis),
+    serving_size: appendMl(form.servingSize),
     kcal: Number(form.kcal),
     carb: Number(form.carb),
     prot: Number(form.prot),
