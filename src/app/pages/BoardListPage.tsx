@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Search, Edit } from 'lucide-react';
 
 import { getBoardListResponse } from '../data/board';
@@ -41,12 +41,38 @@ export function BoardListPage({ initialParams, onNavigate }: BoardListPageProps)
   const itemsPerPage = 20;
   const [totalPages, setTotalPages] = useState(1);
 
+  const mapCategoryToApi = (category: string) => {
+    switch (category) {
+      case '공지':
+        return 'NOTICE';
+      case '신메뉴':
+        return 'NEW_MENU';
+      case '건의':
+        return 'SUGGESTION';
+      case '기타의견':
+        return 'ETC';
+      default:
+        return undefined;
+    }
+  };
+
+  const handleSearch = () => {
+    setAppliedSearchQuery(searchQuery.trim());
+    setCurrentPage(1);
+  };
+
   useEffect(() => {
     let isActive = true;
     const load = async () => {
       setIsLoading(true);
       try {
-        const response = await getBoardListResponse(currentPage, itemsPerPage, appliedSearchQuery);
+        const apiCategory = categoryFilter === '전체' ? undefined : mapCategoryToApi(categoryFilter);
+        const response = await getBoardListResponse(
+          currentPage,
+          itemsPerPage,
+          appliedSearchQuery,
+          apiCategory
+        );
         if (!isActive) return;
         setPosts(toBoardListVMFromResponse(response));
         setTotalPages(response.data.total_pages || 1);
@@ -64,22 +90,7 @@ export function BoardListPage({ initialParams, onNavigate }: BoardListPageProps)
     return () => {
       isActive = false;
     };
-  }, [appliedSearchQuery, currentPage, itemsPerPage, initialParams?.refresh]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setAppliedSearchQuery(searchQuery.trim());
-      setCurrentPage(1);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  // 카테고리 필터 (현재 페이지 기준)
-  const filteredPosts = useMemo(() => {
-    return categoryFilter === '전체'
-      ? posts
-      : posts.filter((post) => post.category === categoryFilter);
-  }, [categoryFilter, posts]);
+  }, [appliedSearchQuery, categoryFilter, currentPage, itemsPerPage, initialParams?.refresh]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -126,6 +137,10 @@ export function BoardListPage({ initialParams, onNavigate }: BoardListPageProps)
                   className="pl-10"
                 />
               </div>
+              <Button onClick={handleSearch}>
+                <Search size={16} className="mr-2" />
+                검색
+              </Button>
               <div className="w-48">
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                   <SelectTrigger>
@@ -164,8 +179,8 @@ export function BoardListPage({ initialParams, onNavigate }: BoardListPageProps)
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPosts.length > 0 ? (
-                  filteredPosts.map((post) => (
+                {posts.length > 0 ? (
+                  posts.map((post) => (
                     <TableRow 
                       key={post.id}
                       className="cursor-pointer hover:bg-gray-50 transition-colors"

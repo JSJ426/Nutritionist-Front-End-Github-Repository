@@ -13,13 +13,17 @@ import type {
 export const getBoardListResponse = async (
   page = 1,
   size = 20,
-  keyword?: string
+  keyword?: string,
+  category?: string
 ): Promise<BoardListResponse> => {
   const params = new URLSearchParams();
   params.set('page', String(page));
   params.set('size', String(size));
   if (keyword) {
     params.set('keyword', keyword);
+  }
+  if (category) {
+    params.set('category', category);
   }
   return http.get<BoardListResponse>(`/boards?${params.toString()}`);
 };
@@ -63,7 +67,7 @@ const boardCategoryToApi = (category: BoardCreatePayload['category']) => {
     case '건의':
       return 'SUGGESTION';
     default:
-      return 'OTHER';
+      return 'ETC';
   }
 };
 

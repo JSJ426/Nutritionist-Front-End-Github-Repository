@@ -54,7 +54,7 @@ export type BoardEditVM = {
   editedDateText: string;
 };
 
-type BoardApiCategory = 'NOTICE' | 'NEW_MENU' | 'SUGGESTION' | 'OTHER';
+type BoardApiCategory = 'NOTICE' | 'NEW_MENU' | 'SUGGESTION' | 'ETC';
 type BoardAuthorType = 'DIETITIAN' | 'STUDENT' | 'TEACHER' | 'STAFF';
 
 export type BoardListResponse = {
@@ -166,6 +166,8 @@ const apiCategoryToBoardCategory = (category: BoardApiCategory): BoardCategory =
       return '신메뉴';
     case 'SUGGESTION':
       return '건의';
+    case 'ETC':
+      return '기타의견';
     default:
       return '기타의견';
   }
