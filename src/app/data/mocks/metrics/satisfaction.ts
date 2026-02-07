@@ -153,6 +153,5 @@ export const satisfactionConfig = {
     weekly: 7,
     monthly: 30,
   },
-  recentLimit: 6,
 };
 

@@ -131,7 +131,6 @@ export type SatisfactionConfig = {
     weekly: number;
     monthly: number;
   };
-  recentLimit: number;
 };
 
 export type SatisfactionLabels = {

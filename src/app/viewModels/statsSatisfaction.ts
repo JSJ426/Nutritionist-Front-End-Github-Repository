@@ -152,10 +152,6 @@ export const getSatisfactionFilteredFeedback = (
   };
 };
 
-export const getRecentFeedback = (feedback: FeedbackItem[], limit: number): FeedbackItem[] => {
-  return feedback.slice(0, limit);
-};
-
 export const toFeedbackFromReviewList = (raw: MetricSatisReviewListResponse): FeedbackItem[] =>
   raw.data.reviews.map((review, index) => {
     const firstTag = review.aspect_tags[0];

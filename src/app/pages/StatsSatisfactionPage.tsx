@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { MessageSquare, Smile, Frown, ThumbsUp } from 'lucide-react';
+import { MessageSquare, Smile, Frown } from 'lucide-react';
 
 import {
   getSatisfactionMetrics,
@@ -11,13 +11,11 @@ import {
 import { KpiCard } from '../components/KpiCard';
 import { FeedbackItem } from '../components/FeedbackItem';
 import { StatsFilterPanel } from '../components/StatsFilterPanel';
+import { Pagination } from '../components/Pagination';
 
 import {
   StatsSatisfactionMeal,
   StatsSatisfactionPeriod,
-  getLatestFeedbackDate,
-  getRecentFeedback,
-  getSatisfactionFilteredFeedback,
   toFeedbackFromReviewList,
 } from '../viewModels';
 import type { SatisfactionMetricsResponse } from '../viewModels/metrics';
@@ -27,7 +25,7 @@ interface StatsSatisfactionPageProps {
   onNavigate?: (page: string, params?: any) => void;
 }
 
-export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps) {
+export function StatsSatisfactionPage({ onNavigate: _onNavigate }: StatsSatisfactionPageProps) {
   const [metrics, setMetrics] = useState<SatisfactionMetricsResponse | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [filteredReviewList, setFilteredReviewList] = useState<MetricSatisReviewListResponse | null>(null);
@@ -35,6 +33,8 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
     useState<SatisfactionMetricsResponse['positiveCount'] | null>(null);
   const [filteredNegativeCount, setFilteredNegativeCount] =
     useState<SatisfactionMetricsResponse['negativeCount'] | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
   useEffect(() => {
     let isActive = true;
@@ -53,16 +53,8 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
 
   const fallbackDefaults = {
     defaultPeriod: 'weekly',
-    defaultMeal: '전체',
-  };
-  const fallbackLabels = {
-    period: {
-      weekly: '7일',
-      monthly: '30일',
-    },
   };
   const defaults = metrics?.defaults ?? fallbackDefaults;
-  const labels = metrics?.labels ?? fallbackLabels;
   const config = metrics?.config;
   const periodOptions = [
     { value: 'weekly', label: '7일' },
@@ -75,11 +67,10 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
   ];
   const countLast30Days = metrics?.countLast30Days;
   const reviewList = filteredReviewList ?? metrics?.reviewList;
-  const { defaultPeriod, defaultMeal } = defaults;
+  const { defaultPeriod } = defaults;
   const [period, setPeriod] = useState<StatsSatisfactionPeriod>(defaultPeriod as StatsSatisfactionPeriod);
   const [appliedPeriod, setAppliedPeriod] = useState<StatsSatisfactionPeriod>(defaultPeriod as StatsSatisfactionPeriod);
   const fixedMeal: StatsSatisfactionMeal = '전체';
-  const appliedMeal = fixedMeal;
 
   const feedbackData = useMemo(
     () => (reviewList ? toFeedbackFromReviewList(reviewList) : []),
@@ -129,7 +120,7 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
         icon: <MessageSquare className="w-4 h-4" />,
       },
       {
-        title: '긍정 비율',
+        title: resolvedPeriodLabel ? `최근 ${resolvedPeriodLabel} 긍정 비율` : '긍정 비율',
         value: kpiMetrics.positiveRate.toFixed(1),
         unit: '%',
         sub: `긍정 ${kpiMetrics.positiveCount}건`,
@@ -137,7 +128,7 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
         icon: <Smile className="w-4 h-4" />,
       },
       {
-        title: '부정 비율',
+        title: resolvedPeriodLabel ? `최근 ${resolvedPeriodLabel} 부정 비율` : '부정 비율',
         value: kpiMetrics.negativeRate.toFixed(1),
         unit: '%',
         sub: `부정 ${kpiMetrics.negativeCount}건`,
@@ -177,7 +168,7 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
     return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
   };
 
-  const runSearch = async (nextPeriod: StatsSatisfactionPeriod) => {
+  const runSearch = async (nextPeriod: StatsSatisfactionPeriod, nextPage = page) => {
     setAppliedPeriod(nextPeriod);
 
     if (!config || !countLast30Days) {
@@ -193,8 +184,8 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
       getSatisfactionReviewList({
         start_date: startDate,
         end_date: endDate,
-        page: 1,
-        size: 20,
+        page: nextPage,
+        size: pageSize,
       }),
       getSatisfactionPositiveCount(startDate, endDate),
       getSatisfactionNegativeCount(startDate, endDate),
@@ -213,7 +204,10 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
     setFilteredNegativeCount(negativeResponse);
   };
 
-  const handleSearch = () => runSearch(period);
+  const handleSearch = () => {
+    setPage(1);
+    runSearch(period, 1);
+  };
 
   useEffect(() => {
     if (!metrics || isInitialized) return;
@@ -223,28 +217,6 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
     setIsInitialized(true);
   }, [metrics, isInitialized]);
 
-  const latestDate = useMemo(() => {
-    return getLatestFeedbackDate(feedbackData);
-  }, [feedbackData]);
-
-  const { filteredFeedback, periodLabel } = useMemo(() => {
-    if (!config) {
-      return { filteredFeedback: [], periodLabel: '' };
-    }
-    return getSatisfactionFilteredFeedback(
-      feedbackData,
-      appliedPeriod,
-      appliedMeal,
-      latestDate,
-      config.days,
-      labels
-    );
-  }, [appliedMeal, appliedPeriod, config, feedbackData, labels, latestDate]);
-
-  const recentFeedback = useMemo(
-    () => getRecentFeedback(filteredFeedback, config?.recentLimit ?? 0),
-    [config?.recentLimit, filteredFeedback]
-  );
 
   if (!metrics) {
     return (
@@ -305,16 +277,26 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
         </div>
 
         <div className="space-y-4">
-          {recentFeedback.map((item) => (
+          {feedbackData.map((item) => (
             <FeedbackItem key={item.id} item={item} />
           ))}
         </div>
 
-        {recentFeedback.length === 0 && (
+        {feedbackData.length === 0 && (
           <div className="text-center py-12 text-gray-400">
             해당 조건의 피드백이 없습니다.
           </div>
         )}
+
+        <Pagination
+          currentPage={reviewList?.data?.pagination?.current_page ?? page}
+          totalPages={reviewList?.data?.pagination?.total_pages ?? 1}
+          onPageChange={(nextPage) => {
+            if (nextPage === page) return;
+            setPage(nextPage);
+            runSearch(appliedPeriod, nextPage);
+          }}
+        />
       </div>
     </div>
   );
