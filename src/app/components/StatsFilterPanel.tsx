@@ -8,6 +8,7 @@ type Option = { value: string; label: string };
 interface StatsFilterPanelProps {
   period: string;
   onPeriodChange: (value: string) => void;
+  showMealType?: boolean;
   mealType: string;
   onMealTypeChange: (value: string) => void;
   onSearch: () => void;
@@ -29,8 +30,8 @@ interface StatsFilterPanelProps {
 }
 
 const defaultPeriodOptions: Option[] = [
-  { value: 'weekly', label: '주간 (최근 7일)' },
-  { value: 'monthly', label: '월간 (최근 30일)' },
+  { value: 'weekly', label: '7일' },
+  { value: 'monthly', label: '30일' },
   { value: 'custom', label: '사용자 지정' },
 ];
 
@@ -50,6 +51,7 @@ const defaultMenuTypeOptions: Option[] = [
 export function StatsFilterPanel({
   period,
   onPeriodChange,
+  showMealType = true,
   mealType,
   onMealTypeChange,
   onSearch,
@@ -70,7 +72,8 @@ export function StatsFilterPanel({
   customToggleLabel = '사용자 지정',
 }: StatsFilterPanelProps) {
   const isCustomPeriod = showCustomDates && period === customValue;
-  const gridColsClass = showMenuType ? 'md:grid-cols-4' : 'md:grid-cols-3';
+  const gridColsCount = 1 + (isCustomPeriod ? 2 : 0) + (showMealType ? 1 : 0) + (showMenuType ? 1 : 0) + 1;
+  const gridColsClass = `md:grid-cols-${Math.min(gridColsCount, 6)}`;
   const resolvedPeriodOptions = customEnabled
     ? periodOptions
     : periodOptions.filter((option) => option.value !== customValue);
@@ -127,21 +130,23 @@ export function StatsFilterPanel({
           </>
         )}
 
-        <div>
-          <label className="text-sm text-gray-600 mb-2 block">식사 구분</label>
-          <Select value={mealType} onValueChange={onMealTypeChange}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {mealOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {showMealType && (
+          <div>
+            <label className="text-sm text-gray-600 mb-2 block">식사 구분</label>
+            <Select value={mealType} onValueChange={onMealTypeChange}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {mealOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {showMenuType && (
           <div>

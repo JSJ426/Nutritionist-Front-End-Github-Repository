@@ -168,7 +168,7 @@ export const toFeedbackFromReviewList = (raw: MetricSatisReviewListResponse): Fe
       date: review.date,
       meal: review.meal_type === 'DINNER' ? '석식' : '중식',
       menu: review.aspect_tags.length > 0 ? review.aspect_tags.join(', ') : '기타',
-      comment: phrase || hint || '피드백이 등록되었습니다.',
+      comment: phrase || hint || '(NO_FEEDBACK_TEXT_PROVIDED)',
     };
   });
 
