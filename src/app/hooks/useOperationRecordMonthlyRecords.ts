@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 
-import { getLeftoverMonthly, getSkipMealMonthly } from '../../../data/metrics';
+import { getLeftoverMonthly, getSkipMealMonthly } from '../data/metrics';
 
-import { DailyRecord } from '../utils';
+import { DailyRecord } from '../utils/OperationRecordUtils';
 
 const buildMonthlyRecords = (inputs: {
   leftoverLunch: Awaited<ReturnType<typeof getLeftoverMonthly>>;

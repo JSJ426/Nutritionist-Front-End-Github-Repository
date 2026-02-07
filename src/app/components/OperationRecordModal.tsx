@@ -1,6 +1,6 @@
-import { Button } from '../../components/ui/button';
+import { Button } from '../ui/button';
 
-import { OperationRecordFormValues } from './utils';
+import { OperationRecordFormValues } from '../utils/OperationRecordUtils';
 
 type OperationRecordModalProps = {
   isOpen: boolean;

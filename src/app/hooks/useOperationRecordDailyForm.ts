@@ -5,9 +5,13 @@ import {
   createSkipMealDaily,
   updateLeftoverDaily,
   updateSkipMealDaily,
-} from '../../../data/metrics';
+} from '../data/metrics';
 
-import { DailyRecord, OperationRecordFormValues, toNumberOrZero } from '../utils';
+import {
+  DailyRecord,
+  OperationRecordFormValues,
+  toNumberOrZero,
+} from '../utils/OperationRecordUtils';
 
 type UseOperationRecordDailyFormParams = {
   records: Record<string, DailyRecord>;

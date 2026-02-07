@@ -1,4 +1,4 @@
-import { DailyRecord } from './utils';
+import { DailyRecord } from '../utils/OperationRecordUtils';
 
 type OperationRecordDayCellProps = {
   dateStr: string;

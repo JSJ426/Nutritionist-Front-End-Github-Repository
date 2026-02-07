@@ -1,6 +1,6 @@
-import { Button } from '../../components/ui/button';
+import { Button } from '../ui/button';
 
-import { formatMonthLabel } from './utils';
+import { formatMonthLabel } from '../utils/OperationRecordUtils';
 
 type OperationRecordMonthHeaderProps = {
   currentMonth: Date;

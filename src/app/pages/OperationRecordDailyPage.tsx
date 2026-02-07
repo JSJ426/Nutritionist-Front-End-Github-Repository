@@ -2,13 +2,13 @@ import { useMemo, useState } from 'react';
 
 import { useAuth } from '../auth/AuthContext';
 
-import { OperationRecordCalendarGrid } from './operation-record/OperationRecordCalendarGrid';
-import { OperationRecordModal } from './operation-record/OperationRecordModal';
-import { OperationRecordMonthHeader } from './operation-record/OperationRecordMonthHeader';
-import { OperationRecordWeekdays } from './operation-record/OperationRecordWeekdays';
-import { useOperationRecordCalendarLayout } from './operation-record/hooks/useOperationRecordCalendarLayout';
-import { useOperationRecordDailyForm } from './operation-record/hooks/useOperationRecordDailyForm';
-import { useOperationRecordMonthlyRecords } from './operation-record/hooks/useOperationRecordMonthlyRecords';
+import { OperationRecordCalendarGrid } from '../components/OperationRecordCalendarGrid';
+import { OperationRecordModal } from '../components/OperationRecordModal';
+import { OperationRecordMonthHeader } from '../components/OperationRecordMonthHeader';
+import { OperationRecordWeekdays } from '../components/OperationRecordWeekdays';
+import { useOperationRecordCalendarLayout } from '../hooks/useOperationRecordCalendarLayout';
+import { useOperationRecordDailyForm } from '../hooks/useOperationRecordDailyForm';
+import { useOperationRecordMonthlyRecords } from '../hooks/useOperationRecordMonthlyRecords';
 
 export function OperationRecordDailyPage() {
   const { claims, isReady } = useAuth();
