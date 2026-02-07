@@ -32,6 +32,10 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
 
   const pdfUrl = data?.pdfUrl ?? initialParams?.pdfUrl ?? '';
   const resolvedPdfUrl = pdfUrl;
+  const cmapsUrl = useMemo(
+    () => new URL('pdfjs-dist/cmaps/', import.meta.url).toString(),
+    []
+  );
   const displayTitle = data?.title ?? (initialParams?.title ? String(initialParams.title) : '월간 운영 보고서');
   const displayYear = data?.year ?? initialParams?.year;
   const displayMonth = data?.month ?? initialParams?.month;
@@ -192,6 +196,7 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
                   <div className="flex justify-center py-6">
                     <Document
                       file={resolvedPdfUrl}
+                      options={{ cMapUrl: cmapsUrl, cMapPacked: true }}
                       onLoadSuccess={({ numPages: loadedPages }) => setNumPages(loadedPages)}
                       onLoadError={(err) => {
                         console.error('[OperationReportReadPage] PDF load error:', err);
