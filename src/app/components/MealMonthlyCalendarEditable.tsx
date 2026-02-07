@@ -71,6 +71,13 @@ export function MealMonthlyCalendarEditable({
     setWeeksData(initialWeeks);
   }, [initialWeeks]);
 
+  const isValidMonthKey = /^\d{4}-\d{2}$/.test(currentMonth ?? '');
+  const monthKey = isValidMonthKey ? (currentMonth ?? '') : '';
+  const [yearStr, monthStr] = monthKey.split('-');
+  const today = new Date();
+  const year = yearStr ? Number(yearStr) : today.getFullYear();
+  const month = monthStr ? Number(monthStr) : today.getMonth() + 1;
+
   const weekDays = ['월', '화', '수', '목', '금'];
   const getWeekDateInfo = (weekIndex: number) => {
     if (!currentMonth) {
@@ -156,6 +163,15 @@ export function MealMonthlyCalendarEditable({
 
   return (
     <div className="flex flex-col h-full relative">
+    <div>
+      <div className="bg-white rounded-lg shadow-sm p-6 mb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-medium">{year}년 {Number(month)}월</h2>
+          </div>
+        </div>
+      </div>
+
       {/* Week Tabs - Sticky */}
       <WeekFilterButtons
         weeks={weeksData.map((week) => ({ week: week.week }))}
@@ -256,6 +272,7 @@ export function MealMonthlyCalendarEditable({
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

@@ -60,6 +60,10 @@ export function MealDayCardEditable({
     return padded.slice(0, 7);
   };
 
+  const isMenuEmpty = (menu: MenuItem[]) => {
+    return menu.every((item) => item.name.trim().length === 0);
+  };
+
   useEffect(() => {
     if (!openAiReasonKey) return;
 
@@ -122,20 +126,24 @@ export function MealDayCardEditable({
         </div>
 
         <div className="space-y-2 flex-1 mb-2">
-          {normalizedMenu.map((item, idx) => (
-            <div key={idx} className="flex items-start justify-between gap-2 min-h-[20px]">
-              {item.name ? (
-                <>
-                  <span className="text-sm text-gray-800 flex-1">{item.name}</span>
-                  {item.allergy.length > 0 && (
-                    <span className="text-xs text-gray-600 bg-[#FCE8E6] px-1 py-0.5 rounded flex-shrink-0">
-                      {item.allergy.join(',')}
-                    </span>
-                  )}
-                </>
-              ) : null}
-            </div>
-          ))}
+          {isMealEmpty ? (
+            <div className="text-sm text-gray-400 text-center">(식단 없음)</div>
+          ) : (
+            normalizedMenu.map((item, idx) => (
+              <div key={idx} className="flex items-start justify-between gap-2 min-h-[20px]">
+                {item.name ? (
+                  <>
+                    <span className="text-sm text-gray-800 flex-1">{item.name}</span>
+                    {item.allergy.length > 0 && (
+                      <span className="text-xs text-gray-600 bg-[#FCE8E6] px-1 py-0.5 rounded flex-shrink-0">
+                        {item.allergy.join(',')}
+                      </span>
+                    )}
+                  </>
+                ) : null}
+              </div>
+            ))
+          )}
         </div>
 
         <div className="flex items-center justify-between gap-2 pt-2">  
@@ -205,9 +213,15 @@ export function MealDayCardEditable({
 
       {/* Meals */}
       <div className="space-y-5">
-        {renderMealSection('lunch', meals.lunch)}
-        <div className="border-t border-gray-100"></div>
-        {renderMealSection('dinner', meals.dinner)}
+        {isMenuEmpty(meals.lunch.menu) && isMenuEmpty(meals.dinner.menu) ? (
+          <div className="text-sm text-gray-400 text-center">(식단 없음)</div>
+        ) : (
+          <>
+            {renderMealSection('lunch', meals.lunch)}
+            <div className="border-t border-gray-100"></div>
+            {renderMealSection('dinner', meals.dinner)}
+          </>
+        )}
       </div>
 
     </div>
