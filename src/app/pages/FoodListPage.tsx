@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { getFoodListResponse } from '../data/food';
 
@@ -17,43 +17,27 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
   const [foodListVm, setFoodListVm] = useState<FoodListVM | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState('전체');
-  const [sortBy, setSortBy] = useState('id-asc');
+  const [categoryOptions, setCategoryOptions] = useState<string[]>(['전체']);
+  const [sortBy, setSortBy] = useState('name-asc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
   const [totalPages, setTotalPages] = useState(1);
   const offsetIndex = (currentPage - 1) * itemsPerPage;
 
-  const filteredFoods = useMemo(() => {
-    if (!foodListVm) return [];
-    const baseFoods = categoryFilter === '전체'
-      ? foodListVm.items
-      : foodListVm.items.filter((food) => food.category === categoryFilter);
-
-    const sortedFoods = [...baseFoods].sort((a, b) => {
-      switch (sortBy) {
-        case 'id-asc':
-          return a.id - b.id;
-        case 'id-desc':
-          return b.id - a.id;
-        case 'name-asc':
-          return a.name.localeCompare(b.name);
-        case 'name-desc':
-          return b.name.localeCompare(a.name);
-        case 'category-asc':
-          return a.category.localeCompare(b.category);
-        case 'category-desc':
-          return b.category.localeCompare(a.category);
-        case 'calories-asc':
-          return a.calories - b.calories;
-        case 'calories-desc':
-          return b.calories - a.calories;
-        default:
-          return a.name.localeCompare(b.name);
-      }
-    });
-
-    return sortedFoods;
-  }, [categoryFilter, foodListVm, sortBy]);
+  const mapSortParams = (value: string) => {
+    switch (value) {
+      case 'name-asc':
+        return { sort: 'name', order: 'asc' };
+      case 'name-desc':
+        return { sort: 'name', order: 'desc' };
+      case 'calories-asc':
+        return { sort: 'kcal', order: 'asc' };
+      case 'calories-desc':
+        return { sort: 'kcal', order: 'desc' };
+      default:
+        return { sort: 'name', order: 'asc' };
+    }
+  };
 
   useEffect(() => {
     setCurrentPage(1);
@@ -64,9 +48,13 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
     const load = async () => {
       setIsLoading(true);
       try {
-        const response = await getFoodListResponse(currentPage, itemsPerPage);
+        const { sort, order } = mapSortParams(sortBy);
+        const category = categoryFilter === '전체' ? undefined : categoryFilter;
+        const response = await getFoodListResponse(currentPage, itemsPerPage, category, sort, order);
         if (!isActive) return;
-        setFoodListVm(toFoodListVMFromResponse(response));
+        const vm = toFoodListVMFromResponse(response);
+        setFoodListVm(vm);
+        setCategoryOptions((prev) => (prev.length <= 1 ? vm.categoryOptions : prev));
         setTotalPages(response.data.total_pages || 1);
       } catch (error) {
         console.error('Failed to load food list:', error);
@@ -82,7 +70,7 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
     return () => {
       isActive = false;
     };
-  }, [currentPage, itemsPerPage]);
+  }, [currentPage, itemsPerPage, categoryFilter, sortBy]);
 
   if (isLoading || !foodListVm) {
     return (
@@ -124,7 +112,7 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
                   onChange={(e) => setCategoryFilter(e.target.value)}
                   className="w-48 px-3 py-2 rounded border bg-gray-100 text-sm text-gray-900 focus:outline-none focus:border-[#5dccb4]"
                 >
-                  {foodListVm.categoryOptions.map((option) => (
+                  {categoryOptions.map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
@@ -140,8 +128,6 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
                 >
                   <option value="name-asc">메뉴명 (오름차순)</option>
                   <option value="name-desc">메뉴명 (내림차순)</option>
-                  <option value="category-asc">식품대분류명 (오름차순)</option>
-                  <option value="category-desc">식품대분류명 (내림차순)</option>
                   <option value="calories-asc">열량 (오름차순)</option>
                   <option value="calories-desc">열량 (내림차순)</option>
                 </select>
@@ -156,13 +142,13 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
                   <TableHead className="w-20 text-center">번호</TableHead>
                   <TableHead className="w-44 text-center">식품대분류명</TableHead>
                   <TableHead>메뉴명</TableHead>
-                  <TableHead className="w-32 text-center">열량</TableHead>
+                  <TableHead className="w-32 text-center">열량(Kcal)</TableHead>
                   <TableHead className="text-center">알레르기정보</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredFoods.length > 0 ? (
-                  filteredFoods.map((food, index) => (
+                {foodListVm.items.length > 0 ? (
+                  foodListVm.items.map((food, index) => (
                     <TableRow
                       key={food.menuId}
                       className="cursor-pointer hover:bg-gray-50 transition-colors"

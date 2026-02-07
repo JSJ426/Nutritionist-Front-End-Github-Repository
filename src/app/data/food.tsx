@@ -6,7 +6,10 @@ import type { FoodInfoDetailResponse, FoodListResponse } from '../viewModels/foo
 // GetFoodInfo 대응
 export const getFoodListResponse = async (
   page = 1,
-  size = 20
+  size = 20,
+  category?: string,
+  sort?: string,
+  order?: string
 ): Promise<FoodListResponse> => {
   const params = new URLSearchParams();
   if (typeof page === 'number') {
@@ -14,6 +17,15 @@ export const getFoodListResponse = async (
   }
   if (typeof size === 'number') {
     params.set('size', String(size));
+  }
+  if (category) {
+    params.set('category', category);
+  }
+  if (sort) {
+    params.set('sort', sort);
+  }
+  if (order) {
+    params.set('order', order);
   }
   return http.get<FoodListResponse>(`/foodinfo?${params.toString()}`);
 };
