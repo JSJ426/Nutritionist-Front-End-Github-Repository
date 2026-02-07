@@ -21,6 +21,7 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
   const [totalPages, setTotalPages] = useState(1);
+  const offsetIndex = (currentPage - 1) * itemsPerPage;
 
   const filteredFoods = useMemo(() => {
     if (!foodListVm) return [];
@@ -137,8 +138,6 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
                   onChange={(e) => setSortBy(e.target.value)}
                   className="w-40 px-3 py-2 rounded border bg-gray-100 text-sm text-gray-900 focus:outline-none focus:border-[#5dccb4]"
                 >
-                  <option value="id-asc">번호 (오름차순)</option>
-                  <option value="id-desc">번호 (내림차순)</option>
                   <option value="name-asc">메뉴명 (오름차순)</option>
                   <option value="name-desc">메뉴명 (내림차순)</option>
                   <option value="category-asc">식품대분류명 (오름차순)</option>
@@ -163,13 +162,15 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
               </TableHeader>
               <TableBody>
                 {filteredFoods.length > 0 ? (
-                  filteredFoods.map((food) => (
+                  filteredFoods.map((food, index) => (
                     <TableRow
                       key={food.menuId}
                       className="cursor-pointer hover:bg-gray-50 transition-colors"
                       onClick={() => onNavigate?.('food-info', { foodId: food.menuId })}
                     >
-                      <TableCell className="text-center text-sm">{food.id}</TableCell>
+                      <TableCell className="text-center text-sm">
+                        {offsetIndex + index + 1}
+                      </TableCell>
                       <TableCell className="text-center text-sm">
                         <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">
                           {food.category}
