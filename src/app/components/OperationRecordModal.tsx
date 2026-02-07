@@ -1,12 +1,17 @@
-import { Button } from '../ui/button';
+import { Button } from './ui/button';
 
-import { OperationRecordFormValues } from '../utils/OperationRecordUtils';
+import {
+  emptyMealAvailability,
+  MealAvailability,
+  OperationRecordFormValues,
+} from '../utils/OperationRecordUtils';
 
 type OperationRecordModalProps = {
   isOpen: boolean;
   selectedDate: string | null;
   hasRecord: boolean;
   formValues: OperationRecordFormValues;
+  availableMeals?: MealAvailability;
   onChange: (patch: Partial<OperationRecordFormValues>) => void;
   onClose: () => void;
   onSave: () => void;
@@ -17,6 +22,7 @@ export function OperationRecordModal({
   selectedDate,
   hasRecord,
   formValues,
+  availableMeals = emptyMealAvailability,
   onChange,
   onClose,
   onSave,
@@ -42,6 +48,7 @@ export function OperationRecordModal({
               min={0}
               value={formValues.lunchMissed}
               onChange={(e) => onChange({ lunchMissed: e.target.value })}
+              disabled={!availableMeals.lunch}
               className="w-full border border-gray-200 rounded px-3 py-2 text-sm"
             />
           </div>
@@ -53,6 +60,7 @@ export function OperationRecordModal({
               step="0.1"
               value={formValues.lunchLeftoversKg}
               onChange={(e) => onChange({ lunchLeftoversKg: e.target.value })}
+              disabled={!availableMeals.lunch}
               className="w-full border border-gray-200 rounded px-3 py-2 text-sm"
             />
           </div>
@@ -63,6 +71,7 @@ export function OperationRecordModal({
               min={0}
               value={formValues.dinnerMissed}
               onChange={(e) => onChange({ dinnerMissed: e.target.value })}
+              disabled={!availableMeals.dinner}
               className="w-full border border-gray-200 rounded px-3 py-2 text-sm"
             />
           </div>
@@ -74,6 +83,7 @@ export function OperationRecordModal({
               step="0.1"
               value={formValues.dinnerLeftoversKg}
               onChange={(e) => onChange({ dinnerLeftoversKg: e.target.value })}
+              disabled={!availableMeals.dinner}
               className="w-full border border-gray-200 rounded px-3 py-2 text-sm"
             />
           </div>

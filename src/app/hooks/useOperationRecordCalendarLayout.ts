@@ -13,7 +13,7 @@ export function useOperationRecordCalendarLayout(currentMonth: Date) {
       1
     ).getDay();
     const totalCells = Math.ceil((startDay + daysInMonth) / 7) * 7;
-    const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+    const weekdays = ['월', '화', '수', '목', '금'];
 
     return { daysInMonth, startDay, totalCells, weekdays };
   }, [currentMonth]);

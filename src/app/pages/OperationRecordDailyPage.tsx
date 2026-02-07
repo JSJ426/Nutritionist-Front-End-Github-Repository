@@ -8,7 +8,9 @@ import { OperationRecordMonthHeader } from '../components/OperationRecordMonthHe
 import { OperationRecordWeekdays } from '../components/OperationRecordWeekdays';
 import { useOperationRecordCalendarLayout } from '../hooks/useOperationRecordCalendarLayout';
 import { useOperationRecordDailyForm } from '../hooks/useOperationRecordDailyForm';
+import { useOperationRecordMealAvailability } from '../hooks/useOperationRecordMealAvailability';
 import { useOperationRecordMonthlyRecords } from '../hooks/useOperationRecordMonthlyRecords';
+import { emptyMealAvailability } from '../utils/OperationRecordUtils';
 
 export function OperationRecordDailyPage() {
   const { claims, isReady } = useAuth();
@@ -29,12 +31,18 @@ export function OperationRecordDailyPage() {
     currentMonth,
     schoolId
   );
+  const { mealAvailability, isLoading: isMealPlanLoading } =
+    useOperationRecordMealAvailability(currentMonth);
+  const selectedAvailability = selectedDate
+    ? mealAvailability[selectedDate] ?? emptyMealAvailability
+    : emptyMealAvailability;
   const { weekdays } = useOperationRecordCalendarLayout(currentMonth);
   const { formValues, updateFormValues, handleSave, hasRecord } = useOperationRecordDailyForm({
     records,
     selectedDate,
     schoolId,
     setRecords,
+    availableMeals: selectedAvailability,
     onClose: () => setIsModalOpen(false),
   });
 
@@ -64,7 +72,7 @@ export function OperationRecordDailyPage() {
     setIsModalOpen(true);
   };
 
-  if (isLoading) {
+  if (isLoading || isMealPlanLoading) {
     return (
       <div className="flex flex-col h-full bg-gray-50">
         <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
@@ -117,6 +125,7 @@ export function OperationRecordDailyPage() {
               selectedDate={selectedDate}
               isModalOpen={isModalOpen}
               serverToday={serverToday}
+              mealAvailability={mealAvailability}
               onSelectDate={openModalForDate}
             />
           </div>
@@ -129,6 +138,7 @@ export function OperationRecordDailyPage() {
         selectedDate={selectedDate}
         hasRecord={hasRecord}
         formValues={formValues}
+        availableMeals={selectedAvailability}
         onChange={updateFormValues}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSave}
