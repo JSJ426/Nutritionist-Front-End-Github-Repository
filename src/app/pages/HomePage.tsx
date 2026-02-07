@@ -7,6 +7,7 @@ import { getLeftoversMetrics, getMissedMetrics, getSatisfactionMetrics } from '.
 
 import { KpiCard } from '../components/KpiCard';
 import { KpiMiniCard } from '../components/KpiMiniCard';
+import { WeeklyMealSection } from '../components/WeeklyMealSection';
 
 import { getSeriesKpiData } from '../viewModels';
 import { toLeftoversSeriesByPeriod } from '../viewModels/statsLeftovers';
@@ -163,7 +164,7 @@ export function HomePage() {
     dinner: toHomeMealFromDetailResponse(null),
   };
   const { todayMeals: weeklyTodayMeals, weeklyMeals } = mealPlanWeeklyResponse
-    ? toHomeMealsFromWeeklyResponse(mealPlanWeeklyResponse)
+    ? toHomeMealsFromWeeklyResponse(mealPlanWeeklyResponse, { todayDate: new Date() })
     : { todayMeals: emptyTodayMeals, weeklyMeals: buildEmptyWeeklyMeals(displayDate) };
   const todayMeals = {
     lunch: todayLunchDetail ? toHomeMealFromDetailResponse(todayLunchDetail) : weeklyTodayMeals.lunch,
@@ -297,163 +298,71 @@ export function HomePage() {
             {/* 중식 카드 */}
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
               <h3 className="text-base font-medium mb-3 text-orange-700 pb-2 border-b border-orange-200">중식</h3>
-              <div className="space-y-2">
-                <div>
-                  <div className="text-sm text-gray-800">
-                    {hasTodayLunch ? todayMeals.lunch.menu.join(', ') : '등록된 식단이 없습니다.'}
+              {hasTodayLunch ? (
+                <div className="space-y-2">
+                  <div>
+                    <div className="text-sm text-gray-800">{todayMeals.lunch.menu.join(', ')}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-600">
+                      칼로리: {todayMeals.lunch.calories} kcal
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-600">(영양성분)</div>
+                    <div className="text-xs text-gray-600">
+                      단백질 {todayMeals.lunch.nutrients.protein}, 탄수화물 {todayMeals.lunch.nutrients.carbs}, 지방{' '}
+                      {todayMeals.lunch.nutrients.fat}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-600 mb-1">알레르기 유발 식품</div>
+                    <div className="text-sm text-red-600">{todayMeals.lunch.allergens.join(', ')}</div>
                   </div>
                 </div>
-                <div>
-                  <div className="text-xs text-gray-600">
-                    칼로리: {hasTodayLunch ? `${todayMeals.lunch.calories} kcal` : '-'}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-600">
-                    (영양성분)
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    단백질 {hasTodayLunch ? todayMeals.lunch.nutrients.protein : '-'}, 탄수화물 {hasTodayLunch ? todayMeals.lunch.nutrients.carbs : '-'}, 지방 {hasTodayLunch ? todayMeals.lunch.nutrients.fat : '-'}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-600 mb-1">알레르기 유발 식품</div>
-                  <div className="text-sm text-red-600">
-                    {hasTodayLunch ? todayMeals.lunch.allergens.join(', ') : '-'}
-                  </div>
-                </div>
-              </div>
+              ) : (
+                <div className="text-sm text-gray-800">등록된 식단이 없습니다.</div>
+              )}
             </div>
 
             {/* 석식 카드 */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h3 className="text-base font-medium mb-3 text-blue-700 pb-2 border-b border-blue-200">석식</h3>
-              <div className="space-y-2">
-                <div>
-                  <div className="text-sm text-gray-800">
-                    {hasTodayDinner ? todayMeals.dinner.menu.join(', ') : '등록된 식단이 없습니다.'}
+              {hasTodayDinner ? (
+                <div className="space-y-2">
+                  <div>
+                    <div className="text-sm text-gray-800">{todayMeals.dinner.menu.join(', ')}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-600">
+                      칼로리: {todayMeals.dinner.calories} kcal
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-600">(영양성분)</div>
+                    <div className="text-xs text-gray-600">
+                      단백질 {todayMeals.dinner.nutrients.protein}, 탄수화물 {todayMeals.dinner.nutrients.carbs}, 지방{' '}
+                      {todayMeals.dinner.nutrients.fat}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-600 mb-1">알레르기 유발 식품</div>
+                    <div className="text-sm text-red-600">{todayMeals.dinner.allergens.join(', ')}</div>
                   </div>
                 </div>
-                <div>
-                  <div className="text-xs text-gray-600">
-                    칼로리: {hasTodayDinner ? `${todayMeals.dinner.calories} kcal` : '-'}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-600">
-                    (영양성분)
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    단백질 {hasTodayDinner ? todayMeals.dinner.nutrients.protein : '-'}, 탄수화물 {hasTodayDinner ? todayMeals.dinner.nutrients.carbs : '-'}, 지방 {hasTodayDinner ? todayMeals.dinner.nutrients.fat : '-'}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-600 mb-1">알레르기 유발 식품</div>
-                  <div className="text-sm text-red-600">
-                    {hasTodayDinner ? todayMeals.dinner.allergens.join(', ') : '-'}
-                  </div>
-                </div>
-              </div>
+              ) : (
+                <div className="text-sm text-gray-800">등록된 식단이 없습니다.</div>
+              )}
             </div>
           </div>
         </div>
 
         {/* 이 주의 식단표 - 75% */}
-        <div className="bg-white rounded-lg shadow-md p-6" style={{ width: '75%' }}>
-        <h2 className="text-xl font-medium mb-4 pb-2 border-b-2 border-[#5dccb4]">
-          이 주의 식단표
-        </h2>
-      
-        {/* 스크롤 컨테이너 */}
-        <div className="overflow-x-auto">
-          <div
-            className="
-              flex
-              flex-nowrap
-              gap-3
-              justify-center   // 가로 중앙
-              items-center     // 세로 중앙
-              min-h-[400px]    // Tailwind 방식 권장
-            "
-          >
-            {weeklyMeals.map((dayMeal, idx) => {
-              const isToday = dayMeal.date === currentDate;
-              return (
-                <div
-                  key={idx}
-                  className={`flex-shrink-0 border-2 rounded-lg overflow-hidden transition-all ${
-                    isToday ? 'border-[#5dccb4] shadow-2xl' : 'border-gray-200'
-                  }`}
-                  style={{
-                    width: isToday ? '176px' : '184px',
-                    transform: isToday ? 'scale(1.05)' : 'scale(1)',
-                  }}
-                >
-                    {/* Day Header */}
-                    <div className={`text-white text-center py-2 font-medium ${
-                      isToday ? 'bg-[#5dccb4]' : 'bg-[#5dccb4]'
-                    }`}>
-                      {dayMeal.day}요일 <span className="text-sm">({currentMonth}월 {dayMeal.date}일)</span>
-                    </div>
-                    
-                    {/* Meal Content */}
-                    <div className={`p-3 flex flex-col ${isToday ? 'bg-[#5dccb4]/5' : ''}`}>
-                      {/* 중식 */}
-                      <div className="pb-3 border-b border-gray-200 flex flex-col">
-                        <div className="h-6 mb-2 flex items-center justify-between flex-shrink-0">
-                          <span className="inline-block px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded">
-                            중식
-                          </span>
-                        </div>
-                        <div className="text-sm text-gray-800 leading-relaxed space-y-1 flex-1">
-                          {dayMeal.lunch.menu.length === 0 ? (
-                            <div className="text-xs text-gray-400">식단 없음</div>
-                          ) : (
-                            dayMeal.lunch.menu.map((item, itemIdx) => (
-                              <div key={itemIdx} className="flex items-start gap-1.5">
-                                <span className="text-xs">{item.name}</span>
-                                {item.allergy.length > 0 && (
-                                  <span className="text-xs text-gray-600 bg-[#FCE8E6] px-1 py-0.5 rounded flex-shrink-0">
-                                    {item.allergy.join(',')}
-                                  </span>
-                                )}
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 석식 */}
-                      <div className="pt-3 flex flex-col">
-                        <div className="h-6 mb-2 flex items-center justify-between flex-shrink-0">
-                          <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
-                            석식
-                          </span>
-                        </div>
-                        <div className="text-sm text-gray-800 leading-relaxed space-y-1 flex-1">
-                          {dayMeal.dinner.menu.length === 0 ? (
-                            <div className="text-xs text-gray-400">식단 없음</div>
-                          ) : (
-                            dayMeal.dinner.menu.map((item, itemIdx) => (
-                              <div key={itemIdx} className="flex items-start gap-1.5">
-                                <span className="text-xs">{item.name}</span>
-                                {item.allergy.length > 0 && (
-                                  <span className="text-xs text-gray-600 bg-[#FCE8E6] px-1 py-0.5 rounded flex-shrink-0">
-                                    {item.allergy.join(',')}
-                                  </span>
-                                )}
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        <WeeklyMealSection
+          currentMonth={currentMonth}
+          currentDate={currentDate}
+          weeklyMeals={weeklyMeals}
+        />
       </div>
 
       {/* 하단 카드 섹션 */}

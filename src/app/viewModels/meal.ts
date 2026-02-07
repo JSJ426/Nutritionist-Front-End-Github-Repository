@@ -486,9 +486,14 @@ const defaultHomeMealsDefaults: HomeMealsDefaults = {
 
 export const toHomeMealsFromWeeklyResponse = (
   raw: MealPlanWeeklyResponse,
-  defaults: HomeMealsDefaults = defaultHomeMealsDefaults
+  defaults: Partial<HomeMealsDefaults> = {}
 ) => {
-  const isoToday = toIsoDate(defaults.todayDate ?? new Date(`${raw.data.week_start}T00:00:00`));
+  const resolvedDefaults: HomeMealsDefaults = {
+    ...defaultHomeMealsDefaults,
+    ...defaults,
+    defaultDetail: defaults.defaultDetail ?? defaultHomeMealsDefaults.defaultDetail,
+  };
+  const isoToday = toIsoDate(resolvedDefaults.todayDate ?? new Date(`${raw.data.week_start}T00:00:00`));
   const mealsByDate = new Map<string, DayMeals>();
 
   raw.data.menus.forEach((menu) => {
@@ -500,11 +505,16 @@ export const toHomeMealsFromWeeklyResponse = (
   });
 
   const sortedDates = Array.from(mealsByDate.keys()).sort((a, b) => a.localeCompare(b));
-  const todayEntry = mealsByDate.get(isoToday) ?? (sortedDates[0] ? mealsByDate.get(sortedDates[0]) : undefined);
+  const fallbackEntry = resolvedDefaults.todayDate
+    ? undefined
+    : sortedDates[0]
+    ? mealsByDate.get(sortedDates[0])
+    : undefined;
+  const todayEntry = mealsByDate.get(isoToday) ?? fallbackEntry;
 
   const toTodayMeal = (meal?: MealData) => {
     const menu = meal?.menu ?? [];
-    const detail = meal?.detail ?? defaults.defaultDetail;
+    const detail = meal?.detail ?? resolvedDefaults.defaultDetail;
     return {
       menu: menu.map((item) => item.name),
       calories: detail.nutrition.kcal,
@@ -513,7 +523,7 @@ export const toHomeMealsFromWeeklyResponse = (
         carbs: formatMacro(detail.nutrition.carb),
         fat: formatMacro(detail.nutrition.fat),
       },
-      allergens: menu.length > 0 ? buildAllergenTextList(menu) : defaults.defaultAllergenText ?? [],
+      allergens: menu.length > 0 ? buildAllergenTextList(menu) : resolvedDefaults.defaultAllergenText ?? [],
     };
   };
 
