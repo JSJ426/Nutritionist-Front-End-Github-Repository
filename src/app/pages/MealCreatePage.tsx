@@ -13,12 +13,15 @@ interface MealCreatePageProps {
 export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
+  const now = new Date();
+  const generationTarget = new Date(now.getFullYear(), now.getMonth() + 1, 1);
   const [schoolInfo, setSchoolInfo] = useState({
     targetPrice: 0,
     maxPrice: 0,
     staffCount: 0,
     equipmentSummary: "",
   });
+  const formatNumber = (value: number) => value.toLocaleString("ko-KR");
 
   const handleGenerate = async () => {
     setIsLoading(true);
@@ -47,12 +50,6 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
   //   alert("취소되었습니다.");
   // };
 
-  const handleApply = () => {
-    if (hasGenerated) {
-      onNavigate?.("meal-edit");
-    }
-  };
-
   useEffect(() => {
     const loadSchoolInfo = async () => {
       const response = await getSchoolResponse();
@@ -79,6 +76,13 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
       {/* Content Area with Tabs */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
         <div className="space-y-4 max-w-[1200px] mx-auto">
+          {/* 생성 대상 월 */}
+          <h2 className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            현재 생성 대상:
+            {" "}{generationTarget.getFullYear()}년{" "}
+            {generationTarget.getMonth() + 1}월
+          </h2>
+
           {/* 단가 관리 */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-medium mb-4 pb-2 border-b border-gray-200">
@@ -91,7 +95,7 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
                 </label>
                 <div className="flex-1 flex items-center gap-2">
                   <div className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700">
-                    {schoolInfo.targetPrice}
+                    {formatNumber(schoolInfo.targetPrice)}
                   </div>
                   <span className="text-sm text-gray-600">원</span>
                 </div>
@@ -102,7 +106,7 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
                 </label>
                 <div className="flex-1 flex items-center gap-2">
                   <div className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700">
-                    {schoolInfo.maxPrice}
+                    {formatNumber(schoolInfo.maxPrice)}
                   </div>
                   <span className="text-sm text-gray-600">원</span>
                 </div>
@@ -122,7 +126,7 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
                 </label>
                 <div className="flex-1 flex items-center gap-2">
                   <div className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700">
-                    {schoolInfo.staffCount}
+                    {formatNumber(schoolInfo.staffCount)}
                   </div>
                   <span className="text-sm text-gray-600">명</span>
                 </div>
@@ -132,7 +136,7 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
                   주요 조리 기구
                 </label>
                 <div className="flex-1">
-                  <div className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700 whitespace-pre-line">
+                  <div className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700 whitespace-pre-line min-h-[160px]">
                     {schoolInfo.equipmentSummary}
                   </div>
                 </div>
@@ -154,13 +158,6 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
             : hasGenerated
               ? "식단표 재생성"
               : "식단표 생성"}
-        </button>
-        <button
-          onClick={handleApply}
-          disabled={!hasGenerated}
-          className="px-6 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          적용
         </button>
         {/* <button
           onClick={handleCancel}
