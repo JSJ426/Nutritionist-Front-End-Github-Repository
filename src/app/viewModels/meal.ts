@@ -14,6 +14,9 @@ export type MealDetailPayload = {
     byMenu: Record<string, number[]>;
   };
   recipeByMenu?: Record<string, string>;
+  menuItems?: Record<string, MealPlanMenuItem | null>;
+  imageUrl?: string | null;
+  isReviewed?: boolean;
   menuId?: number;
   mealPlanId?: number;
   date?: string;
@@ -72,6 +75,8 @@ type MealPlanMenuItem = {
   name: string;
   display?: string;
   allergens: number[];
+  recipe?: string;
+  ingredients?: string;
 };
 
 export type MealPlanWeeklyResponse = {
@@ -136,6 +141,8 @@ export type MealPlanDetailResponse = {
     school_id: number;
     date: string;
     meal_type: 'LUNCH' | 'DINNER';
+    image_url?: string | null;
+    is_reviewed?: boolean;
     nutrition: {
       kcal: number;
       carb: number;
@@ -144,7 +151,7 @@ export type MealPlanDetailResponse = {
     };
     cost: number;
     ai_comment: string | null;
-    menu_items: Record<string, MealPlanMenuItem>;
+    menu_items: Record<string, MealPlanMenuItem | null>;
     allergen_summary: {
       unique_allergens: number[];
       by_menu: Record<string, number[]>;
@@ -321,7 +328,7 @@ const buildMenuItemsFromMenuItems = (
   Object.values(menuItems)
     .filter((item): item is MealPlanMenuItem => Boolean(item))
     .map((item) => ({
-      name: item.display || item.name,
+      name: item.name,
       allergy: item.allergens || [],
     }));
 
@@ -377,6 +384,7 @@ export const buildMealMonthlyDataFromResponse = (raw: MealMonthlyResponse): Meal
         byMenu: computedSummary.byMenu,
       },
       recipeByMenu: buildRecipeByMenu(menuItems),
+      menuItems: menu.menu_items,
       menuId: menu.menu_id ?? menu.id,
       mealPlanId,
       date: menu.date,

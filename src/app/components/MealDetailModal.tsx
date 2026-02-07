@@ -90,6 +90,19 @@ interface MealDetailModalProps {
       byMenu: Record<string, number[]>;
     };
     recipeByMenu?: Record<string, string>;
+    menuItems?: Record<
+      string,
+      {
+        id: string;
+        name: string;
+        display?: string;
+        allergens: number[];
+        recipe?: string;
+        ingredients?: string;
+      } | null
+    >;
+    imageUrl?: string | null;
+    isReviewed?: boolean;
   };
   onClose: () => void;
 }
@@ -100,12 +113,41 @@ export function MealDetailModal({ day, week, mealType, mealData, detail, onClose
   const carbValue = detail?.nutrition.carb ?? details.nutrition.carbs;
   const protValue = detail?.nutrition.prot ?? details.nutrition.protein;
   const fatValue = detail?.nutrition.fat ?? details.nutrition.fat;
+  const fallbackAllergies = detail?.menuItems
+    ? Array.from(
+        new Set(
+          Object.values(detail.menuItems)
+            .filter((item): item is NonNullable<typeof item> => Boolean(item))
+            .flatMap((item) => item.allergens ?? [])
+        )
+      ).sort((a, b) => a - b)
+    : Array.from(new Set(mealData.menu.flatMap((item) => item.allergy))).sort((a, b) => a - b);
   const allAllergies = detail?.allergenSummary.uniqueAllergens
     ? detail.allergenSummary.uniqueAllergens
-    : Array.from(new Set(mealData.menu.flatMap(item => item.allergy))).sort((a, b) => a - b);
+    : fallbackAllergies;
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const recipeByMenu = detail?.recipeByMenu ?? {};
   const formattedCost = detail?.cost != null ? detail.cost.toLocaleString('ko-KR') : '-';
+  const menuOrder = ['rice', 'soup', 'main1', 'main2', 'side', 'kimchi', 'dessert'];
+  const detailMenuItems = detail?.menuItems
+    ? menuOrder
+        .map((key) => detail.menuItems?.[key])
+        .filter((item): item is NonNullable<typeof item> => Boolean(item))
+    : [];
+  const ingredientsList =
+    detailMenuItems.length > 0
+      ? detailMenuItems.map((item) => ({
+          name: item.name,
+          allergy: item.allergens ?? [],
+          components: item.ingredients ?? '',
+          recipe: item.recipe ?? '',
+        }))
+      : details.ingredients.map((item) => ({
+          name: item.name,
+          allergy: item.allergy,
+          components: item.components,
+          recipe: recipeByMenu[item.name] ?? '',
+        }));
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-6">
@@ -192,9 +234,8 @@ export function MealDetailModal({ day, week, mealType, mealData, detail, onClose
             메뉴 상세 정보
           </h3>
           <div className="space-y-2">
-            {details.ingredients.map((ingredient) => {
+            {ingredientsList.map((ingredient) => {
               const isOpen = openMenu === ingredient.name;
-              const recipe = recipeByMenu[ingredient.name];
               return (
                 <div key={ingredient.name} className="border border-gray-200 rounded-lg bg-gray-50">
                   <button
@@ -219,12 +260,16 @@ export function MealDetailModal({ day, week, mealType, mealData, detail, onClose
                     <div className="px-4 pb-4 text-sm text-gray-700 space-y-3">
                       <div>
                         <p className="text-xs text-gray-500 mb-1">식자재 성분</p>
-                        <p className="text-sm text-gray-700">{ingredient.components.join(', ')}</p>
+                        <p className="text-sm text-gray-700">
+                          {Array.isArray(ingredient.components)
+                            ? ingredient.components.join(', ')
+                            : ingredient.components || '등록된 식자재 정보가 없습니다.'}
+                        </p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500 mb-1">레시피</p>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                          {recipe ? recipe : '등록된 레시피가 없습니다.'}
+                          {ingredient.recipe ? ingredient.recipe : '등록된 레시피가 없습니다.'}
                         </p>
                       </div>
                     </div>

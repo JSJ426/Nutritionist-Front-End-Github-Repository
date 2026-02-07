@@ -13,6 +13,17 @@ type MealDetailPayload = {
     uniqueAllergens: number[];
     byMenu: Record<string, number[]>;
   };
+  menuItems?: Record<
+    string,
+    {
+      id: string;
+      name: string;
+      display?: string;
+      allergens: number[];
+      recipe?: string;
+      ingredients?: string;
+    } | null
+  >;
 };
 
 interface MealWeekSectionProps {
