@@ -80,13 +80,6 @@ export function MealMonthlyCalendar({
   const activeMonth = currentMonth || (Object.keys(mealDataByMonth)[0] ?? '');
   const mealData = activeMonth ? mealDataByMonth[activeMonth] : undefined;
 
-  // Filter weeks based on selected week
-  const displayWeeks = mealData
-    ? selectedWeek !== null
-      ? mealData.weeks.filter((_, idx) => idx === selectedWeek)
-      : mealData.weeks
-    : [];
-
   const isValidMonthKey = /^\d{4}-\d{2}$/.test(activeMonth);
   const monthKey = isValidMonthKey ? activeMonth : '';
   const [yearStr, monthStr] = monthKey.split('-');
@@ -111,6 +104,13 @@ export function MealMonthlyCalendar({
       return acc;
     }, {});
   };
+
+  // Filter weeks based on selected week
+  const displayWeeks = mealData
+    ? selectedWeek !== null
+      ? mealData.weeks.filter((_, idx) => idx === selectedWeek)
+      : mealData.weeks
+    : [];
 
   return (
     <div>

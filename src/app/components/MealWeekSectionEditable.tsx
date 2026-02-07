@@ -43,12 +43,21 @@ export function MealWeekSectionEditable({
   weekNum,
   hasChanges,
 }: MealWeekSectionEditableProps) {
+  const isEmptyWeek = !weekDays.some((day) => {
+    if (!dateInMonth[day]) return false;
+    const dayMeals = mealsByDay[day];
+    const lunchCount = dayMeals?.lunch?.menu?.length ?? 0;
+    const dinnerCount = dayMeals?.dinner?.menu?.length ?? 0;
+    return lunchCount > 0 || dinnerCount > 0;
+  });
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h3 className="text-lg font-medium mb-4 pb-2 border-b border-gray-200">
         {weekLabel}
       </h3>
 
+      {isEmptyWeek ? null : (
       <div className="grid grid-cols-5 gap-4">
         {weekDays.map((day) => {
           const dayMeals = mealsByDay[day];
@@ -98,6 +107,7 @@ export function MealWeekSectionEditable({
           );
         })}
       </div>
+      )}
     </div>
   );
 }

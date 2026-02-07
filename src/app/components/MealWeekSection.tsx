@@ -30,12 +30,19 @@ interface MealWeekSectionProps {
 }
 
 export function MealWeekSection({ weekLabel, weekDays, mealsByDay, dateLabels, dateInMonth, onDetail }: MealWeekSectionProps) {
+  const isEmptyWeek = !weekDays.some((day) => {
+    if (!dateInMonth[day]) return false;
+    const dayMeals = mealsByDay[day];
+    return Boolean(dayMeals?.lunch || dayMeals?.dinner);
+  });
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h3 className="text-lg font-medium mb-4 pb-2 border-b border-gray-200">
         {weekLabel}
       </h3>
 
+      {isEmptyWeek ? null : (
       <div className="grid grid-cols-5 gap-4">
         {weekDays.map((day) => (
           <MealDayCard
@@ -49,6 +56,7 @@ export function MealWeekSection({ weekLabel, weekDays, mealsByDay, dateLabels, d
           />
         ))}
       </div>
+      )}
     </div>
   );
 }

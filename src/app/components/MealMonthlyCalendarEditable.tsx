@@ -191,10 +191,12 @@ export function MealMonthlyCalendarEditable({
       {/* Content with relative positioning for drawer */}
       <div className="flex-1 overflow-y-auto px-6 py-6 relative">
         <div className="max-w-[1600px] mx-auto space-y-6">
-          {(selectedWeek === null ? weeksData : [weeksData[selectedWeek]]).map((weekData, index) => {
-            const actualWeekIndex = selectedWeek === null ? index : selectedWeek;
-            const weekNum = actualWeekIndex + 1;
-            const weekDateInfo = getWeekDateInfo(actualWeekIndex);
+          {(selectedWeek === null ? weeksData : [weeksData[selectedWeek]])
+            .filter(Boolean)
+            .map((weekData, index) => {
+              const actualWeekIndex = selectedWeek === null ? index : selectedWeek;
+              const weekNum = actualWeekIndex + 1;
+              const weekDateInfo = getWeekDateInfo(actualWeekIndex);
 
             return (
               <MealWeekSectionEditable
