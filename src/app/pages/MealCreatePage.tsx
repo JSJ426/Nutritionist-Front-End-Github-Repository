@@ -78,9 +78,10 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
         <div className="space-y-4 max-w-[1200px] mx-auto">
           {/* 생성 대상 월 */}
           <h2 className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            현재 생성 대상:
-            {" "}{generationTarget.getFullYear()}년{" "}
-            {generationTarget.getMonth() + 1}월
+            <b>
+              {generationTarget.getFullYear()}년{" "}
+              {generationTarget.getMonth() + 1}월
+            </b>에 대한 식단표를 생성합니다.
           </h2>
 
           {/* 단가 관리 */}
