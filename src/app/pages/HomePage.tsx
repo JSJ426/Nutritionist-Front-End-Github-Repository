@@ -380,10 +380,12 @@ export function HomePage() {
               unit="%"
               diff={formatKpiDiff(absenteeKpi.todayChange, '%')}
               trend={getTrend(absenteeKpi.todayChange)}
+              showDiff
+              showDiffLabel
               isEmpty={isMissedEmpty}
             />
             <KpiMiniCard
-              title="주간 평균"
+              title="7일 평균"
               value={formatKpiValue(absenteeKpi.weekAvg)}
               unit="%"
               diff={formatKpiDiff(absenteeKpi.weekChange, '%')}
@@ -391,7 +393,7 @@ export function HomePage() {
               isEmpty={isMissedEmpty}
             />
             <KpiMiniCard
-              title="월간 평균"
+              title="30일 평균"
               value={formatKpiValue(absenteeKpi.monthAvg)}
               unit="%"
               diff={formatKpiDiff(absenteeKpi.monthChange, '%')}
@@ -434,10 +436,12 @@ export function HomePage() {
               unit="kg"
               diff={formatKpiDiff(wasteKpi.todayChange, 'kg')}
               trend={getTrend(wasteKpi.todayChange)}
+              showDiff
+              showDiffLabel
               isEmpty={isWasteEmpty}
             />
             <KpiMiniCard
-              title="주간 평균"
+              title="7일 평균"
               value={formatKpiValue(wasteKpi.weekAvg)}
               unit="kg"
               diff={formatKpiDiff(wasteKpi.weekChange, 'kg')}
@@ -445,7 +449,7 @@ export function HomePage() {
               isEmpty={isWasteEmpty}
             />
             <KpiMiniCard
-              title="월간 평균"
+              title="30일 평균"
               value={formatKpiValue(wasteKpi.monthAvg)}
               unit="kg"
               diff={formatKpiDiff(wasteKpi.monthChange, 'kg')}
