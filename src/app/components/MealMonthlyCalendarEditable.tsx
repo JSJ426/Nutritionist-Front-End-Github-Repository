@@ -5,6 +5,11 @@ import { MealDetailModal } from './MealDetailModal';
 import { MealEditModal } from './MealEditModal';
 import { WeekFilterButtons } from './WeekFilterButtons';
 import { MealWeekSectionEditable } from './MealWeekSectionEditable';
+import {
+  getWeekDatesForMonth,
+  WEEKDAY_INDICES_MON_FRI,
+  WEEKDAY_LABELS_MON_FRI,
+} from '../utils/calendar';
 
 // 식단 데이터 타입
 interface MenuItem {
@@ -78,7 +83,7 @@ export function MealMonthlyCalendarEditable({
   const year = yearStr ? Number(yearStr) : today.getFullYear();
   const month = monthStr ? Number(monthStr) : today.getMonth() + 1;
 
-  const weekDays = ['월', '화', '수', '목', '금'];
+  const weekDays = WEEKDAY_LABELS_MON_FRI;
   const getWeekDateInfo = (weekIndex: number) => {
     if (!currentMonth) {
       return weekDays.reduce<Record<string, { label: string; iso: string }>>((acc, day) => {
@@ -97,21 +102,21 @@ export function MealMonthlyCalendarEditable({
       }, {});
     }
 
-    const firstDay = new Date(year, month - 1, 1);
-    const dayOfWeek = (firstDay.getDay() + 6) % 7; // Monday = 0
-    const firstMonday = new Date(year, month - 1, 1 - dayOfWeek);
-    const weekMonday = new Date(firstMonday);
-    weekMonday.setDate(firstMonday.getDate() + weekIndex * 7);
+    const weekDates = getWeekDatesForMonth({
+      year,
+      monthIndex: month - 1,
+      weekIndex,
+      weekDayIndices: [...WEEKDAY_INDICES_MON_FRI],
+      weekStartsOnMonday: true,
+    });
 
     return weekDays.reduce<Record<string, { label: string; iso: string; inMonth: boolean }>>((acc, day, idx) => {
-      const date = new Date(weekMonday);
-      date.setDate(weekMonday.getDate() + idx);
+      const { date, inMonth } = weekDates[idx];
       const labelMonth = String(date.getMonth() + 1).padStart(2, '0');
       const labelDay = String(date.getDate()).padStart(2, '0');
       const isoYear = String(date.getFullYear());
       const isoMonth = String(date.getMonth() + 1).padStart(2, '0');
       const isoDay = String(date.getDate()).padStart(2, '0');
-      const inMonth = date.getFullYear() === year && date.getMonth() + 1 === month;
       acc[day] = {
         label: `${labelMonth}/${labelDay}`,
         iso: `${isoYear}-${isoMonth}-${isoDay}`,

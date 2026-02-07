@@ -5,6 +5,11 @@ import {
   DailyRecord,
   MealAvailability,
 } from '../utils/OperationRecordUtils';
+import {
+  getWeekCountInMonth,
+  getWeekDatesForMonth,
+  WEEKDAY_INDICES_MON_FRI,
+} from '../utils/calendar';
 
 type OperationRecordCalendarGridProps = {
   currentMonth: Date;
@@ -26,28 +31,23 @@ export function OperationRecordCalendarGrid({
   onSelectDate,
 }: OperationRecordCalendarGridProps) {
   const year = currentMonth.getFullYear();
-  const month = currentMonth.getMonth();
-  const monthStart = new Date(year, month, 1);
-  const monthEnd = new Date(year, month + 1, 0);
-  const startDayOfWeek = (monthStart.getDay() + 6) % 7; // Monday = 0
-  const firstMonday = new Date(year, month, 1 - startDayOfWeek);
-  const endDayOfWeek = (monthEnd.getDay() + 6) % 7;
-  const lastMonday = new Date(year, month, monthEnd.getDate() - endDayOfWeek);
-  const weekCount =
-    Math.floor((lastMonday.getTime() - firstMonday.getTime()) / (1000 * 60 * 60 * 24 * 7)) + 1;
+  const monthIndex = currentMonth.getMonth();
+  const weekCount = getWeekCountInMonth(year, monthIndex, { weekStartsOnMonday: true });
 
   return (
     <div className="space-y-2">
       {Array.from({ length: weekCount }).map((_, weekIndex) => {
-        const weekMonday = new Date(firstMonday);
-        weekMonday.setDate(firstMonday.getDate() + weekIndex * 7);
+        const weekDates = getWeekDatesForMonth({
+          year,
+          monthIndex,
+          weekIndex,
+          weekDayIndices: [...WEEKDAY_INDICES_MON_FRI],
+          weekStartsOnMonday: true,
+        });
 
         return (
           <div key={`week-${weekIndex}`} className="grid grid-cols-5 gap-2">
-            {Array.from({ length: 5 }).map((__, dayIndex) => {
-              const date = new Date(weekMonday);
-              date.setDate(weekMonday.getDate() + dayIndex);
-              const inMonth = date.getMonth() === month;
+            {weekDates.map(({ date, inMonth }, dayIndex) => {
               const dateStr = inMonth ? formatDate(date) : `empty-${weekIndex}-${dayIndex}`;
               const available = inMonth
                 ? mealAvailability[dateStr] ?? emptyMealAvailability

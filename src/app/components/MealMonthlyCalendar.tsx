@@ -2,6 +2,11 @@ import { useState } from 'react';
 import { MealDetailModal } from './MealDetailModal';
 import { WeekFilterButtons } from './WeekFilterButtons';
 import { MealWeekSection } from './MealWeekSection';
+import {
+  getWeekDatesForMonth,
+  WEEKDAY_INDICES_MON_FRI,
+  WEEKDAY_LABELS_MON_FRI,
+} from '../utils/calendar';
 
 type MealDetailPayload = {
   nutrition: {
@@ -54,7 +59,7 @@ export function MealMonthlyCalendar({
   onNextMonth,
   onResetMonth,
 }: MealMonthlyCalendarProps) {
-  const weekDays = ['월', '화', '수', '목', '금'];
+  const weekDays = WEEKDAY_LABELS_MON_FRI;
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
   const [detailMeal, setDetailMeal] = useState<{
     week: string;
@@ -90,18 +95,18 @@ export function MealMonthlyCalendar({
   const month = monthStr ? Number(monthStr) : today.getMonth() + 1;
 
   const getWeekDateMeta = (weekIndex: number) => {
-    const firstDay = new Date(year, month - 1, 1);
-    const dayOfWeek = (firstDay.getDay() + 6) % 7; // Monday = 0
-    const firstMonday = new Date(year, month - 1, 1 - dayOfWeek);
-    const weekMonday = new Date(firstMonday);
-    weekMonday.setDate(firstMonday.getDate() + weekIndex * 7);
+    const weekDates = getWeekDatesForMonth({
+      year,
+      monthIndex: month - 1,
+      weekIndex,
+      weekDayIndices: [...WEEKDAY_INDICES_MON_FRI],
+      weekStartsOnMonday: true,
+    });
 
     return weekDays.reduce<Record<string, { label: string; inMonth: boolean }>>((acc, day, idx) => {
-      const date = new Date(weekMonday);
-      date.setDate(weekMonday.getDate() + idx);
+      const { date, inMonth } = weekDates[idx];
       const labelMonth = String(date.getMonth() + 1).padStart(2, '0');
       const labelDay = String(date.getDate()).padStart(2, '0');
-      const inMonth = date.getFullYear() === year && date.getMonth() + 1 === month;
       acc[day] = { label: `${labelMonth}-${labelDay}`, inMonth };
       return acc;
     }, {});
