@@ -18,13 +18,7 @@ import {
   mockMetricSkipMealRegisterResponse,
   mockMetricSkipMealUpdateResponse,
 } from './mocks/metrics/missed';
-import {
-  satisfactionConfig,
-  satisfactionDefaults,
-  satisfactionLabels,
-  satisfactionMealOptions,
-  satisfactionPeriodOptions,
-} from './mocks/metrics/satisfaction';
+import { satisfactionConfig, satisfactionDefaults } from './mocks/metrics/satisfaction';
 import type {
   LeftoversMetricsResponse,
   MissedMetricsResponse,
@@ -149,9 +143,6 @@ export const getSatisfactionMetrics = async (): Promise<SatisfactionMetricsRespo
   return {
     defaults: satisfactionDefaults,
     config: satisfactionConfig,
-    labels: satisfactionLabels,
-    periodOptions: satisfactionPeriodOptions,
-    mealOptions: satisfactionMealOptions,
     countLast30Days,
     listLast30Days,
     positiveCount,

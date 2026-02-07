@@ -146,9 +146,9 @@ export type SatisfactionOption = {
 export type SatisfactionMetricsResponse = {
   defaults: SatisfactionDefaults;
   config: SatisfactionConfig;
-  labels: SatisfactionLabels;
-  periodOptions: SatisfactionOption[];
-  mealOptions: SatisfactionOption[];
+  labels?: SatisfactionLabels;
+  periodOptions?: SatisfactionOption[];
+  mealOptions?: SatisfactionOption[];
   countLast30Days: MetricSatisCountLast30DaysResponse;
   listLast30Days: {
     success: boolean;

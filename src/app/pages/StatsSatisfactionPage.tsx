@@ -57,22 +57,29 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
   };
   const fallbackLabels = {
     period: {
-      weekly: '',
-      monthly: '',
+      weekly: '7일',
+      monthly: '30일',
     },
   };
   const defaults = metrics?.defaults ?? fallbackDefaults;
   const labels = metrics?.labels ?? fallbackLabels;
   const config = metrics?.config;
-  const periodOptions = metrics?.periodOptions ?? [];
-  const mealOptions = metrics?.mealOptions ?? [];
+  const periodOptions = [
+    { value: 'weekly', label: '7일' },
+    { value: 'monthly', label: '30일' },
+  ];
+  const mealOptions = [
+    { value: '전체', label: '전체' },
+    { value: '중식', label: '중식' },
+    { value: '석식', label: '석식' },
+  ];
   const countLast30Days = metrics?.countLast30Days;
   const reviewList = filteredReviewList ?? metrics?.reviewList;
   const { defaultPeriod, defaultMeal } = defaults;
   const [period, setPeriod] = useState<StatsSatisfactionPeriod>(defaultPeriod as StatsSatisfactionPeriod);
-  const [meal, setMeal] = useState<StatsSatisfactionMeal>(defaultMeal as StatsSatisfactionMeal);
   const [appliedPeriod, setAppliedPeriod] = useState<StatsSatisfactionPeriod>(defaultPeriod as StatsSatisfactionPeriod);
-  const [appliedMeal, setAppliedMeal] = useState<StatsSatisfactionMeal>(defaultMeal as StatsSatisfactionMeal);
+  const fixedMeal: StatsSatisfactionMeal = '전체';
+  const appliedMeal = fixedMeal;
 
   const feedbackData = useMemo(
     () => (reviewList ? toFeedbackFromReviewList(reviewList) : []),
@@ -106,13 +113,19 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
     };
   }, [countLast30Days, filteredNegativeCount, filteredPositiveCount, filteredReviewList]);
 
+  const resolvedPeriodDays = useMemo(() => {
+    if (!config?.days) return 0;
+    return appliedPeriod === 'weekly' ? config.days.weekly : config.days.monthly;
+  }, [appliedPeriod, config?.days]);
+
+  const resolvedPeriodLabel = resolvedPeriodDays > 0 ? `${resolvedPeriodDays}일` : '';
+
   const satisfactionKpis = useMemo(
     () => [
       {
-        title: '전체 리뷰 수',
+        title: resolvedPeriodLabel ? `최근 ${resolvedPeriodLabel} 리뷰 수` : '리뷰 수',
         value: kpiMetrics.totalCount,
         unit: '건',
-        sub: '최근 30일 기준',
         icon: <MessageSquare className="w-4 h-4" />,
       },
       {
@@ -132,7 +145,7 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
         icon: <Frown className="w-4 h-4" />,
       }
     ],
-    [kpiMetrics]
+    [kpiMetrics, resolvedPeriodLabel]
   );
 
   const resolvePeriodRange = (
@@ -164,9 +177,8 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
     return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
   };
 
-  const runSearch = async (nextPeriod: StatsSatisfactionPeriod, nextMeal: StatsSatisfactionMeal) => {
+  const runSearch = async (nextPeriod: StatsSatisfactionPeriod) => {
     setAppliedPeriod(nextPeriod);
-    setAppliedMeal(nextMeal);
 
     if (!config || !countLast30Days) {
       return;
@@ -201,15 +213,13 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
     setFilteredNegativeCount(negativeResponse);
   };
 
-  const handleSearch = () => runSearch(period, meal);
+  const handleSearch = () => runSearch(period);
 
   useEffect(() => {
     if (!metrics || isInitialized) return;
     const nextPeriod = metrics.defaults.defaultPeriod as StatsSatisfactionPeriod;
-    const nextMeal = metrics.defaults.defaultMeal as StatsSatisfactionMeal;
     setPeriod(nextPeriod);
-    setMeal(nextMeal);
-    runSearch(nextPeriod, nextMeal);
+    runSearch(nextPeriod);
     setIsInitialized(true);
   }, [metrics, isInitialized]);
 
@@ -259,8 +269,9 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
       <StatsFilterPanel
         period={period}
         onPeriodChange={(value) => setPeriod(value as 'weekly' | 'monthly')}
-        mealType={meal}
-        onMealTypeChange={(value) => setMeal(value as '전체' | '중식' | '석식')}
+        showMealType={false}
+        mealType={fixedMeal}
+        onMealTypeChange={() => {}}
         onSearch={handleSearch}
         periodOptions={periodOptions}
         mealOptions={mealOptions}
@@ -286,8 +297,9 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
         <div className="flex items-center gap-2 mb-6">
           <MessageSquare className="text-[#5dccb4]" size={22} />
           <div>
-            <h2 className="text-xl font-medium">최근 피드백</h2>
-            <p className="text-sm text-gray-500">{periodLabel} · {appliedMeal}</p>
+            <h2 className="text-xl font-medium">
+              {resolvedPeriodLabel ? `최근 ${resolvedPeriodLabel} 피드백` : '최근 피드백'}
+            </h2>
           </div>
         </div>
 

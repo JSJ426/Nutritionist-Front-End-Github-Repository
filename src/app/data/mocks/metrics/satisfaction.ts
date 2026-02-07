@@ -156,20 +156,3 @@ export const satisfactionConfig = {
   recentLimit: 6,
 };
 
-export const satisfactionLabels = {
-  period: {
-    weekly: '최근 7일',
-    monthly: '최근 30일',
-  },
-};
-
-export const satisfactionPeriodOptions = [
-  { value: 'weekly', label: '주간' },
-  { value: 'monthly', label: '월간' },
-];
-
-export const satisfactionMealOptions = [
-  { value: '전체', label: '전체' },
-  { value: '중식', label: '중식' },
-  { value: '석식', label: '석식' },
-];

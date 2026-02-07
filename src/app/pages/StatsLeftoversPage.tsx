@@ -272,23 +272,35 @@ export function StatsLeftoversPage() {
           title="어제 잔반량"
           value={kpiData.today.toFixed(1)}
           unit="kg"
-          sub={`전일 대비 ${kpiData.todayChange > 0 ? '+' : ''}${kpiData.todayChange.toFixed(1)}kg`}
+          diff={`${kpiData.todayChange > 0 ? '+' : ''}${kpiData.todayChange.toFixed(1)}kg`}
+          trend={kpiData.todayChange > 0 ? 'up' : kpiData.todayChange < 0 ? 'down' : 'same'}
+          showDiff
+          showDiffLabel
+          diffPrefix="전일"
           color={kpiData.todayChange > 0 ? 'red' : 'green'}
         />
         <KpiCard
           icon={kpiData.weekChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-          title="주간 평균"
+          title="7일 평균"
           value={kpiData.weekAvg.toFixed(1)}
           unit="kg"
-          sub={`전주 대비 ${kpiData.weekChange > 0 ? '+' : ''}${kpiData.weekChange.toFixed(1)}kg`}
+          diff={`${kpiData.weekChange > 0 ? '+' : ''}${kpiData.weekChange.toFixed(1)}kg`}
+          trend={kpiData.weekChange > 0 ? 'up' : kpiData.weekChange < 0 ? 'down' : 'same'}
+          showDiff
+          showDiffLabel
+          diffPrefix="전주"
           color={kpiData.weekChange > 0 ? 'red' : 'green'}
         />
         <KpiCard
           icon={kpiData.monthChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-          title="월간 평균"
+          title="30일 평균"
           value={kpiData.monthAvg.toFixed(1)}
           unit="kg"
-          sub={`전월 대비 ${kpiData.monthChange > 0 ? '+' : ''}${kpiData.monthChange.toFixed(1)}kg`}
+          diff={`${kpiData.monthChange > 0 ? '+' : ''}${kpiData.monthChange.toFixed(1)}kg`}
+          trend={kpiData.monthChange > 0 ? 'up' : kpiData.monthChange < 0 ? 'down' : 'same'}
+          showDiff
+          showDiffLabel
+          diffPrefix="전월"
           color={kpiData.monthChange > 0 ? 'red' : 'green'}
         />
       </div>
