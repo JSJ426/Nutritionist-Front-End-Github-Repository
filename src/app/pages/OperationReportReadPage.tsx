@@ -31,12 +31,13 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
   const { status, data, error } = useMonthlyOpsDocDetail(reportId);
 
   const pdfUrl = data?.pdfUrl ?? initialParams?.pdfUrl ?? '';
+  const resolvedPdfUrl = pdfUrl;
   const displayTitle = data?.title ?? (initialParams?.title ? String(initialParams.title) : '월간 운영 보고서');
   const displayYear = data?.year ?? initialParams?.year;
   const displayMonth = data?.month ?? initialParams?.month;
   const generatedDate = data?.generatedDateText ?? initialParams?.generatedDate ?? '-';
   const downloadFileName = data?.fileName;
-  const hasPdf = Boolean(pdfUrl);
+  const hasPdf = Boolean(resolvedPdfUrl);
   const scale = useMemo(() => zoom / 100, [zoom]);
 
   useEffect(() => {
@@ -190,11 +191,21 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
                 <div className="h-[70vh] overflow-auto">
                   <div className="flex justify-center py-6">
                     <Document
+                      file={resolvedPdfUrl}
+                      onLoadSuccess={({ numPages: loadedPages }) => setNumPages(loadedPages)}
+                      onLoadError={(err) => {
+                        console.error('[OperationReportReadPage] PDF load error:', err);
+                        console.info('[OperationReportReadPage] PDF url:', resolvedPdfUrl);
+                        toast.error('PDF를 불러오지 못했습니다.');
+                      }}
+                      loading=""
+                    >
+                    {/* <Document
                       file={pdfUrl}
                       onLoadSuccess={({ numPages: loadedPages }) => setNumPages(loadedPages)}
                       onLoadError={() => toast.error('PDF를 불러오지 못했습니다.')}
                       loading=""
-                    >
+                    > */}
                       <Page
                         pageNumber={currentPage}
                         scale={scale}
