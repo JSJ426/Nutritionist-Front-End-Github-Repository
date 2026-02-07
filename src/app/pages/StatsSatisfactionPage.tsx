@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { MessageSquare, Smile, Frown, ThumbsUp } from 'lucide-react';
 
-import { getSatisfactionMetrics } from '../data/metrics';
+import {
+  getSatisfactionMetrics,
+  getSatisfactionNegativeCount,
+  getSatisfactionPositiveCount,
+  getSatisfactionReviewList,
+} from '../data/metrics';
 
 import { KpiCard } from '../components/KpiCard';
 import { FeedbackItem } from '../components/FeedbackItem';
@@ -14,9 +19,9 @@ import {
   getRecentFeedback,
   getSatisfactionFilteredFeedback,
   toFeedbackFromReviewList,
-  toSatisfactionKpiMetrics,
 } from '../viewModels';
 import type { SatisfactionMetricsResponse } from '../viewModels/metrics';
+import type { MetricSatisReviewListResponse } from '../viewModels/statsSatisfaction';
 
 interface StatsSatisfactionPageProps {
   onNavigate?: (page: string, params?: any) => void;
@@ -25,6 +30,11 @@ interface StatsSatisfactionPageProps {
 export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps) {
   const [metrics, setMetrics] = useState<SatisfactionMetricsResponse | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [filteredReviewList, setFilteredReviewList] = useState<MetricSatisReviewListResponse | null>(null);
+  const [filteredPositiveCount, setFilteredPositiveCount] =
+    useState<SatisfactionMetricsResponse['positiveCount'] | null>(null);
+  const [filteredNegativeCount, setFilteredNegativeCount] =
+    useState<SatisfactionMetricsResponse['negativeCount'] | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -32,6 +42,8 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
       const response = await getSatisfactionMetrics();
       if (!isActive) return;
       setMetrics(response);
+      console.log('[satisfaction][init] countLast30Days.period', response.countLast30Days?.data?.period);
+      console.log('[satisfaction][init] reviewList.total_items', response.reviewList?.data?.pagination?.total_items);
     };
     load();
     return () => {
@@ -55,39 +67,44 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
   const periodOptions = metrics?.periodOptions ?? [];
   const mealOptions = metrics?.mealOptions ?? [];
   const countLast30Days = metrics?.countLast30Days;
-  const reviewList = metrics?.reviewList;
+  const reviewList = filteredReviewList ?? metrics?.reviewList;
   const { defaultPeriod, defaultMeal } = defaults;
   const [period, setPeriod] = useState<StatsSatisfactionPeriod>(defaultPeriod as StatsSatisfactionPeriod);
   const [meal, setMeal] = useState<StatsSatisfactionMeal>(defaultMeal as StatsSatisfactionMeal);
   const [appliedPeriod, setAppliedPeriod] = useState<StatsSatisfactionPeriod>(defaultPeriod as StatsSatisfactionPeriod);
   const [appliedMeal, setAppliedMeal] = useState<StatsSatisfactionMeal>(defaultMeal as StatsSatisfactionMeal);
 
-  useEffect(() => {
-    if (!metrics || isInitialized) return;
-    setPeriod(metrics.defaults.defaultPeriod as StatsSatisfactionPeriod);
-    setMeal(metrics.defaults.defaultMeal as StatsSatisfactionMeal);
-    setAppliedPeriod(metrics.defaults.defaultPeriod as StatsSatisfactionPeriod);
-    setAppliedMeal(metrics.defaults.defaultMeal as StatsSatisfactionMeal);
-    setIsInitialized(true);
-  }, [metrics, isInitialized]);
-
   const feedbackData = useMemo(
     () => (reviewList ? toFeedbackFromReviewList(reviewList) : []),
     [reviewList]
   );
-  const kpiMetrics = useMemo(
-    () =>
-      countLast30Days
-        ? toSatisfactionKpiMetrics(countLast30Days)
-        : {
-            totalCount: 0,
-            positiveCount: 0,
-            negativeCount: 0,
-            positiveRate: 0,
-            negativeRate: 0,
-          },
-    [countLast30Days]
-  );
+  const kpiMetrics = useMemo(() => {
+    if (!countLast30Days) {
+      return {
+        totalCount: 0,
+        positiveCount: 0,
+        negativeCount: 0,
+        positiveRate: 0,
+        negativeRate: 0,
+      };
+    }
+    const totalCount =
+      filteredReviewList?.data?.pagination?.total_items ??
+      countLast30Days.data.total_count ??
+      0;
+    const positiveCount =
+      filteredPositiveCount?.data?.count ?? countLast30Days.data.positive_count ?? 0;
+    const negativeCount =
+      filteredNegativeCount?.data?.count ?? countLast30Days.data.negative_count ?? 0;
+    const safeTotal = Number(totalCount) || 0;
+    return {
+      totalCount: safeTotal,
+      positiveCount,
+      negativeCount,
+      positiveRate: safeTotal > 0 ? (positiveCount / safeTotal) * 100 : 0,
+      negativeRate: safeTotal > 0 ? (negativeCount / safeTotal) * 100 : 0,
+    };
+  }, [countLast30Days, filteredNegativeCount, filteredPositiveCount, filteredReviewList]);
 
   const satisfactionKpis = useMemo(
     () => [
@@ -118,10 +135,83 @@ export function StatsSatisfactionPage({ onNavigate }: StatsSatisfactionPageProps
     [kpiMetrics]
   );
 
-  const handleSearch = () => {
-    setAppliedPeriod(period);
-    setAppliedMeal(meal);
+  const resolvePeriodRange = (
+    baseEndDate: Date,
+    rangePeriod: StatsSatisfactionPeriod,
+    configDays?: { weekly: number; monthly: number }
+  ) => {
+    if (!configDays) {
+      return { start: baseEndDate, end: baseEndDate };
+    }
+    const days = rangePeriod === 'weekly' ? configDays.weekly : configDays.monthly;
+    const end = new Date(baseEndDate);
+    const start = new Date(baseEndDate);
+    start.setDate(start.getDate() - (days - 1));
+    return { start, end };
   };
+
+  const formatYmd = (value: Date) => {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const resolveBaseEndDate = () => {
+    const endDateStr = countLast30Days?.data?.period?.end_date;
+    if (!endDateStr) return new Date();
+    const parsed = new Date(`${endDateStr}T00:00:00`);
+    return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  };
+
+  const runSearch = async (nextPeriod: StatsSatisfactionPeriod, nextMeal: StatsSatisfactionMeal) => {
+    setAppliedPeriod(nextPeriod);
+    setAppliedMeal(nextMeal);
+
+    if (!config || !countLast30Days) {
+      return;
+    }
+
+    const baseEndDate = resolveBaseEndDate();
+    const { start, end } = resolvePeriodRange(baseEndDate, nextPeriod, config.days);
+    const startDate = formatYmd(start);
+    const endDate = formatYmd(end);
+
+    const [reviewResponse, positiveResponse, negativeResponse] = await Promise.all([
+      getSatisfactionReviewList({
+        start_date: startDate,
+        end_date: endDate,
+        page: 1,
+        size: 20,
+      }),
+      getSatisfactionPositiveCount(startDate, endDate),
+      getSatisfactionNegativeCount(startDate, endDate),
+    ]);
+
+    console.log('[satisfaction][search] range', { startDate, endDate });
+    console.log('[satisfaction][search] review.total_items', reviewResponse?.data?.pagination?.total_items);
+    console.log('[satisfaction][search] review.items.length', reviewResponse?.data?.reviews?.length);
+    console.log('[satisfaction][search] positive.count', positiveResponse?.data?.count);
+    console.log('[satisfaction][search] negative.count', negativeResponse?.data?.count);
+    console.log('[satisfaction][search] positive.period', positiveResponse?.data?.period);
+    console.log('[satisfaction][search] negative.period', negativeResponse?.data?.period);
+
+    setFilteredReviewList(reviewResponse);
+    setFilteredPositiveCount(positiveResponse);
+    setFilteredNegativeCount(negativeResponse);
+  };
+
+  const handleSearch = () => runSearch(period, meal);
+
+  useEffect(() => {
+    if (!metrics || isInitialized) return;
+    const nextPeriod = metrics.defaults.defaultPeriod as StatsSatisfactionPeriod;
+    const nextMeal = metrics.defaults.defaultMeal as StatsSatisfactionMeal;
+    setPeriod(nextPeriod);
+    setMeal(nextMeal);
+    runSearch(nextPeriod, nextMeal);
+    setIsInitialized(true);
+  }, [metrics, isInitialized]);
 
   const latestDate = useMemo(() => {
     return getLatestFeedbackDate(feedbackData);

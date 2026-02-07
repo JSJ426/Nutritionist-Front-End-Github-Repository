@@ -219,7 +219,9 @@ export function HomePage() {
       negativeCount: stats.negativeCount,
     };
   };
-  const endDateValue = satisfactionMetricsSource.countLast30Days?.data?.period?.end_date;
+  const endDateValue =
+    satisfactionMetricsSource.listLast30Days?.data?.period?.end_date ??
+    satisfactionMetricsSource.countLast30Days?.data?.period?.end_date;
   const latestDate = endDateValue ? parseDate(endDateValue) : new Date();
   const weeklyStartDate = new Date(latestDate);
   weeklyStartDate.setDate(weeklyStartDate.getDate() - 6);

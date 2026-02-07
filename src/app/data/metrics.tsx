@@ -36,6 +36,7 @@ import type {
   MetricSatisListLast30DaysResponse,
   MetricSatisNegativeCountResponse,
   MetricSatisPositiveCountResponse,
+  MetricSatisReviewListResponse,
 } from '../viewModels/statsSatisfaction';
 import { http } from './http';
 
@@ -122,12 +123,6 @@ export const getSatisfactionMetrics = async (): Promise<SatisfactionMetricsRespo
     page: '1',
     size: '20',
   });
-  if (periodStart) {
-    listParams.set('start_date', periodStart);
-  }
-  if (periodEnd) {
-    listParams.set('end_date', periodEnd);
-  }
 
   const [listLast30DaysRaw, positiveCount, negativeCount] = await Promise.all([
     http.get<MetricSatisListLast30DaysResponse>(
@@ -162,10 +157,43 @@ export const getSatisfactionMetrics = async (): Promise<SatisfactionMetricsRespo
     positiveCount,
     negativeCount,
     reviewList: await http.get<SatisfactionMetricsResponse['reviewList']>(
-      '/metrics/satisfaction/reviews?sentiment=POSITIVE&page=1&size=20'
+      '/metrics/satisfaction/reviews?page=1&size=20'
     ),
   };
 };
+
+type SatisfactionReviewQuery = {
+  batch_id?: string;
+  start_date?: string;
+  end_date?: string;
+  sentiment?: string;
+  page?: number;
+  size?: number;
+};
+
+export const getSatisfactionReviewList = async (
+  params: SatisfactionReviewQuery
+): Promise<MetricSatisReviewListResponse> => {
+  const query = new URLSearchParams({
+    page: String(params.page ?? 1),
+    size: String(params.size ?? 20),
+  });
+  if (params.batch_id) query.set('batch_id', params.batch_id);
+  if (params.start_date) query.set('start_date', params.start_date);
+  if (params.end_date) query.set('end_date', params.end_date);
+  if (params.sentiment) query.set('sentiment', params.sentiment);
+  return http.get<MetricSatisReviewListResponse>(`/metrics/satisfaction/reviews?${query.toString()}`);
+};
+
+export const getSatisfactionPositiveCount = async (startDate: string, endDate: string) =>
+  http.get<MetricSatisPositiveCountResponse>(
+    `/metrics/satisfaction/positive/count?start_date=${startDate}&end_date=${endDate}`
+  );
+
+export const getSatisfactionNegativeCount = async (startDate: string, endDate: string) =>
+  http.get<MetricSatisNegativeCountResponse>(
+    `/metrics/satisfaction/negative/count?start_date=${startDate}&end_date=${endDate}`
+  );
 
 export const getLeftoverMonthly = async (year: number, month: number, mealType?: 'LUNCH' | 'DINNER') => {
   const params = new URLSearchParams({
