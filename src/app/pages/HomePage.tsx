@@ -193,7 +193,6 @@ export function HomePage() {
   const satisfactionBatches = satisfactionMetricsSource.listLast30Days?.data?.batches ?? [];
   const isWasteEmpty = leftoversWeeklyData.length === 0;
   const isMissedEmpty = missedWeeklyData.length === 0;
-  const isSatisfactionEmpty = satisfactionBatches.length === 0;
   const parseDate = (value: string) => new Date(`${value}T00:00:00`);
   const getStatsInRange = (startDate: Date, endDate: Date) => {
     const stats = satisfactionBatches.reduce(
@@ -231,44 +230,48 @@ export function HomePage() {
   const prevWeekStartDate = new Date(prevWeekEndDate);
   prevWeekStartDate.setDate(prevWeekStartDate.getDate() - 6);
 
-  const weeklyStats = getStatsInRange(weeklyStartDate, latestDate);
-  const prevWeekStats = getStatsInRange(prevWeekStartDate, prevWeekEndDate);
-  const weeklyAvgRating = weeklyStats.averageRating;
-  const weeklyAvgDiff = weeklyAvgRating - prevWeekStats.averageRating;
-  const weeklyPositiveRate =
-    weeklyStats.totalReviews > 0 ? (weeklyStats.positiveCount / weeklyStats.totalReviews) * 100 : 0;
-  const weeklyNegativeRate =
-    weeklyStats.totalReviews > 0 ? (weeklyStats.negativeCount / weeklyStats.totalReviews) * 100 : 0;
+  const monthlyDays = satisfactionMetricsSource.config?.days?.monthly ?? 30;
+  const monthlyStartDate = new Date(latestDate);
+  monthlyStartDate.setDate(monthlyStartDate.getDate() - (monthlyDays - 1));
+  const prevMonthEndDate = new Date(monthlyStartDate);
+  prevMonthEndDate.setDate(prevMonthEndDate.getDate() - 1);
+  const prevMonthStartDate = new Date(prevMonthEndDate);
+  prevMonthStartDate.setDate(prevMonthStartDate.getDate() - (monthlyDays - 1));
+
+  const monthlyStats = getStatsInRange(monthlyStartDate, latestDate);
+  const prevMonthStats = getStatsInRange(prevMonthStartDate, prevMonthEndDate);
+  const monthlyAvgRating = monthlyStats.averageRating;
+  const monthlyAvgDiff = monthlyAvgRating - prevMonthStats.averageRating;
   const formatNumber = (value: number) => new Intl.NumberFormat('ko-KR').format(value);
 
   const satisfactionKpis = [
     {
-      title: '이번 주 평균 만족도',
-      value: weeklyAvgRating.toFixed(1),
+      title: '지난 30일 평균 만족도',
+      value: monthlyAvgRating.toFixed(1),
       unit: '/ 5.0',
-      sub: `전주 대비 ${weeklyAvgDiff >= 0 ? '+' : ''}${weeklyAvgDiff.toFixed(1)}`,
+      sub: `이전 30일 대비 ${monthlyAvgDiff >= 0 ? '+' : ''}${monthlyAvgDiff.toFixed(1)}`,
       color: 'yellow' as const,
       icon: <Star className="w-4 h-4" />,
     },
     {
       title: '만족도 평가 수',
-      value: formatNumber(weeklyStats.totalReviews),
+      value: formatNumber(satisfactionMetrics.totalCount),
       unit: '건',
       icon: <MessageSquare className="w-4 h-4" />,
     },
     {
       title: '긍정 피드백',
-      value: formatNumber(weeklyStats.positiveCount),
+      value: formatNumber(satisfactionMetrics.positiveCount),
       unit: '건',
-      sub: `${weeklyPositiveRate.toFixed(0)}%`,
+      sub: `${satisfactionMetrics.positiveRate.toFixed(0)}%`,
       color: 'green' as const,
       icon: <ThumbsUp className="w-4 h-4" />,
     },
     {
       title: '부정 피드백',
-      value: formatNumber(weeklyStats.negativeCount),
+      value: formatNumber(satisfactionMetrics.negativeCount),
       unit: '건',
-      sub: `${weeklyNegativeRate.toFixed(0)}%`,
+      sub: `${satisfactionMetrics.negativeRate.toFixed(0)}%`,
       color: 'red' as const,
       icon: <ThumbsDown className="w-4 h-4" />,
     },
@@ -497,7 +500,6 @@ export function HomePage() {
                 sub={kpi.sub}
                 subMode="sub"
                 color={kpi.color}
-                isEmpty={isSatisfactionEmpty}
               />
             ))}
           </div>
