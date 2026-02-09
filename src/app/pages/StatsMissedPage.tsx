@@ -11,10 +11,13 @@ import { StatsFilterPanel } from '../components/StatsFilterPanel';
 import {
   StatsMissedMealType,
   StatsMissedPeriod,
+  getKpiDataFromFiltered,
+  formatKpiDiff,
+  formatKpiValue,
+  getTrendFromValue,
   getMissedBaseData,
   getMissedFilterLabels,
   getMissedFilteredData,
-  getMissedKpiData,
   toMissedSeriesByPeriod,
 } from '../viewModels';
 import type { MissedMetricsResponse } from '../viewModels/metrics';
@@ -147,12 +150,8 @@ export function StatsMissedPage() {
     () => getMissedFilteredData(missedSeries.monthly, mealType),
     [missedSeries.monthly, mealType]
   );
-  const weeklyKpi = useMemo(
-    () => getMissedKpiData(monthlyFilteredData, prevMonthAvg),
-    [monthlyFilteredData, prevMonthAvg]
-  );
-  const monthlyKpi = useMemo(
-    () => getMissedKpiData(monthlyFilteredData, prevMonthAvg),
+  const kpiData = useMemo(
+    () => getKpiDataFromFiltered(monthlyFilteredData, (item) => item.displayRate, prevMonthAvg),
     [monthlyFilteredData, prevMonthAvg]
   );
 
@@ -229,43 +228,43 @@ export function StatsMissedPage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-6 mb-6">
         <KpiCard
-          icon={weeklyKpi.todayChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+          icon={kpiData.todayChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
           title="어제 결식률"
-          value={weeklyKpi.today.toFixed(1)}
+          value={formatKpiValue(kpiData.today)}
           unit="%"
-          diff={`${weeklyKpi.todayChange > 0 ? '+' : ''}${weeklyKpi.todayChange.toFixed(1)}%`}
-          trend={weeklyKpi.todayChange > 0 ? 'up' : weeklyKpi.todayChange < 0 ? 'down' : 'same'}
+          diff={formatKpiDiff(kpiData.todayChange, '%')}
+          trend={getTrendFromValue(kpiData.todayChange)}
           showDiff
           showDiffLabel
           diffPrefix="전일"
           subMode="diff"
-          color={weeklyKpi.todayChange > 0 ? 'red' : 'green'}
+          color={kpiData.todayChange > 0 ? 'red' : 'green'}
         />
         <KpiCard
-          icon={weeklyKpi.weekChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+          icon={kpiData.weekChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
           title="7일 평균"
-          value={weeklyKpi.weekAvg.toFixed(1)}
+          value={formatKpiValue(kpiData.weekAvg)}
           unit="%"
-          diff={`${weeklyKpi.weekChange > 0 ? '+' : ''}${weeklyKpi.weekChange.toFixed(1)}%`}
-          trend={weeklyKpi.weekChange > 0 ? 'up' : weeklyKpi.weekChange < 0 ? 'down' : 'same'}
+          diff={formatKpiDiff(kpiData.weekChange, '%')}
+          trend={getTrendFromValue(kpiData.weekChange)}
           showDiff
           showDiffLabel
-          diffPrefix="전주"
+          diffPrefix="이전 7일"
           subMode="diff"
-          color={weeklyKpi.weekChange > 0 ? 'red' : 'green'}
+          color={kpiData.weekChange > 0 ? 'red' : 'green'}
         />
         <KpiCard
-          icon={monthlyKpi.monthChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+          icon={kpiData.monthChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
           title="30일 평균"
-          value={monthlyKpi.monthAvg.toFixed(1)}
+          value={formatKpiValue(kpiData.monthAvg)}
           unit="%"
-          diff={`${monthlyKpi.monthChange > 0 ? '+' : ''}${monthlyKpi.monthChange.toFixed(1)}%`}
-          trend={monthlyKpi.monthChange > 0 ? 'up' : monthlyKpi.monthChange < 0 ? 'down' : 'same'}
+          diff={formatKpiDiff(kpiData.monthChange, '%')}
+          trend={getTrendFromValue(kpiData.monthChange)}
           showDiff
           showDiffLabel
-          diffPrefix="전월"
+          diffPrefix="이전 30일"
           subMode="diff"
-          color={monthlyKpi.monthChange > 0 ? 'red' : 'green'}
+          color={kpiData.monthChange > 0 ? 'red' : 'green'}
         />
       </div>
 

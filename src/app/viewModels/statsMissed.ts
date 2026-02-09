@@ -1,4 +1,3 @@
-import { getSeriesKpiData } from './statsKpi';
 
 export type StatsMissedPeriod = 'weekly' | 'monthly' | 'custom';
 export type StatsMissedMealType = 'all' | 'lunch' | 'dinner';
@@ -94,14 +93,6 @@ export const getMissedFilteredData = (
     ...item,
     displayRate: mealType === 'lunch' ? item.lunch : mealType === 'dinner' ? item.dinner : item.rate,
   }));
-};
-
-export const getMissedKpiData = (
-  filteredData: StatsMissedDisplayItem[],
-  prevMonthAvg: number
-): StatsMissedKpiData => {
-  const rates = filteredData.map((d) => d.displayRate);
-  return getSeriesKpiData(rates, prevMonthAvg);
 };
 
 export const getMissedFilterLabels = (

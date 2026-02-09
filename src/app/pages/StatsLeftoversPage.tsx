@@ -12,10 +12,13 @@ import {
   StatsLeftoversMealType,
   StatsLeftoversMenuType,
   StatsLeftoversPeriod,
+  getKpiDataFromFiltered,
+  formatKpiDiff,
+  formatKpiValue,
+  getTrendFromValue,
   getLeftoversBaseData,
   getLeftoversFilterLabels,
   getLeftoversFilteredData,
-  getLeftoversKpiData,
   toLeftoversSeriesByPeriod,
 } from '../viewModels';
 import type { LeftoversMetricsResponse } from '../viewModels/metrics';
@@ -185,12 +188,8 @@ export function StatsLeftoversPage() {
     () => getLeftoversFilteredData(leftoversSeries.monthly, mealType, menuType),
     [leftoversSeries.monthly, mealType, menuType]
   );
-  const weeklyKpi = useMemo(
-    () => getLeftoversKpiData(monthlyFilteredData, prevMonthAvg),
-    [monthlyFilteredData, prevMonthAvg]
-  );
-  const monthlyKpi = useMemo(
-    () => getLeftoversKpiData(monthlyFilteredData, prevMonthAvg),
+  const kpiData = useMemo(
+    () => getKpiDataFromFiltered(monthlyFilteredData, (item) => item.displayAmount, prevMonthAvg),
     [monthlyFilteredData, prevMonthAvg]
   );
 
@@ -277,43 +276,43 @@ export function StatsLeftoversPage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-6 mb-6">
         <KpiCard
-          icon={weeklyKpi.todayChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+          icon={kpiData.todayChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
           title="어제 잔반량"
-          value={weeklyKpi.today.toFixed(1)}
+          value={formatKpiValue(kpiData.today)}
           unit="kg"
-          diff={`${weeklyKpi.todayChange > 0 ? '+' : ''}${weeklyKpi.todayChange.toFixed(1)}kg`}
-          trend={weeklyKpi.todayChange > 0 ? 'up' : weeklyKpi.todayChange < 0 ? 'down' : 'same'}
+          diff={formatKpiDiff(kpiData.todayChange, 'kg')}
+          trend={getTrendFromValue(kpiData.todayChange)}
           showDiff
           showDiffLabel
           diffPrefix="전일"
           subMode="diff"
-          color={weeklyKpi.todayChange > 0 ? 'red' : 'green'}
+          color={kpiData.todayChange > 0 ? 'red' : 'green'}
         />
         <KpiCard
-          icon={weeklyKpi.weekChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+          icon={kpiData.weekChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
           title="7일 평균"
-          value={weeklyKpi.weekAvg.toFixed(1)}
+          value={formatKpiValue(kpiData.weekAvg)}
           unit="kg"
-          diff={`${weeklyKpi.weekChange > 0 ? '+' : ''}${weeklyKpi.weekChange.toFixed(1)}kg`}
-          trend={weeklyKpi.weekChange > 0 ? 'up' : weeklyKpi.weekChange < 0 ? 'down' : 'same'}
+          diff={formatKpiDiff(kpiData.weekChange, 'kg')}
+          trend={getTrendFromValue(kpiData.weekChange)}
           showDiff
           showDiffLabel
-          diffPrefix="전주"
+          diffPrefix="이전 7일"
           subMode="diff"
-          color={weeklyKpi.weekChange > 0 ? 'red' : 'green'}
+          color={kpiData.weekChange > 0 ? 'red' : 'green'}
         />
         <KpiCard
-          icon={monthlyKpi.monthChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+          icon={kpiData.monthChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
           title="30일 평균"
-          value={monthlyKpi.monthAvg.toFixed(1)}
+          value={formatKpiValue(kpiData.monthAvg)}
           unit="kg"
-          diff={`${monthlyKpi.monthChange > 0 ? '+' : ''}${monthlyKpi.monthChange.toFixed(1)}kg`}
-          trend={monthlyKpi.monthChange > 0 ? 'up' : monthlyKpi.monthChange < 0 ? 'down' : 'same'}
+          diff={formatKpiDiff(kpiData.monthChange, 'kg')}
+          trend={getTrendFromValue(kpiData.monthChange)}
           showDiff
           showDiffLabel
-          diffPrefix="전월"
+          diffPrefix="이전 30일"
           subMode="diff"
-          color={monthlyKpi.monthChange > 0 ? 'red' : 'green'}
+          color={kpiData.monthChange > 0 ? 'red' : 'green'}
         />
       </div>
 

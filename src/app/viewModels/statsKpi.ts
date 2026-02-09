@@ -37,3 +37,20 @@ export const getSeriesKpiData = (series: number[], prevMonthAvg: number): StatsK
     monthChange: monthAvg - prevMonthAvg,
   };
 };
+
+export const getKpiDataFromSeries = (series: number[], prevMonthAvg: number): StatsKpiData =>
+  getSeriesKpiData(series, prevMonthAvg);
+
+export const getKpiDataFromFiltered = <T>(
+  items: T[],
+  getValue: (item: T) => number,
+  prevMonthAvg: number
+): StatsKpiData => getSeriesKpiData(items.map(getValue), prevMonthAvg);
+
+export const formatKpiValue = (value: number, decimals = 1): string => value.toFixed(decimals);
+
+export const formatKpiDiff = (value: number, unit: string, decimals = 1): string =>
+  `${value > 0 ? '+' : ''}${value.toFixed(decimals)}${unit}`;
+
+export const getTrendFromValue = (value: number): 'up' | 'down' | 'same' =>
+  value > 0 ? 'up' : value < 0 ? 'down' : 'same';

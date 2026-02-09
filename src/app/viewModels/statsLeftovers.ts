@@ -1,4 +1,3 @@
-import { getSeriesKpiData } from './statsKpi';
 
 export type StatsLeftoversPeriod = 'weekly' | 'monthly' | 'custom';
 export type StatsLeftoversMealType = 'all' | 'lunch' | 'dinner';
@@ -112,14 +111,6 @@ export const getLeftoversFilteredData = (
       displayAmount,
     };
   });
-};
-
-export const getLeftoversKpiData = (
-  filteredData: StatsLeftoversDisplayItem[],
-  prevMonthAvg: number
-): StatsLeftoversKpiData => {
-  const amounts = filteredData.map((d) => d.displayAmount);
-  return getSeriesKpiData(amounts, prevMonthAvg);
 };
 
 export const getLeftoversFilterLabels = (

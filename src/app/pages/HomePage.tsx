@@ -9,7 +9,7 @@ import { KpiCard } from '../components/KpiCard';
 import { KpiMiniCard } from '../components/KpiMiniCard';
 import { WeeklyMealSection } from '../components/WeeklyMealSection';
 
-import { getSeriesKpiData } from '../viewModels';
+import { formatKpiDiff, formatKpiValue, getKpiDataFromSeries, getTrendFromValue } from '../viewModels';
 import { toLeftoversSeriesByPeriod } from '../viewModels/statsLeftovers';
 import { toMissedSeriesByPeriod } from '../viewModels/statsMissed';
 import { toHomeMealFromDetailResponse, toHomeMealsFromWeeklyResponse } from '../viewModels/meal';
@@ -189,8 +189,8 @@ export function HomePage() {
 
   const wasteSeries = leftoversMonthlyData.map((item) => item.amount);
   const absenteeSeries = missedMonthlyData.map((item) => item.rate);
-  const wasteKpi = getSeriesKpiData(wasteSeries, leftoversMetrics.defaults.prevMonthAvg);
-  const absenteeKpi = getSeriesKpiData(absenteeSeries, missedMetrics.defaults.prevMonthAvg);
+  const wasteKpi = getKpiDataFromSeries(wasteSeries, leftoversMetrics.defaults.prevMonthAvg);
+  const absenteeKpi = getKpiDataFromSeries(absenteeSeries, missedMetrics.defaults.prevMonthAvg);
   const satisfactionMetrics = toSatisfactionKpiMetrics(satisfactionMetricsSource.countLast30Days);
   const satisfactionBatches = satisfactionMetricsSource.listLast30Days?.data?.batches ?? [];
   const isWasteEmpty = leftoversWeeklyData.length === 0;
@@ -287,11 +287,6 @@ export function HomePage() {
       icon: <ThumbsDown className="w-4 h-4" />,
     },
   ];
-
-  const formatKpiValue = (value: number) => value.toFixed(1);
-  const formatKpiDiff = (value: number, unit: string) =>
-    `${value > 0 ? '+' : ''}${value.toFixed(1)}${unit}`;
-  const getTrend = (value: number) => (value > 0 ? 'up' : value < 0 ? 'down' : 'same');
 
   return (
     <div className="p-6">
@@ -393,7 +388,7 @@ export function HomePage() {
               value={formatKpiValue(absenteeKpi.today)}
               unit="%"
               diff={formatKpiDiff(absenteeKpi.todayChange, '%')}
-              trend={getTrend(absenteeKpi.todayChange)}
+              trend={getTrendFromValue(absenteeKpi.todayChange)}
               showDiff
               showDiffLabel
               isEmpty={isMissedEmpty}
@@ -403,7 +398,7 @@ export function HomePage() {
               value={formatKpiValue(absenteeKpi.weekAvg)}
               unit="%"
               diff={formatKpiDiff(absenteeKpi.weekChange, '%')}
-              trend={getTrend(absenteeKpi.weekChange)}
+              trend={getTrendFromValue(absenteeKpi.weekChange)}
               showDiff
               showDiffLabel
               diffPrefix="이전 7일"
@@ -414,7 +409,7 @@ export function HomePage() {
               value={formatKpiValue(absenteeKpi.monthAvg)}
               unit="%"
               diff={formatKpiDiff(absenteeKpi.monthChange, '%')}
-              trend={getTrend(absenteeKpi.monthChange)}
+              trend={getTrendFromValue(absenteeKpi.monthChange)}
               showDiff
               showDiffLabel
               diffPrefix="이전 30일"
@@ -455,7 +450,7 @@ export function HomePage() {
               value={formatKpiValue(wasteKpi.today)}
               unit="kg"
               diff={formatKpiDiff(wasteKpi.todayChange, 'kg')}
-              trend={getTrend(wasteKpi.todayChange)}
+              trend={getTrendFromValue(wasteKpi.todayChange)}
               showDiff
               showDiffLabel
               diffPrefix="전일"
@@ -466,7 +461,7 @@ export function HomePage() {
               value={formatKpiValue(wasteKpi.weekAvg)}
               unit="kg"
               diff={formatKpiDiff(wasteKpi.weekChange, 'kg')}
-              trend={getTrend(wasteKpi.weekChange)}
+              trend={getTrendFromValue(wasteKpi.weekChange)}
               showDiff
               showDiffLabel
               diffPrefix="이전 7일"
@@ -477,7 +472,7 @@ export function HomePage() {
               value={formatKpiValue(wasteKpi.monthAvg)}
               unit="kg"
               diff={formatKpiDiff(wasteKpi.monthChange, 'kg')}
-              trend={getTrend(wasteKpi.monthChange)}
+              trend={getTrendFromValue(wasteKpi.monthChange)}
               showDiff
               showDiffLabel
               diffPrefix="이전 30일"
