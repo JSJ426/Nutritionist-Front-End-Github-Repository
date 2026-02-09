@@ -142,6 +142,8 @@ export function HomePage() {
 
   const leftoversWeeklyData = leftoversSeries.weekly;
   const missedWeeklyData = missedSeries.weekly;
+  const leftoversMonthlyData = leftoversSeries.monthly;
+  const missedMonthlyData = missedSeries.monthly;
 
   const dayLabel = (date: Date) => ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
   const buildEmptyWeeklyMeals = (baseDate: Date) => {
@@ -185,8 +187,8 @@ export function HomePage() {
     석식: item.dinner,
   }));
 
-  const wasteSeries = leftoversWeeklyData.map((item) => item.amount);
-  const absenteeSeries = missedWeeklyData.map((item) => item.rate);
+  const wasteSeries = leftoversMonthlyData.map((item) => item.amount);
+  const absenteeSeries = missedMonthlyData.map((item) => item.rate);
   const wasteKpi = getSeriesKpiData(wasteSeries, leftoversMetrics.defaults.prevMonthAvg);
   const absenteeKpi = getSeriesKpiData(absenteeSeries, missedMetrics.defaults.prevMonthAvg);
   const satisfactionMetrics = toSatisfactionKpiMetrics(satisfactionMetricsSource.countLast30Days);
@@ -242,17 +244,26 @@ export function HomePage() {
   const prevMonthStats = getStatsInRange(prevMonthStartDate, prevMonthEndDate);
   const monthlyAvgRating = monthlyStats.averageRating;
   const monthlyAvgDiff = monthlyAvgRating - prevMonthStats.averageRating;
+  const hasPrevMonthStats = prevMonthStats.totalReviews > 0;
   const formatNumber = (value: number) => new Intl.NumberFormat('ko-KR').format(value);
 
   const satisfactionKpis = [
     {
-      title: '지난 30일 평균 만족도',
+      title: '30일 평균 만족도',
       value: monthlyAvgRating.toFixed(1),
       unit: '/ 5.0',
-      sub: `이전 30일 대비 ${monthlyAvgDiff >= 0 ? '+' : ''}${monthlyAvgDiff.toFixed(1)}`,
-      color: 'yellow' as const,
       icon: <Star className="w-4 h-4" />,
     },
+    // {
+    //   title: '30일 평균 만족도',
+    //   value: monthlyAvgRating.toFixed(1),
+    //   unit: '/ 5.0',
+    //   sub: hasPrevMonthStats
+    //     ? `이전 30일 대비 ${monthlyAvgDiff >= 0 ? '+' : ''}${monthlyAvgDiff.toFixed(1)}`
+    //     : '이전 30일 데이터 없음',
+    //   color: 'yellow' as const,
+    //   icon: <Star className="w-4 h-4" />,
+    // },
     {
       title: '만족도 평가 수',
       value: formatNumber(satisfactionMetrics.totalCount),
@@ -393,6 +404,9 @@ export function HomePage() {
               unit="%"
               diff={formatKpiDiff(absenteeKpi.weekChange, '%')}
               trend={getTrend(absenteeKpi.weekChange)}
+              showDiff
+              showDiffLabel
+              diffPrefix="이전 7일"
               isEmpty={isMissedEmpty}
             />
             <KpiMiniCard
@@ -401,6 +415,9 @@ export function HomePage() {
               unit="%"
               diff={formatKpiDiff(absenteeKpi.monthChange, '%')}
               trend={getTrend(absenteeKpi.monthChange)}
+              showDiff
+              showDiffLabel
+              diffPrefix="이전 30일"
               isEmpty={isMissedEmpty}
             />
           </div>
@@ -441,6 +458,7 @@ export function HomePage() {
               trend={getTrend(wasteKpi.todayChange)}
               showDiff
               showDiffLabel
+              diffPrefix="전일"
               isEmpty={isWasteEmpty}
             />
             <KpiMiniCard
@@ -449,6 +467,9 @@ export function HomePage() {
               unit="kg"
               diff={formatKpiDiff(wasteKpi.weekChange, 'kg')}
               trend={getTrend(wasteKpi.weekChange)}
+              showDiff
+              showDiffLabel
+              diffPrefix="이전 7일"
               isEmpty={isWasteEmpty}
             />
             <KpiMiniCard
@@ -457,6 +478,9 @@ export function HomePage() {
               unit="kg"
               diff={formatKpiDiff(wasteKpi.monthChange, 'kg')}
               trend={getTrend(wasteKpi.monthChange)}
+              showDiff
+              showDiffLabel
+              diffPrefix="이전 30일"
               isEmpty={isWasteEmpty}
             />
           </div>
