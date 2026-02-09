@@ -30,7 +30,7 @@ export function WeeklyMealSection({ currentMonth, currentDate, weeklyMeals }: We
             gap-3
             justify-center   // 가로 중앙
             items-center     // 세로 중앙
-            min-h-[400px]    // Tailwind 방식 권장
+            min-h-[576px]    // Tailwind 방식 권장
             px-6
           "
         >

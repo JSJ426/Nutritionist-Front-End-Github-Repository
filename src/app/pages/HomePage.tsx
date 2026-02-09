@@ -7,6 +7,7 @@ import { getLeftoversMetrics, getMissedMetrics, getSatisfactionMetrics } from '.
 
 import { KpiCard } from '../components/KpiCard';
 import { KpiMiniCard } from '../components/KpiMiniCard';
+import { TodayMealCard } from '../components/TodayMealCard';
 import { WeeklyMealSection } from '../components/WeeklyMealSection';
 
 import { formatKpiDiff, formatKpiValue, getKpiDataFromSeries, getTrendFromValue } from '../viewModels';
@@ -249,7 +250,7 @@ export function HomePage() {
 
   const satisfactionKpis = [
     {
-      title: '30일 평균 만족도',
+      title: '평균 만족도',
       value: monthlyAvgRating.toFixed(1),
       unit: '/ 5.0',
       icon: <Star className="w-4 h-4" />,
@@ -305,64 +306,20 @@ export function HomePage() {
           
           <div className="space-y-4">
             {/* 중식 카드 */}
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-              <h3 className="text-base font-medium mb-3 text-orange-700 pb-2 border-b border-orange-200">중식</h3>
-              {hasTodayLunch ? (
-                <div className="space-y-2">
-                  <div>
-                    <div className="text-sm text-gray-800">{todayMeals.lunch.menu.join(', ')}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-600">
-                      칼로리: {todayMeals.lunch.calories} kcal
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-600">(영양성분)</div>
-                    <div className="text-xs text-gray-600">
-                      단백질 {todayMeals.lunch.nutrients.protein}, 탄수화물 {todayMeals.lunch.nutrients.carbs}, 지방{' '}
-                      {todayMeals.lunch.nutrients.fat}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-600 mb-1">알레르기 유발 식품</div>
-                    <div className="text-sm text-red-600">{todayMeals.lunch.allergens.join(', ')}</div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-sm text-gray-800">등록된 식단이 없습니다.</div>
-              )}
-            </div>
+            <TodayMealCard
+              title="중식"
+              variant="lunch"
+              hasMeal={hasTodayLunch}
+              meal={todayMeals.lunch}
+            />
 
             {/* 석식 카드 */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="text-base font-medium mb-3 text-blue-700 pb-2 border-b border-blue-200">석식</h3>
-              {hasTodayDinner ? (
-                <div className="space-y-2">
-                  <div>
-                    <div className="text-sm text-gray-800">{todayMeals.dinner.menu.join(', ')}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-600">
-                      칼로리: {todayMeals.dinner.calories} kcal
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-600">(영양성분)</div>
-                    <div className="text-xs text-gray-600">
-                      단백질 {todayMeals.dinner.nutrients.protein}, 탄수화물 {todayMeals.dinner.nutrients.carbs}, 지방{' '}
-                      {todayMeals.dinner.nutrients.fat}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-600 mb-1">알레르기 유발 식품</div>
-                    <div className="text-sm text-red-600">{todayMeals.dinner.allergens.join(', ')}</div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-sm text-gray-800">등록된 식단이 없습니다.</div>
-              )}
-            </div>
+            <TodayMealCard
+              title="석식"
+              variant="dinner"
+              hasMeal={hasTodayDinner}
+              meal={todayMeals.dinner}
+            />
           </div>
         </div>
 
@@ -505,7 +462,7 @@ export function HomePage() {
         {/* 만족도 */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-medium mb-6 pb-2 border-b-2 border-[#5dccb4]">
-            만족도
+            만족도 (최근 30일)
           </h2>
         
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
