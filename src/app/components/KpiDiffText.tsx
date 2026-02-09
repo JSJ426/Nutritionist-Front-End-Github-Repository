@@ -28,21 +28,21 @@ export function KpiDiffText({
 }: KpiDiffTextProps) {
   if (!showDiff || !diff || !trend) return null;
 
-  const diffSuffix =
-    typeof diff === 'string'
-      ? diff.startsWith('+')
-        ? ' 증가'
-        : diff.startsWith('-')
-          ? ' 감소'
-          : ''
-      : '';
+  // const diffSuffix =
+  //   typeof diff === 'string'
+  //     ? diff.startsWith('+')
+  //       ? ' 증가'
+  //       : diff.startsWith('-')
+  //         ? ' 감소'
+  //         : ''
+  //     : '';
 
   const content =
     trend === 'same'
       ? '-'
       : showDiffLabel
-        ? `${diffPrefix} 대비 ${diff}${diffSuffix}`
-        : `${diff}${diffSuffix}`;
+        ? `${diffPrefix} 대비 ${diff}`
+        : `${diff}`;
 
   const isPositive =
     trend !== 'same' &&
