@@ -142,10 +142,19 @@ export function StatsMissedPage() {
     return getMissedFilteredData(baseData, mealType);
   }, [baseData, mealType]);
 
-  // KPI 계산
-  const kpiData = useMemo(() => {
-    return getMissedKpiData(filteredData, prevMonthAvg);
-  }, [filteredData, prevMonthAvg]);
+  // KPI 계산 (기간 선택과 무관하게 고정 7일/30일 기준)
+  const monthlyFilteredData = useMemo(
+    () => getMissedFilteredData(missedSeries.monthly, mealType),
+    [missedSeries.monthly, mealType]
+  );
+  const weeklyKpi = useMemo(
+    () => getMissedKpiData(monthlyFilteredData, prevMonthAvg),
+    [monthlyFilteredData, prevMonthAvg]
+  );
+  const monthlyKpi = useMemo(
+    () => getMissedKpiData(monthlyFilteredData, prevMonthAvg),
+    [monthlyFilteredData, prevMonthAvg]
+  );
 
   const { periodLabel, mealLabel } = useMemo(() => {
     return getMissedFilterLabels(period, mealType, labels);
@@ -220,43 +229,43 @@ export function StatsMissedPage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-6 mb-6">
         <KpiCard
-          icon={kpiData.todayChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+          icon={weeklyKpi.todayChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
           title="어제 결식률"
-          value={kpiData.today.toFixed(1)}
+          value={weeklyKpi.today.toFixed(1)}
           unit="%"
-          diff={`${kpiData.todayChange > 0 ? '+' : ''}${kpiData.todayChange.toFixed(1)}%`}
-          trend={kpiData.todayChange > 0 ? 'up' : kpiData.todayChange < 0 ? 'down' : 'same'}
+          diff={`${weeklyKpi.todayChange > 0 ? '+' : ''}${weeklyKpi.todayChange.toFixed(1)}%`}
+          trend={weeklyKpi.todayChange > 0 ? 'up' : weeklyKpi.todayChange < 0 ? 'down' : 'same'}
           showDiff
           showDiffLabel
           diffPrefix="전일"
           subMode="diff"
-          color={kpiData.todayChange > 0 ? 'red' : 'green'}
+          color={weeklyKpi.todayChange > 0 ? 'red' : 'green'}
         />
         <KpiCard
-          icon={kpiData.weekChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+          icon={weeklyKpi.weekChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
           title="7일 평균"
-          value={kpiData.weekAvg.toFixed(1)}
+          value={weeklyKpi.weekAvg.toFixed(1)}
           unit="%"
-          diff={`${kpiData.weekChange > 0 ? '+' : ''}${kpiData.weekChange.toFixed(1)}%`}
-          trend={kpiData.weekChange > 0 ? 'up' : kpiData.weekChange < 0 ? 'down' : 'same'}
+          diff={`${weeklyKpi.weekChange > 0 ? '+' : ''}${weeklyKpi.weekChange.toFixed(1)}%`}
+          trend={weeklyKpi.weekChange > 0 ? 'up' : weeklyKpi.weekChange < 0 ? 'down' : 'same'}
           showDiff
           showDiffLabel
           diffPrefix="전주"
           subMode="diff"
-          color={kpiData.weekChange > 0 ? 'red' : 'green'}
+          color={weeklyKpi.weekChange > 0 ? 'red' : 'green'}
         />
         <KpiCard
-          icon={kpiData.monthChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+          icon={monthlyKpi.monthChange > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
           title="30일 평균"
-          value={kpiData.monthAvg.toFixed(1)}
+          value={monthlyKpi.monthAvg.toFixed(1)}
           unit="%"
-          diff={`${kpiData.monthChange > 0 ? '+' : ''}${kpiData.monthChange.toFixed(1)}%`}
-          trend={kpiData.monthChange > 0 ? 'up' : kpiData.monthChange < 0 ? 'down' : 'same'}
+          diff={`${monthlyKpi.monthChange > 0 ? '+' : ''}${monthlyKpi.monthChange.toFixed(1)}%`}
+          trend={monthlyKpi.monthChange > 0 ? 'up' : monthlyKpi.monthChange < 0 ? 'down' : 'same'}
           showDiff
           showDiffLabel
           diffPrefix="전월"
           subMode="diff"
-          color={kpiData.monthChange > 0 ? 'red' : 'green'}
+          color={monthlyKpi.monthChange > 0 ? 'red' : 'green'}
         />
       </div>
 
