@@ -182,3 +182,42 @@ export const toSatisfactionKpiMetrics = (
     negativeRate: total > 0 ? (negative / total) * 100 : 0,
   };
 };
+
+export const buildSatisfactionKpiMetrics = ({
+  countLast30Days,
+  reviewList,
+  positiveCount,
+  negativeCount,
+}: {
+  countLast30Days?: MetricSatisCountLast30DaysResponse | null;
+  reviewList?: MetricSatisReviewListResponse | null;
+  positiveCount?: MetricSatisPositiveCountResponse | null;
+  negativeCount?: MetricSatisNegativeCountResponse | null;
+}): SatisfactionKpiMetrics => {
+  if (!countLast30Days) {
+    return {
+      totalCount: 0,
+      positiveCount: 0,
+      negativeCount: 0,
+      positiveRate: 0,
+      negativeRate: 0,
+    };
+  }
+
+  const totalCount =
+    reviewList?.data?.pagination?.total_items ??
+    countLast30Days.data.total_count ??
+    0;
+  const resolvedPositiveCount =
+    positiveCount?.data?.count ?? countLast30Days.data.positive_count ?? 0;
+  const resolvedNegativeCount =
+    negativeCount?.data?.count ?? countLast30Days.data.negative_count ?? 0;
+  const safeTotal = Number(totalCount) || 0;
+  return {
+    totalCount: safeTotal,
+    positiveCount: resolvedPositiveCount,
+    negativeCount: resolvedNegativeCount,
+    positiveRate: safeTotal > 0 ? (resolvedPositiveCount / safeTotal) * 100 : 0,
+    negativeRate: safeTotal > 0 ? (resolvedNegativeCount / safeTotal) * 100 : 0,
+  };
+};

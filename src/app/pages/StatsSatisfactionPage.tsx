@@ -17,6 +17,7 @@ import {
   StatsSatisfactionMeal,
   StatsSatisfactionPeriod,
   toFeedbackFromReviewList,
+  buildSatisfactionKpiMetrics,
 } from '../viewModels';
 import type { SatisfactionMetricsResponse } from '../viewModels/metrics';
 import type { MetricSatisReviewListResponse } from '../viewModels/statsSatisfaction';
@@ -76,33 +77,16 @@ export function StatsSatisfactionPage({ onNavigate: _onNavigate }: StatsSatisfac
     () => (reviewList ? toFeedbackFromReviewList(reviewList) : []),
     [reviewList]
   );
-  const kpiMetrics = useMemo(() => {
-    if (!countLast30Days) {
-      return {
-        totalCount: 0,
-        positiveCount: 0,
-        negativeCount: 0,
-        positiveRate: 0,
-        negativeRate: 0,
-      };
-    }
-    const totalCount =
-      filteredReviewList?.data?.pagination?.total_items ??
-      countLast30Days.data.total_count ??
-      0;
-    const positiveCount =
-      filteredPositiveCount?.data?.count ?? countLast30Days.data.positive_count ?? 0;
-    const negativeCount =
-      filteredNegativeCount?.data?.count ?? countLast30Days.data.negative_count ?? 0;
-    const safeTotal = Number(totalCount) || 0;
-    return {
-      totalCount: safeTotal,
-      positiveCount,
-      negativeCount,
-      positiveRate: safeTotal > 0 ? (positiveCount / safeTotal) * 100 : 0,
-      negativeRate: safeTotal > 0 ? (negativeCount / safeTotal) * 100 : 0,
-    };
-  }, [countLast30Days, filteredNegativeCount, filteredPositiveCount, filteredReviewList]);
+  const kpiMetrics = useMemo(
+    () =>
+      buildSatisfactionKpiMetrics({
+        countLast30Days,
+        reviewList: filteredReviewList ?? undefined,
+        positiveCount: filteredPositiveCount ?? undefined,
+        negativeCount: filteredNegativeCount ?? undefined,
+      }),
+    [countLast30Days, filteredNegativeCount, filteredPositiveCount, filteredReviewList]
+  );
 
   const resolvedPeriodDays = useMemo(() => {
     if (!config?.days) return 0;

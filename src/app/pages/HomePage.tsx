@@ -3,7 +3,14 @@ import { MessageSquare, ThumbsUp, Star, ThumbsDown } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 import { fetchMealPlanMenuDetail, fetchMealPlanWeekly } from '../data/mealplan';
-import { getLeftoversMetrics, getMissedMetrics, getSatisfactionMetrics } from '../data/metrics';
+import {
+  getLeftoversMetrics,
+  getMissedMetrics,
+  getSatisfactionMetrics,
+  getSatisfactionNegativeCount,
+  getSatisfactionPositiveCount,
+  getSatisfactionReviewList,
+} from '../data/metrics';
 
 import { KpiCard } from '../components/KpiCard';
 import { KpiMiniCard } from '../components/KpiMiniCard';
@@ -14,7 +21,7 @@ import { formatKpiDiff, formatKpiValue, getKpiDataFromSeries, getTrendFromValue 
 import { toLeftoversSeriesByPeriod } from '../viewModels/statsLeftovers';
 import { toMissedSeriesByPeriod } from '../viewModels/statsMissed';
 import { toHomeMealFromDetailResponse, toHomeMealsFromWeeklyResponse } from '../viewModels/meal';
-import { toSatisfactionKpiMetrics } from '../viewModels/statsSatisfaction';
+import { buildSatisfactionKpiMetrics } from '../viewModels/statsSatisfaction';
 import type { MealPlanDetailResponse, MealPlanWeeklyResponse } from '../viewModels/meal';
 import type {
   LeftoversMetricsResponse,
@@ -32,6 +39,12 @@ export function HomePage() {
   const [leftoversMetrics, setLeftoversMetrics] = useState<LeftoversMetricsResponse | null>(null);
   const [missedMetrics, setMissedMetrics] = useState<MissedMetricsResponse | null>(null);
   const [satisfactionMetricsSource, setSatisfactionMetricsSource] = useState<SatisfactionMetricsResponse | null>(null);
+  const [satisfactionReviewList, setSatisfactionReviewList] =
+    useState<SatisfactionMetricsResponse['reviewList'] | null>(null);
+  const [satisfactionPositiveCount, setSatisfactionPositiveCount] =
+    useState<SatisfactionMetricsResponse['positiveCount'] | null>(null);
+  const [satisfactionNegativeCount, setSatisfactionNegativeCount] =
+    useState<SatisfactionMetricsResponse['negativeCount'] | null>(null);
 
   useEffect(() => {
     if (!isReady || !schoolId) {
@@ -85,12 +98,59 @@ export function HomePage() {
         getSatisfactionMetrics(),
       ]);
       if (!isActive) return;
+
+      const normalizeDateParam = (value: string, edge: 'start' | 'end') => {
+        const trimmed = value.trim();
+        if (/^\d{4}-\d{2}$/.test(trimmed)) {
+          if (edge === 'start') {
+            return `${trimmed}-01`;
+          }
+          const [year, month] = trimmed.split('-').map(Number);
+          const lastDay = new Date(year, month, 0).getDate();
+          return `${trimmed}-${String(lastDay).padStart(2, '0')}`;
+        }
+        return trimmed;
+      };
+
+      const periodStartRaw = satisfactionResponse?.countLast30Days?.data?.period?.start_date;
+      const periodEndRaw = satisfactionResponse?.countLast30Days?.data?.period?.end_date;
+      let reviewListResponse: SatisfactionMetricsResponse['reviewList'] | null = null;
+      let positiveResponse: SatisfactionMetricsResponse['positiveCount'] | null = null;
+      let negativeResponse: SatisfactionMetricsResponse['negativeCount'] | null = null;
+
+      if (periodStartRaw && periodEndRaw) {
+        const periodStart = normalizeDateParam(periodStartRaw, 'start');
+        const periodEnd = normalizeDateParam(periodEndRaw, 'end');
+        try {
+          const [reviewList, positiveCount, negativeCount] = await Promise.all([
+            getSatisfactionReviewList({ start_date: periodStart, end_date: periodEnd, page: 1, size: 20 }),
+            getSatisfactionPositiveCount(periodStart, periodEnd),
+            getSatisfactionNegativeCount(periodStart, periodEnd),
+          ]);
+          reviewListResponse = reviewList;
+          positiveResponse = {
+            status: positiveCount.status,
+            message: positiveCount.message,
+            data: positiveCount.data,
+          };
+          negativeResponse = {
+            status: negativeCount.status,
+            message: negativeCount.message,
+            data: negativeCount.data,
+          };
+        } catch (error) {
+          console.error('Failed to load satisfaction review list/counts:', error);
+        }
+      }
       setMealPlanWeeklyResponse(weeklyResponse);
       setTodayLunchDetail(lunchDetail);
       setTodayDinnerDetail(dinnerDetail);
       setLeftoversMetrics(leftoversResponse);
       setMissedMetrics(missedResponse);
       setSatisfactionMetricsSource(satisfactionResponse);
+      setSatisfactionReviewList(reviewListResponse);
+      setSatisfactionPositiveCount(positiveResponse);
+      setSatisfactionNegativeCount(negativeResponse);
     };
     load();
     return () => {
@@ -98,7 +158,16 @@ export function HomePage() {
     };
   }, [isReady, schoolId]);
 
-  if (!isReady || !schoolId || !leftoversMetrics || !missedMetrics || !satisfactionMetricsSource) {
+  if (
+    !isReady ||
+    !schoolId ||
+    !leftoversMetrics ||
+    !missedMetrics ||
+    !satisfactionMetricsSource ||
+    !satisfactionReviewList ||
+    !satisfactionPositiveCount ||
+    !satisfactionNegativeCount
+  ) {
     return (
       <div className="p-6">
         <div className="mb-6">
@@ -192,7 +261,12 @@ export function HomePage() {
   const absenteeSeries = missedMonthlyData.map((item) => item.rate);
   const wasteKpi = getKpiDataFromSeries(wasteSeries, leftoversMetrics.defaults.prevMonthAvg);
   const absenteeKpi = getKpiDataFromSeries(absenteeSeries, missedMetrics.defaults.prevMonthAvg);
-  const satisfactionMetrics = toSatisfactionKpiMetrics(satisfactionMetricsSource.countLast30Days);
+  const satisfactionMetrics = buildSatisfactionKpiMetrics({
+    countLast30Days: satisfactionMetricsSource.countLast30Days,
+    reviewList: satisfactionReviewList,
+    positiveCount: satisfactionPositiveCount,
+    negativeCount: satisfactionNegativeCount,
+  });
   const satisfactionBatches = satisfactionMetricsSource.listLast30Days?.data?.batches ?? [];
   const isWasteEmpty = leftoversWeeklyData.length === 0;
   const isMissedEmpty = missedWeeklyData.length === 0;
