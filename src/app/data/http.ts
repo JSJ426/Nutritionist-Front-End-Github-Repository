@@ -42,6 +42,25 @@ const buildUrl = (url: string) => {
   return `${API_BASE_URL}${url}`;
 };
 
+type HttpError = {
+  status: number;
+  code?: string;
+  message: string;
+};
+
+const parseErrorPayload = (text: string, status: number) => {
+  if (!text) return { message: `HTTP ${status}` };
+  try {
+    const parsed = JSON.parse(text) as { message?: string; code?: string };
+    if (parsed?.message || parsed?.code) {
+      return { message: parsed.message ?? `HTTP ${status}`, code: parsed.code };
+    }
+  } catch {
+    // ignore JSON parse errors and fall back to raw text
+  }
+  return { message: text };
+};
+
 export const httpRequest = async <T>(url: string, options: HttpRequestOptions = {}): Promise<T> => {
   const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const headers = buildHeaders(options.headers);
@@ -64,7 +83,9 @@ export const httpRequest = async <T>(url: string, options: HttpRequestOptions = 
   const text = await response.text();
 
   if (!response.ok) {
-    throw new Error(text || `HTTP ${response.status}`);
+    const { message, code } = parseErrorPayload(text, response.status);
+    const error: HttpError = { status: response.status, message, code };
+    throw error;
   }
 
   if (!text) {
@@ -78,7 +99,8 @@ export const httpRequest = async <T>(url: string, options: HttpRequestOptions = 
   try {
     return JSON.parse(text) as T;
   } catch {
-    throw new Error(`Invalid JSON response: ${text.slice(0, 200)}`);
+    const error: HttpError = { status: 200, message: `Invalid JSON response: ${text.slice(0, 200)}` };
+    throw error;
   }
 };
 
