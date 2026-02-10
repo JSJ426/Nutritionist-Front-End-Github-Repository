@@ -1,6 +1,7 @@
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -13,7 +14,10 @@ type ErrorModalProps = {
   title?: string;
   message: string;
   actionLabel?: string;
+  cancelLabel?: string;
   onClose: () => void;
+  onCancel?: () => void;
+  onConfirm?: () => void;
 };
 
 export function ErrorModal({
@@ -21,8 +25,25 @@ export function ErrorModal({
   title = "오류",
   message,
   actionLabel = "확인",
+  cancelLabel = "취소",
   onClose,
+  onCancel,
+  onConfirm,
 }: ErrorModalProps) {
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
+    }
+    onClose();
+  };
+
+  const handleConfirm = () => {
+    if (onConfirm) {
+      onConfirm();
+    }
+    onClose();
+  };
+
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => (!open ? onClose() : undefined)}>
       <AlertDialogContent>
@@ -31,7 +52,10 @@ export function ErrorModal({
           <AlertDialogDescription>{message}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction onClick={onClose}>{actionLabel}</AlertDialogAction>
+          {onCancel ? (
+            <AlertDialogCancel onClick={handleCancel}>{cancelLabel}</AlertDialogCancel>
+          ) : null}
+          <AlertDialogAction onClick={handleConfirm}>{actionLabel}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
