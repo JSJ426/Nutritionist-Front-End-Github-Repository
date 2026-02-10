@@ -3,6 +3,7 @@ import { Mail } from 'lucide-react';
 
 import { findDietitianId } from '../data/auth';
 import { Footer } from '../components/Footer';
+import { GuestHeader } from '../components/GuestHeader';
 
 type FindIdPageProps = {
   onNavigate: (page: string) => void;
@@ -56,6 +57,9 @@ export function FindIdPage({ onNavigate }: FindIdPageProps) {
 
   return (
     <div className="min-h-screen bg-[#F6F7F8] flex flex-col">
+      <GuestHeader
+        onLogoClick={() => onNavigate('login')}
+      />
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden p-8 lg:p-12">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">아이디 찾기</h2>

@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { User, Lock, Eye, EyeOff } from 'lucide-react';
 
-import mealTrayImage from '@/assets/AppLogo.png';
+import mealTrayImage from '@/assets/FoodTray.png';
 import { loginDietitian } from '../data/auth';
 import { useAuth } from '../auth/AuthContext';
 import { Footer } from '../components/Footer';
+import { GuestHeader } from '../components/GuestHeader';
 import { ErrorModal } from '../components/ErrorModal';
 import { useErrorModal } from '../hooks/useErrorModal';
 import { normalizeErrorMessage } from '../utils/errorMessage';
@@ -44,6 +45,9 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
 
   return (
     <div className="min-h-screen bg-[#F6F7F8] flex flex-col">
+      <GuestHeader
+        onLogoClick={() => onNavigate('login')}
+      />
       <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="grid md:grid-cols-2 gap-0">
