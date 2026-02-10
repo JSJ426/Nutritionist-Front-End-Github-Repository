@@ -373,7 +373,7 @@ export function HomePage() {
       {/* 상단 카드 섹션 */}
       <div className="flex gap-6 mb-6">
         {/* 오늘의 중식/석식 - 25% */}
-        <div className="bg-white rounded-lg shadow-md p-6" style={{ width: '25%' }}>
+        <div className="bg-white rounded-lg shadow-md p-6" style={{ width: '30%' }}>
           <h2 className="text-xl font-medium mb-4 pb-2 border-b-2 border-[#5dccb4]">
             오늘의 식단 <span className="text-base text-gray-600">({currentMonth}월 {currentDate}일)</span>
           </h2>
