@@ -28,6 +28,7 @@ interface MealWeekSectionEditableProps {
   onAiReplace: (day: string, mealType: 'lunch' | 'dinner', date: string) => void;
   weekNum: number;
   hasChanges?: boolean;
+  isAiReplacing?: boolean;
 }
 
 export function MealWeekSectionEditable({
@@ -42,6 +43,7 @@ export function MealWeekSectionEditable({
   onAiReplace,
   weekNum,
   hasChanges,
+  isAiReplacing,
 }: MealWeekSectionEditableProps) {
   const isEmptyWeek = !weekDays.some((day) => {
     if (!dateInMonth[day]) return false;
@@ -76,6 +78,7 @@ export function MealWeekSectionEditable({
               onAiReplace={onAiReplace}
               hasChanges={false}
               isOutOfMonth={true}
+              isAiReplacing={isAiReplacing}
             />
           );
         }
@@ -93,6 +96,7 @@ export function MealWeekSectionEditable({
               onAiReplace={onAiReplace}
               hasChanges={hasChanges}
               isOutOfMonth={false}
+              isAiReplacing={isAiReplacing}
             />
           ) : (
             <div

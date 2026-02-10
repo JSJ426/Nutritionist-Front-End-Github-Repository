@@ -8,6 +8,7 @@ import PrivacyModal from '../components/PrivacyModal';
 import { Footer } from '../components/Footer';
 import { validatePasswordPolicy } from '../utils/password';
 import { ErrorModal } from '../components/ErrorModal';
+import { useErrorModal } from '../hooks/useErrorModal';
 import { normalizeErrorMessage } from '../utils/errorMessage';
 import type { SchoolSearchItem } from '../viewModels/school';
 
@@ -16,6 +17,7 @@ type SchoolSignupPageProps = {
 };
 
 export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
+  const { modalProps, openAlert } = useErrorModal();
   const [formData, setFormData] = useState({
     username: '',
     name: '',
@@ -46,8 +48,6 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isErrorOpen, setIsErrorOpen] = useState(false);
   const [passwordPolicyError, setPasswordPolicyError] = useState('');
   const [contactAreaCode, setContactAreaCode] = useState('');
   const [contactNumber, setContactNumber] = useState('');
@@ -79,24 +79,24 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
     };
 
     if (formData.password !== formData.confirmPassword) {
-      alert('비밀번호가 일치하지 않습니다.');
+      openAlert('비밀번호가 일치하지 않습니다.');
       return;
     }
 
     const policyResult = validatePasswordPolicy(formData.password);
     if (!policyResult.isValid) {
       setPasswordPolicyError(policyResult.message);
-      alert(policyResult.message);
+      openAlert(policyResult.message);
       return;
     }
 
     if (!agreedToTerms || !agreedToPrivacy) {
-      alert('필수 약관에 동의해주세요.');
+      openAlert('필수 약관에 동의해주세요.');
       return;
     }
 
     if (!formData.regionCode.trim() || !formData.schoolCode.trim() || !formData.schoolAddress.trim()) {
-      alert('학교 검색 결과를 선택해주세요.');
+      openAlert('학교 검색 결과를 선택해주세요.');
       return;
     }
 
@@ -105,7 +105,7 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
       formData.schoolTypeSecondary.trim()
     );
     if (!schoolType) {
-      alert('학교 구분을 정확히 선택해주세요.');
+      openAlert('학교 구분을 정확히 선택해주세요.');
       return;
     }
 
@@ -148,13 +148,14 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
     try {
       setIsSubmitting(true);
       await signupDietitian(payload);
-      alert('학교 계정 회원가입이 완료되었습니다!');
-      onNavigate('login');
+      openAlert('학교 계정 회원가입이 완료되었습니다!', {
+        title: '안내',
+        onConfirm: () => onNavigate('login'),
+      });
     } catch (error) {
       const rawMessage = (error as { message?: string })?.message ?? '';
       const message = normalizeErrorMessage(rawMessage, '회원가입에 실패했습니다.');
-      setErrorMessage(message);
-      setIsErrorOpen(true);
+      openAlert(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -941,11 +942,7 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
         onAgree={() => setAgreedToPrivacy(true)}
       />
       <Footer />
-      <ErrorModal
-        isOpen={isErrorOpen}
-        message={errorMessage ?? ''}
-        onClose={() => setIsErrorOpen(false)}
-      />
+      <ErrorModal {...modalProps} />
     </div>
   );
 }

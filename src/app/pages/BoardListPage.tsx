@@ -100,7 +100,7 @@ export function BoardListPage({ initialParams, onNavigate }: BoardListPageProps)
     return (
       <div className="flex flex-col h-full bg-gray-50">
         <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
-          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+          <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
             게시판
           </h1>
         </div>
@@ -116,13 +116,13 @@ export function BoardListPage({ initialParams, onNavigate }: BoardListPageProps)
     <div className="flex flex-col h-full bg-gray-50">
       {/* Header */}
       <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
-        <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+        <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
           게시판
         </h1>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-6 py-6 text-lg">
         <div className="max-w-[1400px] mx-auto">
           {/* 검색 및 필터 */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
@@ -170,12 +170,12 @@ export function BoardListPage({ initialParams, onNavigate }: BoardListPageProps)
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
-                  <TableHead className="w-20 text-center">번호</TableHead>
-                  <TableHead className="w-32 text-center">분류</TableHead>
-                  <TableHead>제목</TableHead>
-                  <TableHead className="w-32 text-center">작성자</TableHead>
-                  <TableHead className="w-32 text-center">작성일</TableHead>
-                  <TableHead className="w-24 text-center">조회수</TableHead>
+                  <TableHead className="w-20 text-center text-xl">번호</TableHead>
+                  <TableHead className="w-32 text-center text-xl">분류</TableHead>
+                  <TableHead className="text-xl">제목</TableHead>
+                  <TableHead className="w-32 text-center text-xl">작성자</TableHead>
+                  <TableHead className="w-32 text-center text-xl">작성일</TableHead>
+                  <TableHead className="w-24 text-center text-xl">조회수</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -186,21 +186,21 @@ export function BoardListPage({ initialParams, onNavigate }: BoardListPageProps)
                       className="cursor-pointer hover:bg-gray-50 transition-colors"
                       onClick={() => onNavigate?.('board-read', { postId: post.id })}
                     >
-                      <TableCell className="text-center text-sm">{post.id}</TableCell>
+                      <TableCell className="text-center text-lg">{post.id}</TableCell>
                       <TableCell className="text-center">
                         <Badge variant="outline" className={`${post.categoryColorClass}`}>
                           {post.category}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium text-lg">
                         {post.category === '공지' && (
                           <span className="text-red-600 mr-2">[공지]</span>
                         )}
                         {post.title}
                       </TableCell>
-                      <TableCell className="text-center text-sm">{post.author}</TableCell>
-                      <TableCell className="text-center text-sm text-gray-600">{post.dateText}</TableCell>
-                      <TableCell className="text-center text-sm text-gray-600">{post.viewsText}</TableCell>
+                      <TableCell className="text-center text-light text-lg">{post.author}</TableCell>
+                      <TableCell className="text-center text-light text-lg text-gray-600">{post.dateText}</TableCell>
+                      <TableCell className="text-center text-light text-lg text-gray-600">{post.viewsText}</TableCell>
                     </TableRow>
                   ))
                 ) : (

@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react';
 
 import { fetchMealPlanMonthly, replaceMealPlanWithAI, updateMealPlanManually } from '../data/mealplan';
 
+import { ErrorModal } from '../components/ErrorModal';
+import { Spinner } from '../components/Spinner';
 import { MealMonthlyCalendarEditable } from "../components/MealMonthlyCalendarEditable";
 
+import { useErrorModal } from '../hooks/useErrorModal';
 import { toMealMonthlyDataByMonth, toMealWeeklyEditableVMFromMonthlyData } from '../viewModels/meal';
 import type { MealWeeklyEditableVM } from '../viewModels/meal';
 
@@ -12,8 +15,10 @@ interface MealEditPageProps {
 }
 
 export function MealEditPage({ initialParams }: MealEditPageProps) {
+  const { modalProps, openAlert } = useErrorModal();
   const [weeklyEditableVm, setWeeklyEditableVm] = useState<MealWeeklyEditableVM>({ weeks: [] });
   const [currentMonth, setCurrentMonth] = useState<string>('');
+  const [isAiReplacing, setIsAiReplacing] = useState(false);
 
   const formatDate = (date: Date) => {
     const year = date.getFullYear();
@@ -65,7 +70,7 @@ export function MealEditPage({ initialParams }: MealEditPageProps) {
   }) => {
     console.log(`${payload.mealPlanId}, ${payload.menuId}`);
     if (!payload.menuId || !payload.mealPlanId) {
-      alert('메뉴 식별자를 찾을 수 없습니다. 데이터를 다시 불러오세요.');
+      openAlert('메뉴 식별자를 찾을 수 없습니다. 데이터를 다시 불러오세요.');
       return;
     }
     try {
@@ -73,17 +78,18 @@ export function MealEditPage({ initialParams }: MealEditPageProps) {
         reason: payload.reason,
         menus: payload.menus,
       });
-      alert('식단표 수정 요청이 전송되었습니다.');
+      openAlert('식단표 수정 요청이 전송되었습니다.', { title: '안내' });
     } catch (error) {
       console.error('Failed to update meal plan:', error);
-      alert('식단표 수정 요청에 실패했습니다.');
+      openAlert('식단표 수정 요청에 실패했습니다.');
     }
   };
 
   const handleAiReplace = async (payload: { date: string; mealType: 'LUNCH' | 'DINNER' }) => {
+    setIsAiReplacing(true);
     try {
       await replaceMealPlanWithAI(payload);
-      alert('AI 대체가 완료되었습니다.');
+      openAlert('AI 대체가 완료되었습니다.', { title: '안내' });
       const dateObj = new Date(`${payload.date}T00:00:00`);
       const response = await fetchMealPlanMonthly(dateObj.getFullYear(), dateObj.getMonth() + 1);
       const dataByMonth = toMealMonthlyDataByMonth(response);
@@ -97,7 +103,9 @@ export function MealEditPage({ initialParams }: MealEditPageProps) {
       setWeeklyEditableVm(toMealWeeklyEditableVMFromMonthlyData(monthlyData, payload.date));
     } catch (error) {
       console.error('Failed to replace meal plan with AI:', error);
-      alert('AI 대체에 실패했습니다.');
+      openAlert('AI 대체에 실패했습니다.');
+    } finally {
+      setIsAiReplacing(false);
     }
   };
 
@@ -110,14 +118,24 @@ export function MealEditPage({ initialParams }: MealEditPageProps) {
         </h1>
       </div>
 
-      <div className="flex-1 overflow-hidden px-6 py-6">
+      <div className="relative flex-1 overflow-hidden px-6 py-6">
+        {isAiReplacing ? (
+          <Spinner
+            label="AI 대체 중"
+            showLabel
+            estimatedWaitSeconds={30}
+            containerClassName="fixed top-[72px] left-[240px] right-0 bottom-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm"
+          />
+        ) : null}
         <MealMonthlyCalendarEditable
           initialWeeks={weeklyEditableVm.weeks}
           currentMonth={currentMonth}
           onSubmit={handleSubmit}
           onAiReplace={handleAiReplace}
+          isAiReplacing={isAiReplacing}
         />
       </div>
+      <ErrorModal {...modalProps} />
     </div>
   );
 }

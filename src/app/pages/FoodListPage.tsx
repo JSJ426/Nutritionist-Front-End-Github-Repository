@@ -77,7 +77,7 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
       <div className="flex flex-col h-full bg-gray-50">
         <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+            <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
               메뉴 조회
             </h1>
             <div />
@@ -94,23 +94,23 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
     <div className="flex flex-col h-full bg-gray-50">
       <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+          <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
             메뉴 조회
           </h1>
           <div />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-6 py-6 text-lg">
         <div className="max-w-[1400px] mx-auto">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
             <div className="flex flex-wrap items-center gap-4">
               <div>
-                <label className="text-sm text-gray-600 mb-1 block">식품대분류명</label>
+                <label className="text-base text-gray-600 mb-1 block">식품대분류명</label>
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-48 px-3 py-2 rounded border bg-gray-100 text-sm text-gray-900 focus:outline-none focus:border-[#5dccb4]"
+                  className="w-48 px-3 py-2 rounded border bg-gray-100 text-base text-gray-900 focus:outline-none focus:border-[#5dccb4]"
                 >
                   {categoryOptions.map((option) => (
                     <option key={option} value={option}>
@@ -120,11 +120,11 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
                 </select>
               </div>
               <div>
-                <label className="text-sm text-gray-600 mb-1 block">정렬</label>
+                <label className="text-base text-gray-600 mb-1 block">정렬</label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-40 px-3 py-2 rounded border bg-gray-100 text-sm text-gray-900 focus:outline-none focus:border-[#5dccb4]"
+                  className="w-40 px-3 py-2 rounded border bg-gray-100 text-base text-gray-900 focus:outline-none focus:border-[#5dccb4]"
                 >
                   <option value="name-asc">메뉴명 (오름차순)</option>
                   <option value="name-desc">메뉴명 (내림차순)</option>
@@ -139,11 +139,11 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
-                  <TableHead className="w-20 text-center">번호</TableHead>
-                  <TableHead className="w-44 text-center">식품대분류명</TableHead>
-                  <TableHead>메뉴명</TableHead>
-                  <TableHead className="w-32 text-center">열량(Kcal)</TableHead>
-                  <TableHead className="text-center">알레르기정보</TableHead>
+                  <TableHead className="w-20 text-center text-lg">번호</TableHead>
+                  <TableHead className="w-44 text-center text-lg">식품대분류명</TableHead>
+                  <TableHead className="text-lg">메뉴명</TableHead>
+                  <TableHead className="w-32 text-center text-lg">열량(Kcal)</TableHead>
+                  <TableHead className="text-center text-lg">알레르기정보</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -154,17 +154,17 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
                       className="cursor-pointer hover:bg-gray-50 transition-colors"
                       onClick={() => onNavigate?.('food-info', { foodId: food.menuId })}
                     >
-                      <TableCell className="text-center text-sm">
+                      <TableCell className="text-center text-lg">
                         {offsetIndex + index + 1}
                       </TableCell>
-                      <TableCell className="text-center text-sm">
+                      <TableCell className="text-center text-lg">
                         <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">
                           {food.category}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-medium">{food.name}</TableCell>
-                      <TableCell className="text-center text-sm text-gray-600">{food.caloriesText}</TableCell>
-                      <TableCell className="text-center text-sm text-gray-600">
+                      <TableCell className="font-medium text-lg">{food.name}</TableCell>
+                      <TableCell className="text-center text-lg text-gray-600">{food.caloriesText}</TableCell>
+                      <TableCell className="text-center text-lg text-gray-600">
                         {food.allergiesText}
                       </TableCell>
                     </TableRow>

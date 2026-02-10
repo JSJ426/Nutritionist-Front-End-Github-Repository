@@ -43,8 +43,8 @@ export function WeeklyMealCard({
         isToday ? 'border-[#5dccb4] shadow-2xl' : 'border-gray-200'
       }`}
       style={{
-        width: isToday ? '176px' : '184px',
-        transform: isToday ? 'scale(1.05)' : 'scale(1)',
+        width: isToday ? '216px' : '200px',
+        transform: isToday ? 'scale(1.08)' : 'scale(1)',
       }}
     >
       {/* Day Header */}
@@ -63,7 +63,7 @@ export function WeeklyMealCard({
           </div>
           <div className="text-sm text-gray-800 leading-relaxed space-y-1 flex-1">
             {isLunchEmpty ? (
-              <div className="text-xs text-gray-400 min-h-[140px] flex items-center">
+              <div className="text-base text-gray-400 min-h-[140px] flex items-center">
                 식단 없음
               </div>
             ) : (
@@ -71,7 +71,7 @@ export function WeeklyMealCard({
                 <div key={itemIdx} className="flex items-start gap-1.5 min-h-[20px]">
                   {item.name ? (
                     <>
-                      <span className="text-xs">{item.name}</span>
+                      <span className="text-sm">{item.name}</span>
                       {item.allergy.length > 0 && (
                         <span className="text-xs text-gray-600 bg-[#FCE8E6] px-1 py-0.5 rounded flex-shrink-0">
                           {item.allergy.join(',')}
@@ -94,7 +94,7 @@ export function WeeklyMealCard({
           </div>
           <div className="text-sm text-gray-800 leading-relaxed space-y-1 flex-1">
             {isDinnerEmpty ? (
-              <div className="text-xs text-gray-400 min-h-[140px] flex items-center">
+              <div className="text-base text-gray-400 min-h-[140px] flex items-center">
                 식단 없음
               </div>
             ) : (
@@ -102,7 +102,7 @@ export function WeeklyMealCard({
                 <div key={itemIdx} className="flex items-start gap-1.5 min-h-[20px]">
                   {item.name ? (
                     <>
-                      <span className="text-xs">{item.name}</span>
+                      <span className="text-sm">{item.name}</span>
                       {item.allergy.length > 0 && (
                         <span className="text-xs text-gray-600 bg-[#FCE8E6] px-1 py-0.5 rounded flex-shrink-0">
                           {item.allergy.join(',')}
@@ -119,3 +119,4 @@ export function WeeklyMealCard({
     </div>
   );
 }
+

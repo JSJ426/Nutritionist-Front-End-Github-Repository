@@ -4,14 +4,17 @@ import { Upload, FileText, X } from "lucide-react";
 import { getSchoolResponse } from "../data/school";
 import { generateMealPlan } from "../data/mealplan";
 
+import { ErrorModal } from "../components/ErrorModal";
 import { Button } from "../components/ui/button";
 import { Spinner } from "../components/Spinner";
+import { useErrorModal } from "../hooks/useErrorModal";
 
 interface MealCreatePageProps {
   onNavigate?: (page: string, params?: any) => void;
 }
 
 export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
+  const { modalProps, openAlert } = useErrorModal();
   const [isLoading, setIsLoading] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
   const now = new Date();
@@ -41,7 +44,7 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
       onNavigate?.("meal-edit");
     } catch (error) {
       console.error("Failed to generate meal plan:", error);
-      alert("식단표 생성에 실패했습니다.");
+      openAlert("식단표 생성에 실패했습니다.");
     } finally {
       setIsLoading(false);
     }
@@ -103,25 +106,25 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
               </h2>
               <div className="space-y-3">
                 <div className="flex items-center gap-4">
-                  <label className="text-sm font-medium text-gray-700 w-40">
+                  <label className="text-base font-medium text-gray-700 w-40">
                     목표 1식 단가
                   </label>
                   <div className="flex-1 flex items-center gap-2">
                     <div className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700">
                       {formatNumber(schoolInfo.targetPrice)}
                     </div>
-                    <span className="text-sm text-gray-600">원</span>
+                    <span className="text-base text-gray-600">원</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <label className="text-sm font-medium text-gray-700 w-40">
+                  <label className="text-base font-medium text-gray-700 w-40">
                     1식 단가 상한선
                   </label>
                   <div className="flex-1 flex items-center gap-2">
                     <div className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700">
                       {formatNumber(schoolInfo.maxPrice)}
                     </div>
-                    <span className="text-sm text-gray-600">원</span>
+                    <span className="text-base text-gray-600">원</span>
                   </div>
                 </div>
               </div>
@@ -134,18 +137,18 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
               </h2>
               <div className="space-y-3">
                 <div className="flex items-center gap-4">
-                  <label className="text-sm font-medium text-gray-700 w-40">
+                  <label className="text-base font-medium text-gray-700 w-40">
                     조리 인력
                   </label>
                   <div className="flex-1 flex items-center gap-2">
                     <div className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded text-gray-700">
                       {formatNumber(schoolInfo.staffCount)}
                     </div>
-                    <span className="text-sm text-gray-600">명</span>
+                    <span className="text-base text-gray-600">명</span>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
-                  <label className="text-sm font-medium text-gray-700 w-40 pt-2">
+                  <label className="text-base font-medium text-gray-700 w-40 pt-2">
                     주요 조리 기구
                   </label>
                   <div className="flex-1">
@@ -180,6 +183,8 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
           </button> */}
         </div>
       </div>
+      <ErrorModal {...modalProps} />
     </div>
   );
 }
+

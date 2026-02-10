@@ -7,6 +7,7 @@ import {
   getMonthlyOpsDocListResponse,
 } from '../data/operation';
 
+import { ErrorModal } from '../components/ErrorModal';
 import { Button } from '../components/ui/button';
 import {
   Select,
@@ -24,6 +25,7 @@ import {
   TableRow,
 } from '../components/ui/table';
 import { Pagination } from '../components/Pagination';
+import { useErrorModal } from '../hooks/useErrorModal';
 
 import {
   getOperationReportYearOptions,
@@ -46,6 +48,7 @@ interface OperationReportListPageProps {
 }
 
 export function OperationReportListPage({ onNavigate }: OperationReportListPageProps) {
+  const { modalProps, openAlert } = useErrorModal();
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -77,7 +80,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
         setPagination(vm.pagination);
       } catch (error) {
         console.error('MonthlyOpsDocListResponse error', error);
-        alert('월간 운영 보고서 목록을 불러오지 못했습니다.');
+        openAlert('월간 운영 보고서 목록을 불러오지 못했습니다.');
       } finally {
         if (isActive) {
           setIsLoading(false);
@@ -116,7 +119,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
       const detailVm = toMonthlyOpsDocDetailVM(detail);
       const url = detailVm.pdfUrl;
       if (!url) {
-        alert('다운로드할 파일 정보가 없습니다.');
+        openAlert('다운로드할 파일 정보가 없습니다.');
         return;
       }
       const link = document.createElement('a');
@@ -130,7 +133,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
       link.remove();
     } catch (error) {
       console.error('MonthlyOpsDocDownload error', error);
-      alert('PDF 다운로드에 실패했습니다.');
+      openAlert('PDF 다운로드에 실패했습니다.');
     }
   };
 
@@ -151,7 +154,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
 
     const alreadyExists = reports.some(report => report.year === year && report.month === month);
     if (alreadyExists) {
-      alert('직전월 운영 보고서는 이미 생성되어 있습니다.');
+      openAlert('직전월 운영 보고서는 이미 생성되어 있습니다.', { title: '안내' });
       return;
     }
 
@@ -176,7 +179,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
       setCurrentPage(1);
     } catch (error) {
       console.error('MonthlyOpsDocCreate error', error);
-      alert('월간 운영 보고서 생성에 실패했습니다.');
+      openAlert('월간 운영 보고서 생성에 실패했습니다.');
     } finally {
       setIsGenerating(false);
     }
@@ -222,7 +225,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
             <div className="flex gap-4 items-center">
               <div className="flex items-center gap-2">
                 <Calendar size={20} className="text-gray-500" />
-                <span className="text-sm font-medium text-gray-700">연도 선택:</span>
+                <span className="text-lg font-light text-gray-700">연도 선택:</span>
               </div>
               <div className="w-40">
                 <Select
@@ -244,7 +247,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
                   </SelectContent>
                 </Select>
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-base text-gray-600">
                 총 <span className="font-medium text-[#5dccb4]">{pagination.total_items}</span>건
               </div>
               <div className="flex-1"></div>
@@ -263,49 +266,49 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
-                  <TableHead className="w-24 text-center">번호</TableHead>
-                  <TableHead className="w-24 text-center">년</TableHead>
-                  <TableHead className="w-24 text-center">월</TableHead>
+                  <TableHead className="w-24 text-center text-lg">번호</TableHead>
+                  <TableHead className="w-24 text-center text-lg">년</TableHead>
+                  <TableHead className="w-24 text-center text-lg">월</TableHead>
                   <TableHead></TableHead>
-                  <TableHead className="w-32 text-center">생성일</TableHead>
-                  <TableHead className="w-96 text-center">작업</TableHead>
+                  <TableHead className="w-32 text-center text-lg">생성일</TableHead>
+                  <TableHead className="w-96 text-center text-lg">작업</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedReportsVm.length > 0 ? (
                   paginatedReportsVm.map((report, index) => (
                     <TableRow key={report.id} className="hover:bg-gray-50 transition-colors">
-                      <TableCell className="text-center text-sm">
+                      <TableCell className="text-center text-lg font-light">
                         {offsetIndex + index + 1}
                       </TableCell>
-                      <TableCell className="text-center text-sm font-medium">
+                      <TableCell className="text-center text-lg font-light">
                         {report.yearText}
                       </TableCell>
-                      <TableCell className="text-center text-sm font-medium">
+                      <TableCell className="text-center text-lg font-light">
                         {report.monthText}
                       </TableCell>
-                      <TableCell className="text-center text-sm font-medium">
+                      <TableCell className="text-center text-lg font-light">
                       </TableCell>
-                      <TableCell className="text-center text-sm text-gray-600">
+                      <TableCell className="text-center text-lg text-gray-600">
                         {report.generatedDateText}
                       </TableCell>
                       <TableCell>
                         <div className="flex justify-center gap-2">
                           <Button
-                            size="sm"
+                            size="lg"
                             variant="outline"
                             onClick={() => handleView(reports[index])}
                             className="flex items-center gap-1"
                           >
-                            <FileText size={14} />
+                            <FileText size={32} />
                             조회
                           </Button>
                           <Button
-                            size="sm"
+                            size="lg"
                             onClick={() => handleDownload(reports[index])}
                             className="bg-[#5dccb4] hover:bg-[#4db9a3] text-white flex items-center gap-1"
                           >
-                            <Download size={14} />
+                            <Download size={32} />
                             다운로드
                           </Button>
                         </div>
@@ -331,6 +334,8 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
 
         </div>
       </div>
+      <ErrorModal {...modalProps} />
     </div>
   );
 }
+

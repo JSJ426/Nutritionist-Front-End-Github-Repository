@@ -3,12 +3,16 @@ import { KeyRound, Lock, Mail, Phone, User } from 'lucide-react';
 
 import { getNutritionistProfile, patchNutritionistMe, putNutritionistPassword } from '../data/nutritionist';
 import { validatePasswordPolicy } from '../utils/password';
+import { ErrorModal } from '../components/ErrorModal';
+import { useErrorModal } from '../hooks/useErrorModal';
+import { normalizeErrorMessage } from '../utils/errorMessage';
 
 interface NutritionistInfoPageProps {
   onNavigate?: (page: string, params?: any) => void;
 }
 
 export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) {
+  const { modalProps, openAlert } = useErrorModal();
   const [formState, setFormState] = useState({
     name: '',
     phoneArea: '',
@@ -172,9 +176,11 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
         phoneLine: nextPhone.phoneLine,
         email: response.email ?? trimmedEmail,
       });
-      alert('저장되었습니다.');
+      openAlert('저장되었습니다.', { title: '안내' });
     } catch (error) {
-      alert(extractErrorMessage(error));
+      openAlert(
+        normalizeErrorMessage(extractErrorMessage(error), '저장에 실패했습니다.'),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -213,7 +219,9 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
       setConfirmPassword('');
     } catch (error) {
       setPasswordSuccess(false);
-      alert(extractErrorMessage(error));
+      openAlert(
+        normalizeErrorMessage(extractErrorMessage(error), '비밀번호 변경에 실패했습니다.'),
+      );
     } finally {
       setIsPasswordSaving(false);
     }
@@ -427,6 +435,7 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
           </div>
         </div>
       </div>
+      <ErrorModal {...modalProps} />
     </div>
   );
 }

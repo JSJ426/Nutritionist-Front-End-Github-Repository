@@ -39,25 +39,26 @@ export function TodayMealCard({ title, variant, hasMeal, meal, icon }: TodayMeal
       {hasMeal ? (
         <div className="space-y-2">
           <div>
-            <div className="text-sm text-gray-800">{meal.menu.join(', ')}</div>
+            <div className="text-lg text-gray-800">{meal.menu.join(', ')}</div>
           </div>
           <div>
-            <div className="text-xs text-gray-600">칼로리: {meal.calories} kcal</div>
+            <div className="text-lg text-gray-600">(칼로리: {meal.calories} kcal)</div>
           </div>
           <div>
-            <div className="text-xs text-gray-600">(영양성분)</div>
-            <div className="text-xs text-gray-600">
+            <div className="text-lg text-gray-600">영양성분</div>
+            <div className="text-lg font-light text-gray-600">
               단백질 {meal.nutrients.protein}, 탄수화물 {meal.nutrients.carbs}, 지방 {meal.nutrients.fat}
             </div>
           </div>
           <div>
-            <div className="text-xs text-gray-600 mb-1">알레르기 유발 식품</div>
-            <div className="text-sm text-red-600">{meal.allergens.join(', ')}</div>
+            <div className="text-lg text-gray-600 mb-1">알레르기 유발 식품</div>
+            <div className="text-lg font-light text-red-600">{meal.allergens.join(', ')}</div>
           </div>
         </div>
       ) : (
-        <div className="text-sm text-gray-800">등록된 식단이 없습니다.</div>
+        <div className="text-lg text-gray-800">등록된 식단이 없습니다.</div>
       )}
     </div>
   );
 }
+

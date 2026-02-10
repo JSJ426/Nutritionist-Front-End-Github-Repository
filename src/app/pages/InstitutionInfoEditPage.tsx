@@ -4,6 +4,9 @@ import { Building2, Phone, Mail, Users, FileText, Warehouse, MapPin, Search } fr
 import { getSchoolResponse, patchSchoolMe, searchSchools } from '../data/school';
 import type { SchoolSearchItem } from '../viewModels/school';
 import { useAuth } from '../auth/AuthContext';
+import { ErrorModal } from '../components/ErrorModal';
+import { useErrorModal } from '../hooks/useErrorModal';
+import { normalizeErrorMessage } from '../utils/errorMessage';
 
 interface InstitutionInfoEditPageProps {
   onNavigate?: (page: string, params?: any) => void;
@@ -11,6 +14,7 @@ interface InstitutionInfoEditPageProps {
 
 export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageProps) {
   const { refreshSchoolInfo } = useAuth();
+  const { modalProps, openAlert } = useErrorModal();
   const [activeTab, setActiveTab] = useState<'school' | 'rules'>('school');
   const [form, setForm] = useState({
     schoolName: '',
@@ -230,11 +234,11 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
 
   const handleSave = async () => {
     if (!form.schoolName.trim()) {
-      alert('학교 이름을 입력해주세요.');
+      openAlert('학교 이름을 입력해주세요.');
       return;
     }
     if (!schoolMeta.regionCode || !schoolMeta.schoolCode || !form.schoolAddress.trim()) {
-      alert('학교 기본 정보(지역/학교 코드, 주소)를 불러오지 못했습니다.');
+      openAlert('학교 기본 정보(지역/학교 코드, 주소)를 불러오지 못했습니다.');
       return;
     }
     const schoolType = mapFormToSchoolType(
@@ -242,11 +246,11 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
       form.schoolTypeSecondary.trim()
     );
     if (!schoolType) {
-      alert('학교 구분을 정확히 선택해주세요.');
+      openAlert('학교 구분을 정확히 선택해주세요.');
       return;
     }
     if (!form.schoolPhone.trim()) {
-      alert('대표 전화번호를 입력해주세요.');
+      openAlert('대표 전화번호를 입력해주세요.');
       return;
     }
     const phone = form.schoolPhone.trim();
@@ -297,11 +301,15 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
         });
         setSchoolSearchQuery(refreshed.data.school_name ?? '');
       }
-      alert('저장되었습니다.');
       await refreshSchoolInfo();
-      onNavigate?.('institution-info');
+      openAlert('저장되었습니다.', {
+        title: '안내',
+        onConfirm: () => onNavigate?.('institution-info'),
+      });
     } catch (error) {
-      alert(extractErrorMessage(error));
+      openAlert(
+        normalizeErrorMessage(extractErrorMessage(error), '저장에 실패했습니다.'),
+      );
     } finally {
       setIsSaving(false);
     }
@@ -351,7 +359,7 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
             <div className="space-y-6">
               {/* School Name */}
               <div>
-                <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                <label className="block text-base font-medium mb-2 flex items-center gap-2">
                   <Building2 size={16} />
                   학교 이름
                 </label>
@@ -395,7 +403,7 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
                             className="w-full px-4 py-3 text-left hover:bg-[#00B3A4]/5 transition-colors text-gray-700 border-b border-gray-100 last:border-b-0"
                           >
                             <div className="font-medium">{school.school_name}</div>
-                            <div className="text-xs text-gray-500">{school.address}</div>
+                            <div className="text-base text-gray-500">{school.address}</div>
                           </button>
                         ))
                       ) : (
@@ -413,7 +421,7 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
 
               {/* School Type - Level */}
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-base font-medium mb-2">
                   학교 구분1 <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-4">
@@ -426,7 +434,7 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
                       onChange={handleSchoolTypePrimaryChange}
                       className="h-4 w-4 text-[#5dccb4] focus:ring-[#5dccb4] border-gray-300"
                     />
-                    <span className="text-sm text-gray-700">초등학교</span>
+                    <span className="text-base text-gray-700">초등학교</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -437,7 +445,7 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
                       onChange={handleSchoolTypePrimaryChange}
                       className="h-4 w-4 text-[#5dccb4] focus:ring-[#5dccb4] border-gray-300"
                     />
-                    <span className="text-sm text-gray-700">중학교</span>
+                    <span className="text-base text-gray-700">중학교</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -448,14 +456,14 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
                       onChange={handleSchoolTypePrimaryChange}
                       className="h-4 w-4 text-[#5dccb4] focus:ring-[#5dccb4] border-gray-300"
                     />
-                    <span className="text-sm text-gray-700">고등학교</span>
+                    <span className="text-base text-gray-700">고등학교</span>
                   </label>
                 </div>
               </div>
 
               {/* School Type - Coed */}
               <div>
-                <label className="block text-sm font-medium mb-2">학교 구분2</label>
+                <label className="block text-base font-medium mb-2">학교 구분2</label>
                 <select
                   className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
                   value={form.schoolTypeSecondary}
@@ -471,7 +479,7 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
 
               {/* Region Code */}
               <div>
-                <label htmlFor="regionCode" className="block text-sm font-medium mb-2">
+                <label htmlFor="regionCode" className="block text-base font-medium mb-2">
                   지역 코드 <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -486,7 +494,7 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
 
               {/* School Code */}
               <div>
-                <label htmlFor="schoolCode" className="block text-sm font-medium mb-2">
+                <label htmlFor="schoolCode" className="block text-base font-medium mb-2">
                   학교 코드 <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -501,7 +509,7 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
 
               {/* Address */}
               <div>
-                <label htmlFor="schoolAddress" className="block text-sm font-medium mb-2">
+                <label htmlFor="schoolAddress" className="block text-base font-medium mb-2">
                   학교 주소
                 </label>
                 <div className="flex gap-2 mb-2">
@@ -531,7 +539,7 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
 
               {/* Phone */}
               <div>
-                <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                <label className="block text-base font-medium mb-2 flex items-center gap-2">
                   <Phone size={16} />
                   대표 전화번호
                 </label>
@@ -546,7 +554,7 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                <label className="block text-base font-medium mb-2 flex items-center gap-2">
                   <Mail size={16} />
                   대표 이메일
                 </label>
@@ -560,7 +568,7 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
 
               {/* Student Count */}
               <div>
-                <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                <label className="block text-base font-medium mb-2 flex items-center gap-2">
                   <Users size={16} />
                   학생 수
                 </label>
@@ -574,7 +582,7 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
 
               {/* Meal Price */}
               <div>
-                <label className="block text-sm font-medium mb-2">목표 1식 단가 (원)</label>
+                <label className="block text-base font-medium mb-2">목표 1식 단가 (원)</label>
                 <input 
                   type="number" 
                   value={form.mealPriceTarget}
@@ -584,7 +592,7 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">1식 단가 상한선 (원)</label>
+                <label className="block text-base font-medium mb-2">1식 단가 상한선 (원)</label>
                 <input 
                   type="number" 
                   value={form.mealPriceMax}
@@ -599,7 +607,7 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
 
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                    <label className="block text-base font-medium mb-2 flex items-center gap-2">
                       <Warehouse size={16} />
                       조리 인력 수 (명)
                     </label>
@@ -612,7 +620,7 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">주요 조리 기구 현황</label>
+                    <label className="block text-base font-medium mb-2">주요 조리 기구 현황</label>
                     <textarea 
                       rows={6}
                       value={form.equipmentDetails}
@@ -646,7 +654,7 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
             
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                <label className="block text-base font-medium mb-2 flex items-center gap-2">
                   <FileText size={16} />
                   학교 급식 운영 내규
                 </label>
@@ -675,6 +683,8 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
         )}
 
       </div>
+      <ErrorModal {...modalProps} />
     </div>
   );
 }
+

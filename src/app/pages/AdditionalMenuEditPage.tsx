@@ -3,11 +3,14 @@ import { ArrowLeft } from 'lucide-react';
 
 import { getAdditionalMenuDetailResponse, updateAdditionalMenu } from '../data/additionalMenu';
 
+import { ErrorModal } from '../components/ErrorModal';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
 
+import { useErrorModal } from '../hooks/useErrorModal';
+import { normalizeErrorMessage } from '../utils/errorMessage';
 import {
   getAdditionalMenuCreateForm,
   toAdditionalMenuEditVMFromResponse,
@@ -27,6 +30,7 @@ export function AdditionalMenuEditPage({
     initialParams?.menuId !== undefined && initialParams?.menuId !== null
       ? String(initialParams.menuId)
       : undefined;
+  const { modalProps, openAlert } = useErrorModal();
   const [menuIdValue, setMenuIdValue] = useState<string | undefined>(menuId);
   const [isLoading, setIsLoading] = useState(true);
   const [name, setName] = useState('');
@@ -98,23 +102,23 @@ export function AdditionalMenuEditPage({
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      alert('메뉴명을 입력해주세요.');
+      openAlert('메뉴명을 입력해주세요.');
       return;
     }
     if (!servingSize.trim()) {
-      alert('1회 제공량을 입력해주세요.');
+      openAlert('1회 제공량을 입력해주세요.');
       return;
     }
     if (!kcal.trim()) {
-      alert('열량(kcal)을 입력해주세요.');
+      openAlert('열량(kcal)을 입력해주세요.');
       return;
     }
     if (!ingredientsText.trim()) {
-      alert('원재료 정보를 입력해주세요.');
+      openAlert('원재료 정보를 입력해주세요.');
       return;
     }
     if (!recipeText.trim()) {
-      alert('조리법을 입력해주세요.');
+      openAlert('조리법을 입력해주세요.');
       return;
     }
 
@@ -142,10 +146,14 @@ export function AdditionalMenuEditPage({
     console.log('Update additional menu payload:', requestBody);
 
     const result = await updateAdditionalMenu(menuIdValue, requestBody);
-    alert(result.message);
-    if (menuIdValue) {
-      onNavigate?.('additional-menu-read', { menuId: menuIdValue });
-    }
+    openAlert(normalizeErrorMessage(result.message, '요청이 완료되었습니다.'), {
+      title: '안내',
+      onConfirm: () => {
+        if (menuIdValue) {
+          onNavigate?.('additional-menu-read', { menuId: menuIdValue });
+        }
+      },
+    });
   };
 
   const handleCancel = () => {
@@ -158,7 +166,7 @@ export function AdditionalMenuEditPage({
     return (
       <div className="flex flex-col h-full bg-gray-50">
         <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
-          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+          <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
             신메뉴 편집
           </h1>
         </div>
@@ -174,7 +182,7 @@ export function AdditionalMenuEditPage({
       {/* Header */}
       <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+          <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
             신메뉴 편집
           </h1>
           <Button
@@ -189,12 +197,12 @@ export function AdditionalMenuEditPage({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-6 py-6 text-lg">
         <div className="max-w-[1200px] mx-auto">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="space-y-6">
               <div>
-                <Label htmlFor="name" className="text-sm font-medium mb-2 block">
+                <Label htmlFor="name" className="text-base font-medium mb-2 block">
                   메뉴명 <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -207,14 +215,14 @@ export function AdditionalMenuEditPage({
               </div>
 
               <div>
-                <Label htmlFor="category" className="text-sm font-medium mb-2 block">
+                <Label htmlFor="category" className="text-base font-medium mb-2 block">
                   메뉴 카테고리(식품대분류명) <span className="text-red-500">*</span>
                 </Label>
                 <select
                   id="category"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-3 py-2 rounded border bg-gray-100 text-sm text-gray-900 focus:outline-none focus:border-[#5dccb4]"
+                  className="w-full px-3 py-2 rounded border bg-gray-100 text-base text-gray-900 focus:outline-none focus:border-[#5dccb4]"
                 >
                   <option value="밥류">밥류</option>
                   <option value="국 및 탕류">국 및 탕류</option>
@@ -239,7 +247,7 @@ export function AdditionalMenuEditPage({
               </div>
 
               <div>
-                <Label htmlFor="nutritionBasis" className="text-sm font-medium mb-2 block">
+                <Label htmlFor="nutritionBasis" className="text-base font-medium mb-2 block">
                   영양 성분 기준 <span className="text-red-500">*</span>
                 </Label>
                 <div className="flex items-center gap-2">
@@ -251,12 +259,12 @@ export function AdditionalMenuEditPage({
                     value={nutritionBasis}
                     onChange={(e) => setNutritionBasis(sanitizeNumericInput(e.target.value, false))}
                   />
-                  <span className="text-sm text-gray-600">ml</span>
+                  <span className="text-base text-gray-600">ml</span>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="servingSize" className="text-sm font-medium mb-2 block">
+                <Label htmlFor="servingSize" className="text-base font-medium mb-2 block">
                   1회 제공량 <span className="text-red-500">*</span>
                 </Label>
                 <div className="flex items-center gap-2">
@@ -268,12 +276,12 @@ export function AdditionalMenuEditPage({
                     value={servingSize}
                     onChange={(e) => setServingSize(sanitizeNumericInput(e.target.value, false))}
                   />
-                  <span className="text-sm text-gray-600">ml</span>
+                  <span className="text-base text-gray-600">ml</span>
                 </div>
               </div>
 
               <div>
-                <Label className="text-sm font-medium mb-2 block">
+                <Label className="text-base font-medium mb-2 block">
                   영양 성분
                 </Label>
                 <div className="grid grid-cols-2 gap-4">
@@ -286,7 +294,7 @@ export function AdditionalMenuEditPage({
                       value={kcal}
                       onChange={(e) => setKcal(sanitizeNumericInput(e.target.value, true))}
                     />
-                    <span className="text-sm text-gray-600">kcal</span>
+                    <span className="text-base text-gray-600">kcal</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
@@ -297,7 +305,7 @@ export function AdditionalMenuEditPage({
                       value={carb}
                       onChange={(e) => setCarb(sanitizeNumericInput(e.target.value, true))}
                     />
-                    <span className="text-sm text-gray-600">g</span>
+                    <span className="text-base text-gray-600">g</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
@@ -308,7 +316,7 @@ export function AdditionalMenuEditPage({
                       value={prot}
                       onChange={(e) => setProt(sanitizeNumericInput(e.target.value, true))}
                     />
-                    <span className="text-sm text-gray-600">g</span>
+                    <span className="text-base text-gray-600">g</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
@@ -319,7 +327,7 @@ export function AdditionalMenuEditPage({
                       value={fat}
                       onChange={(e) => setFat(sanitizeNumericInput(e.target.value, true))}
                     />
-                    <span className="text-sm text-gray-600">g</span>
+                    <span className="text-base text-gray-600">g</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
@@ -330,7 +338,7 @@ export function AdditionalMenuEditPage({
                       value={calcium}
                       onChange={(e) => setCalcium(sanitizeNumericInput(e.target.value, true))}
                     />
-                    <span className="text-sm text-gray-600">mg</span>
+                    <span className="text-base text-gray-600">mg</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
@@ -341,7 +349,7 @@ export function AdditionalMenuEditPage({
                       value={iron}
                       onChange={(e) => setIron(sanitizeNumericInput(e.target.value, true))}
                     />
-                    <span className="text-sm text-gray-600">mg</span>
+                    <span className="text-base text-gray-600">mg</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
@@ -352,7 +360,7 @@ export function AdditionalMenuEditPage({
                       value={vitaminA}
                       onChange={(e) => setVitaminA(sanitizeNumericInput(e.target.value, true))}
                     />
-                    <span className="text-sm text-gray-600">μg</span>
+                    <span className="text-base text-gray-600">μg</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
@@ -363,7 +371,7 @@ export function AdditionalMenuEditPage({
                       value={thiamin}
                       onChange={(e) => setThiamin(sanitizeNumericInput(e.target.value, true))}
                     />
-                    <span className="text-sm text-gray-600">mg</span>
+                    <span className="text-base text-gray-600">mg</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
@@ -374,7 +382,7 @@ export function AdditionalMenuEditPage({
                       value={riboflavin}
                       onChange={(e) => setRiboflavin(sanitizeNumericInput(e.target.value, true))}
                     />
-                    <span className="text-sm text-gray-600">mg</span>
+                    <span className="text-base text-gray-600">mg</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Input
@@ -385,13 +393,13 @@ export function AdditionalMenuEditPage({
                       value={vitaminC}
                       onChange={(e) => setVitaminC(sanitizeNumericInput(e.target.value, true))}
                     />
-                    <span className="text-sm text-gray-600">mg</span>
+                    <span className="text-base text-gray-600">mg</span>
                   </div>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="ingredientsText" className="text-sm font-medium mb-2 block">
+                <Label htmlFor="ingredientsText" className="text-base font-medium mb-2 block">
                   원재료 정보 <span className="text-red-500">*</span>
                 </Label>
                 <Textarea
@@ -404,7 +412,7 @@ export function AdditionalMenuEditPage({
               </div>
 
               <div>
-                <Label htmlFor="allergens" className="text-sm font-medium mb-2 block">
+                <Label htmlFor="allergens" className="text-base font-medium mb-2 block">
                   알레르기 정보 (번호, 쉼표로 구분)
                 </Label>
                 <Input
@@ -417,7 +425,7 @@ export function AdditionalMenuEditPage({
               </div>
 
               <div>
-                <Label htmlFor="recipeText" className="text-sm font-medium mb-2 block">
+                <Label htmlFor="recipeText" className="text-base font-medium mb-2 block">
                   조리법 <span className="text-red-500">*</span>
                 </Label>
                 <Textarea
@@ -430,7 +438,7 @@ export function AdditionalMenuEditPage({
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-800 mt-1">
+                <p className="text-base text-blue-800 mt-1">
                   <strong>작성일:</strong> {createdAtText || '-'}
                 </p>
               </div>
@@ -450,6 +458,7 @@ export function AdditionalMenuEditPage({
           </div>
         </div>
       </div>
+      <ErrorModal {...modalProps} />
     </div>
   );
 }

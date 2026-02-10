@@ -77,6 +77,7 @@ interface MealMonthlyCalendarEditableProps {
     mealType: 'LUNCH' | 'DINNER';
   }) => void;
   onAiReplace: (payload: { date: string; mealType: 'LUNCH' | 'DINNER' }) => void;
+  isAiReplacing?: boolean;
 }
 
 export function MealMonthlyCalendarEditable({
@@ -84,6 +85,7 @@ export function MealMonthlyCalendarEditable({
   currentMonth,
   onSubmit,
   onAiReplace,
+  isAiReplacing,
 }: MealMonthlyCalendarEditableProps) {
   const [weeksData, setWeeksData] = useState<WeekData[]>(initialWeeks);
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
@@ -278,6 +280,7 @@ export function MealMonthlyCalendarEditable({
                 }
                 weekNum={weekNum}
                 hasChanges={false}
+                isAiReplacing={isAiReplacing}
               />
             );
           })}

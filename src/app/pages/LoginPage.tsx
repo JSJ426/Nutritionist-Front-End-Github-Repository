@@ -6,6 +6,7 @@ import { loginDietitian } from '../data/auth';
 import { useAuth } from '../auth/AuthContext';
 import { Footer } from '../components/Footer';
 import { ErrorModal } from '../components/ErrorModal';
+import { useErrorModal } from '../hooks/useErrorModal';
 import { normalizeErrorMessage } from '../utils/errorMessage';
 
 type LoginPageProps = {
@@ -14,18 +15,17 @@ type LoginPageProps = {
 };
 
 export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
+  const { modalProps, openAlert } = useErrorModal();
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isErrorOpen, setIsErrorOpen] = useState(false);
   const { loginWithToken } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !password.trim()) {
-      alert('아이디와 비밀번호를 입력해주세요.');
+      openAlert('아이디와 비밀번호를 입력해주세요.');
       return;
     }
     try {
@@ -36,8 +36,7 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
     } catch (error) {
       const rawMessage = (error as { message?: string })?.message ?? '';
       const message = normalizeErrorMessage(rawMessage, '로그인에 실패했습니다.');
-      setErrorMessage(message);
-      setIsErrorOpen(true);
+      openAlert(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -178,11 +177,7 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
         </div>
       </main>
       <Footer />
-      <ErrorModal
-        isOpen={isErrorOpen}
-        message={errorMessage ?? ''}
-        onClose={() => setIsErrorOpen(false)}
-      />
+      <ErrorModal {...modalProps} />
     </div>
   );
 }

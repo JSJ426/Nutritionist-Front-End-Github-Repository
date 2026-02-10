@@ -112,13 +112,13 @@ export function InstitutionInfoPage({ onNavigate }: InstitutionInfoPageProps) {
                 <div className="flex items-start gap-3">
                   <Building2 size={16} className="mt-1 text-gray-500" />
                   <div>
-                    <p className="text-sm text-gray-500">학교 이름</p>
-                    <p className="text-sm font-medium text-gray-800">{institutionInfo.schoolName}</p>
+                    <p className="text-base text-gray-500">학교 이름</p>
+                    <p className="text-base font-medium text-gray-800">{institutionInfo.schoolName}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">학교 구분</p>
-                  <div className="text-sm font-medium text-gray-800 space-y-1">
+                  <p className="text-base text-gray-500">학교 구분</p>
+                  <div className="text-base font-medium text-gray-800 space-y-1">
                     <p>구분1: {institutionInfo.schoolTypePrimary}</p>
                     {institutionInfo.schoolTypeSecondary && (
                       <p>구분2: {institutionInfo.schoolTypeSecondary}</p>
@@ -128,22 +128,22 @@ export function InstitutionInfoPage({ onNavigate }: InstitutionInfoPageProps) {
                 <div className="flex items-start gap-3">
                   <Phone size={16} className="mt-1 text-gray-500" />
                   <div>
-                    <p className="text-sm text-gray-500">학교 전화번호 (대표번호)</p>
-                    <p className="text-sm font-medium text-gray-800">{institutionInfo.phone}</p>
+                    <p className="text-base text-gray-500">학교 전화번호 (대표번호)</p>
+                    <p className="text-base font-medium text-gray-800">{institutionInfo.phone}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Mail size={16} className="mt-1 text-gray-500" />
                   <div>
-                    <p className="text-sm text-gray-500">학교 이메일 (대표메일)</p>
-                    <p className="text-sm font-medium text-gray-800">{institutionInfo.email}</p>
+                    <p className="text-base text-gray-500">학교 이메일 (대표메일)</p>
+                    <p className="text-base font-medium text-gray-800">{institutionInfo.email}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Users size={16} className="mt-1 text-gray-500" />
                   <div>
-                    <p className="text-sm text-gray-500">학생 수</p>
-                    <p className="text-sm font-medium text-gray-800">{institutionInfo.studentCount}</p>
+                    <p className="text-base text-gray-500">학생 수</p>
+                    <p className="text-base font-medium text-gray-800">{institutionInfo.studentCount}</p>
                   </div>
                 </div>
               </div>
@@ -154,16 +154,16 @@ export function InstitutionInfoPage({ onNavigate }: InstitutionInfoPageProps) {
                 <h2 className="text-xl font-medium mb-6">단가</h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <p className="text-sm text-gray-500">목표 1식 단가</p>
-                    <p className="text-sm font-medium text-gray-800">
+                    <p className="text-base text-gray-500">목표 1식 단가</p>
+                    <p className="text-base font-medium text-gray-800">
                       {institutionInfo.mealPriceTarget > 0
                         ? `${institutionInfo.mealPriceTarget.toLocaleString()}원`
                         : '-'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">1식 단가 상한선</p>
-                    <p className="text-sm font-medium text-gray-800">
+                    <p className="text-base text-gray-500">1식 단가 상한선</p>
+                    <p className="text-base font-medium text-gray-800">
                       {institutionInfo.mealPriceMax > 0
                         ? `${institutionInfo.mealPriceMax.toLocaleString()}원`
                         : '-'}
@@ -179,13 +179,13 @@ export function InstitutionInfoPage({ onNavigate }: InstitutionInfoPageProps) {
                 <div className="flex items-start gap-3">
                   <Warehouse size={16} className="mt-1 text-gray-500" />
                   <div>
-                    <p className="text-sm text-gray-500">조리 인력 수</p>
-                    <p className="text-sm font-medium text-gray-800">{institutionInfo.staffCount}</p>
+                    <p className="text-base text-gray-500">조리 인력 수</p>
+                    <p className="text-base font-medium text-gray-800">{institutionInfo.staffCount}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">주요 조리 기구 현황</p>
-                    <p className="text-sm font-medium text-gray-800">{institutionInfo.equipmentSummary}</p>
+                  <p className="text-base text-gray-500">주요 조리 기구 현황</p>
+                    <p className="text-base font-medium text-gray-800">{institutionInfo.equipmentSummary}</p>
                 </div>
               </div>
             </div>
@@ -197,7 +197,7 @@ export function InstitutionInfoPage({ onNavigate }: InstitutionInfoPageProps) {
             <h2 className="text-xl font-medium mb-6">학교 급식 운영 내규</h2>
             <div className="flex items-start gap-3">
               <FileText size={16} className="mt-1 text-gray-500" />
-              <p className="text-sm font-medium text-gray-800 leading-relaxed whitespace-pre-line">
+              <p className="text-base font-medium text-gray-800 leading-relaxed whitespace-pre-line">
                 {institutionInfo.rulesText}
               </p>
             </div>
@@ -207,3 +207,4 @@ export function InstitutionInfoPage({ onNavigate }: InstitutionInfoPageProps) {
     </div>
   );
 }
+

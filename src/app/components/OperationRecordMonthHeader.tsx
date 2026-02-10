@@ -17,20 +17,16 @@ export function OperationRecordMonthHeader({
 }: OperationRecordMonthHeaderProps) {
   return (
     <div className="flex items-center justify-between mb-4">
-      <div className="text-lg font-medium text-gray-800">{formatMonthLabel(currentMonth)}</div>
+      <div className="text-xl font-medium text-gray-800">{formatMonthLabel(currentMonth)}</div>
       <div className="flex items-center gap-2">
-        <Button variant="outline" className="h-8 px-3 text-sm" onClick={onPrev}>
+        <Button variant="outline" className="h-8 px-3 text-base" onClick={onPrev}>
           이전 달
         </Button>
-        <Button
-          variant="outline"
-          className="h-8 px-3 text-sm"
-          onClick={onNext}
-          disabled={nextDisabled}
-        >
+        <Button variant="outline" className="h-8 px-3 text-base" onClick={onNext} disabled={nextDisabled}>
           다음 달
         </Button>
       </div>
     </div>
   );
 }
+

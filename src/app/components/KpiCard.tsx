@@ -41,13 +41,13 @@ export function KpiCard({
 
   return (
     <div className="bg-white rounded-lg shadow-sm border p-5">
-      <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+      <div className="flex items-center justify-between text-lg text-gray-600 mb-2">
         <div className="flex items-center gap-2">
           {icon && <span className={color ? colorMap[color] : undefined}>{icon}</span>}
           <span>{title}</span>
         </div>
         {isEmpty && (
-          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+          <span className="text-lg text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
             {emptyLabel}
           </span>
         )}
@@ -59,7 +59,7 @@ export function KpiCard({
       </div>
 
       {!isEmpty && subMode !== 'none' && (
-        <div className={`text-sm ${color ? colorMap[color] : 'text-gray-500'}`}>
+        <div className={`text-lg ${color ? colorMap[color] : 'text-gray-500'}`}>
           {subMode === 'diff' ? (
             showDiff && diff && trend ? (
               <KpiDiffText
@@ -82,3 +82,4 @@ export function KpiCard({
     </div>
   );
 }
+

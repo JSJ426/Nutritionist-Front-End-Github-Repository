@@ -371,14 +371,14 @@ export function HomePage() {
       </div>
 
       {/* 상단 카드 섹션 */}
-      <div className="flex gap-6 mb-6">
+      <div className="flex gap-6 mb-6 items-stretch ">
         {/* 오늘의 중식/석식 - 25% */}
-        <div className="bg-white rounded-lg shadow-md p-6" style={{ width: '30%' }}>
-          <h2 className="text-xl font-medium mb-4 pb-2 border-b-2 border-[#5dccb4]">
-            오늘의 식단 <span className="text-base text-gray-600">({currentMonth}월 {currentDate}일)</span>
+        <div className="bg-white rounded-lg shadow-md p-6 flex flex-col h-full " style={{ width: '32.5%' }}>
+          <h2 className="text-2xl font-medium mb-4 pb-2 border-b-2 border-[#5dccb4]">
+            오늘의 식단 <span className="text-lg text-gray-600">({currentMonth}월 {currentDate}일)</span>
           </h2>
           
-          <div className="space-y-4">
+          <div className="flex-1 flex flex-col justify-center gap-4 min-h-[640px]">
             {/* 중식 카드 */}
             <TodayMealCard
               title="중식"
@@ -397,7 +397,7 @@ export function HomePage() {
           </div>
         </div>
 
-        {/* 이 주의 식단표 - 75% */}
+        {/* 이 주의 식단표 */}
         <WeeklyMealSection
           currentMonth={currentMonth}
           currentDate={currentDate}

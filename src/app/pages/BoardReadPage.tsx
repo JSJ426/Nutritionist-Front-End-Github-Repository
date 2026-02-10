@@ -3,9 +3,12 @@ import { ArrowLeft, Download, Edit, Paperclip, Trash2 } from 'lucide-react';
 
 import { deleteBoardPost, getBoardDetailResponse } from '../data/board';
 
+import { ErrorModal } from '../components/ErrorModal';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 
+import { useErrorModal } from '../hooks/useErrorModal';
+import { normalizeErrorMessage } from '../utils/errorMessage';
 import { toBoardReadVMFromResponse } from '../viewModels/board';
 import type { BoardReadVM } from '../viewModels/board';
 
@@ -16,6 +19,7 @@ interface BoardReadPageProps {
 
 export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps) {
   const postId = initialParams?.postId || 15;
+  const { modalProps, openAlert, openConfirm } = useErrorModal();
   const [post, setPost] = useState<BoardReadVM | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -38,23 +42,30 @@ export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps)
     onNavigate?.('board-edit', { postId: post.id });
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!post) return;
-    if (confirm('정말 삭제하시겠습니까?')) {
-      try {
-        const result = await deleteBoardPost(post.id);
-        alert(result.message);
-        onNavigate?.('board-list', { refresh: true, deletedId: post.id });
-      } catch (error) {
-        console.error('Failed to delete board post:', error);
-        alert('게시글 삭제에 실패했습니다.');
-      }
-    }
+    openConfirm(
+      '정말 삭제하시겠습니까?',
+      async () => {
+        try {
+          const result = await deleteBoardPost(post.id);
+          openAlert(normalizeErrorMessage(result.message, '요청이 완료되었습니다.'), {
+            title: '안내',
+            onConfirm: () =>
+              onNavigate?.('board-list', { refresh: true, deletedId: post.id }),
+          });
+        } catch (error) {
+          console.error('Failed to delete board post:', error);
+          openAlert('게시글 삭제에 실패했습니다.');
+        }
+      },
+      { title: '삭제 확인', actionLabel: '삭제', cancelLabel: '취소' },
+    );
   };
 
   const handleDownload = (file: { name: string; url: string }) => {
     if (!file.url) {
-      alert('다운로드할 파일 정보가 없습니다.');
+      openAlert('다운로드할 파일 정보가 없습니다.');
       return;
     }
     const link = document.createElement('a');
@@ -70,7 +81,7 @@ export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps)
     return (
       <div className="flex flex-col h-full bg-gray-50">
         <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
-          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+          <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
             게시판
           </h1>
         </div>
@@ -86,7 +97,7 @@ export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps)
       {/* Header */}
       <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
+          <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
             게시판
           </h1>
           <Button
@@ -101,19 +112,19 @@ export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps)
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-6 py-6 text-lg">
         <div className="max-w-[1200px] mx-auto">
           {/* 게시물 정보 */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
             {/* 제목 영역 */}
             <div className="border-b border-gray-200 p-6">
               <div className="flex items-start gap-3 mb-3">
-                <Badge variant="outline" className={`${post.categoryColorClass} text-sm px-3 py-1`}>
+                <Badge variant="outline" className={`${post.categoryColorClass} text-base px-3 py-1`}>
                   {post.category}
                 </Badge>
-                <h2 className="text-2xl font-medium flex-1">{post.title}</h2>
+                <h2 className="text-3xl font-medium flex-1">{post.title}</h2>
               </div>
-              <div className="flex items-center gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-4 text-base text-gray-600">
                 <span>작성자: {post.author}</span>
                 <span className="text-gray-300">|</span>
                 <span>작성일: {post.dateText}</span>
@@ -134,38 +145,38 @@ export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps)
 
         {/* 첨부파일 영역 */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div className="border-b border-gray-200 p-4 flex items-center gap-2">
-            <Paperclip size={16} className="text-gray-500" />
-            <h3 className="text-sm font-medium text-gray-700">첨부파일</h3>
-          </div>
-          <div className="p-4">
-            {post.attachments && post.attachments.length > 0 ? (
-              <div className="space-y-2">
-                {post.attachments.map((file) => (
+            <div className="border-b border-gray-200 p-4 flex items-center gap-2">
+              <Paperclip size={20} className="text-gray-500" />
+              <h3 className="text-lg font-medium text-gray-700">첨부파일</h3>
+            </div>
+            <div className="p-4">
+              {post.attachments && post.attachments.length > 0 ? (
+                <div className="space-y-2">
+                  {post.attachments.map((file) => (
                   <div
                     key={file.id}
                     className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded px-3 py-2"
                   >
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-700 truncate">{file.name}</p>
-                      <p className="text-xs text-gray-500">{file.sizeText}</p>
+                        <div className="min-w-0">
+                          <p className="text-lg font-medium text-gray-700 truncate">{file.name}</p>
+                          <p className="text-lg text-gray-500">{file.sizeText}</p>
+                        </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDownload({ name: file.name, url: file.url })}
+                        className="inline-flex items-center px-3 py-1.5 text-lg border rounded hover:bg-gray-50"
+                      >
+                        <Download size={14} className="mr-1" />
+                        다운로드
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDownload({ name: file.name, url: file.url })}
-                      className="inline-flex items-center px-3 py-1.5 text-xs border rounded hover:bg-gray-50"
-                    >
-                      <Download size={14} className="mr-1" />
-                      다운로드
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500">첨부파일이 없습니다.</p>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <p className="text-base text-gray-500">첨부파일이 없습니다.</p>
+              )}
+            </div>
           </div>
-        </div>
 
           {/* 버튼 영역 (관리자만) */}
           {post.canEdit && (
@@ -195,20 +206,22 @@ export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps)
           {/* <div className="bg-white rounded-lg shadow-sm border border-gray-200 mt-6">
             <div className="border-b border-gray-200 p-4 hover:bg-gray-50 cursor-pointer transition-colors">
               <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-500 w-20">이전글</span>
-                <span className="flex-1 text-sm">식단표 업데이트 안내</span>
+                <span className="text-base text-gray-500 w-20">이전글</span>
+                <span className="flex-1 text-base">식단표 업데이트 안내</span>
               </div>
             </div>
             <div className="p-4 hover:bg-gray-50 cursor-pointer transition-colors">
               <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-500 w-20">다음글</span>
-                <span className="flex-1 text-sm">채식 메뉴 확대 건의드립니다</span>
+                <span className="text-base text-gray-500 w-20">다음글</span>
+                <span className="flex-1 text-base">채식 메뉴 확대 건의드립니다</span>
               </div>
             </div>
           </div> */}
           
         </div>
       </div>
+      <ErrorModal {...modalProps} />
     </div>
   );
 }
+
