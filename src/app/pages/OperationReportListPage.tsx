@@ -48,6 +48,7 @@ interface OperationReportListPageProps {
 export function OperationReportListPage({ onNavigate }: OperationReportListPageProps) {
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [selectedYear, setSelectedYear] = useState('전체');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
@@ -155,13 +156,13 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
     }
 
     try {
+      setIsGenerating(true);
       await createMonthlyOpsDoc({
         year,
         month,
         title: `${year}년 ${month}월 급식 운영 보고서`,
       });
 
-      setIsLoading(true);
       const currentYear = selectedYear === '전체' ? undefined : Number(selectedYear);
       const response = await getMonthlyOpsDocListResponse({
         year: currentYear,
@@ -177,7 +178,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
       console.error('MonthlyOpsDocCreate error', error);
       alert('월간 운영 보고서 생성에 실패했습니다.');
     } finally {
-      setIsLoading(false);
+      setIsGenerating(false);
     }
   };
 
@@ -206,7 +207,14 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="relative flex-1 overflow-y-auto px-6 py-6">
+        {isGenerating ? (
+          <Spinner
+            label="월간 운영 보고서 생성 중"
+            showLabel
+            containerClassName="absolute inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm"
+          />
+        ) : null}
         <div className="max-w-[1400px] mx-auto">
 
           {/* 필터 */}
@@ -242,6 +250,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
               <div className="flex-1"></div>
               <Button
                 onClick={handleGenerateMonthlyReport}
+                disabled={isGenerating}
                 className="bg-[#5dccb4] hover:bg-[#4db9a3] text-white"
               >
                 월간 운영 보고서 생성
