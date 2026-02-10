@@ -7,6 +7,8 @@ import TermsModal from '../components/TermsModal';
 import PrivacyModal from '../components/PrivacyModal';
 import { Footer } from '../components/Footer';
 import { validatePasswordPolicy } from '../utils/password';
+import { ErrorModal } from '../components/ErrorModal';
+import { normalizeErrorMessage } from '../utils/errorMessage';
 import type { SchoolSearchItem } from '../viewModels/school';
 
 type SchoolSignupPageProps = {
@@ -44,7 +46,13 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isErrorOpen, setIsErrorOpen] = useState(false);
   const [passwordPolicyError, setPasswordPolicyError] = useState('');
+  const [contactAreaCode, setContactAreaCode] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
+  const [schoolAreaCode, setSchoolAreaCode] = useState('');
+  const [schoolNumber, setSchoolNumber] = useState('');
 
   // 학교 검색 관련 상태
   const [schoolSearchQuery, setSchoolSearchQuery] = useState('');
@@ -63,6 +71,12 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const formatLocalNumber = (value: string) => {
+      const digits = value.replace(/\D/g, '').slice(0, 8);
+      if (digits.length <= 4) return digits;
+      return `${digits.slice(0, -4)}-${digits.slice(-4)}`;
+    };
 
     if (formData.password !== formData.confirmPassword) {
       alert('비밀번호가 일치하지 않습니다.');
@@ -99,19 +113,28 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
       ? `${formData.schoolAddress} ${formData.schoolAddressDetail}`.trim()
       : formData.schoolAddress.trim();
 
+    const contactNumberFormatted = formatLocalNumber(contactNumber);
+    const schoolNumberFormatted = formatLocalNumber(schoolNumber);
+    const contactPhone = contactAreaCode
+      ? `${contactAreaCode}-${contactNumberFormatted}`
+      : contactNumberFormatted;
+    const schoolPhone = schoolAreaCode
+      ? `${schoolAreaCode}-${schoolNumberFormatted}`
+      : schoolNumberFormatted;
+
     const payload = {
       username: formData.username.trim(),
       pw: formData.password,
       name: formData.name.trim(),
       email: formData.email.trim(),
-      phone: formData.phone.trim(),
+      phone: contactPhone.trim(),
       school_info: {
         school_name: formData.schoolName.trim(),
         region_code: formData.regionCode.trim(),
         school_code: formData.schoolCode.trim(),
         address: schoolAddress,
         school_type: schoolType,
-        phone: formData.schoolPhone.trim() || undefined,
+        phone: schoolPhone.trim() || undefined,
         email: formData.schoolEmail.trim() || undefined,
         student_count: formData.studentCount ? Number(formData.studentCount) : undefined,
         target_unit_price: formData.targetUnitPrice ? Number(formData.targetUnitPrice) : undefined,
@@ -128,8 +151,10 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
       alert('학교 계정 회원가입이 완료되었습니다!');
       onNavigate('login');
     } catch (error) {
-      const message = error instanceof Error ? error.message : '회원가입에 실패했습니다.';
-      alert(message);
+      const rawMessage = (error as { message?: string })?.message ?? '';
+      const message = normalizeErrorMessage(rawMessage, '회원가입에 실패했습니다.');
+      setErrorMessage(message);
+      setIsErrorOpen(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -215,6 +240,32 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
     setFormData((prev) => ({ ...prev, schoolTypeSecondary: event.target.value }));
   };
 
+  const handleContactAreaCodeChange = (value: string) => {
+    setContactAreaCode(value);
+    const combined = contactNumber ? `${value}-${contactNumber}` : value;
+    setFormData((prev) => ({ ...prev, phone: combined }));
+  };
+
+  const handleContactNumberChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 8);
+    setContactNumber(digits);
+    const combined = contactAreaCode ? `${contactAreaCode}-${digits}` : digits;
+    setFormData((prev) => ({ ...prev, phone: combined }));
+  };
+
+  const handleSchoolAreaCodeChange = (value: string) => {
+    setSchoolAreaCode(value);
+    const combined = schoolNumber ? `${value}-${schoolNumber}` : value;
+    setFormData((prev) => ({ ...prev, schoolPhone: combined }));
+  };
+
+  const handleSchoolNumberChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 8);
+    setSchoolNumber(digits);
+    const combined = schoolAreaCode ? `${schoolAreaCode}-${digits}` : digits;
+    setFormData((prev) => ({ ...prev, schoolPhone: combined }));
+  };
+
   const isSchoolSelected = Boolean(
     formData.regionCode.trim() &&
     formData.schoolCode.trim() &&
@@ -222,6 +273,8 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
   );
   const isSecondaryDisabled =
     !formData.schoolTypePrimary || formData.schoolTypePrimary === '초등학교';
+  const isPasswordValid =
+    Boolean(formData.password.trim()) && passwordPolicyError.length === 0;
 
   return (
     <div className="min-h-screen bg-[#F6F7F8] flex flex-col">
@@ -285,7 +338,7 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
               {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  이메일 (로그인 ID) <span className="text-red-500">*</span>
+                  이메일 <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -308,17 +361,51 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                   담당자 연락처 <span className="text-red-500">*</span>
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Phone className="h-5 w-5 text-gray-400" />
+                <div className="flex gap-3">
+                  <div className="relative w-36">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <Phone className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      id="phone"
+                      value={contactAreaCode}
+                      onChange={(e) => handleContactAreaCodeChange(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all bg-white"
+                      required
+                    >
+                      <option value="">지역번호</option>
+                      <option value="010">010</option>
+                      <option value="011">011</option>
+                      <option value="016">016</option>
+                      <option value="017">017</option>
+                      <option value="018">018</option>
+                      <option value="019">019</option>
+                      <option value="02">02</option>
+                      <option value="031">031</option>
+                      <option value="032">032</option>
+                      <option value="033">033</option>
+                      <option value="041">041</option>
+                      <option value="042">042</option>
+                      <option value="043">043</option>
+                      <option value="044">044</option>
+                      <option value="051">051</option>
+                      <option value="052">052</option>
+                      <option value="053">053</option>
+                      <option value="054">054</option>
+                      <option value="055">055</option>
+                      <option value="061">061</option>
+                      <option value="062">062</option>
+                      <option value="063">063</option>
+                      <option value="064">064</option>
+                      <option value="070">070</option>
+                    </select>
                   </div>
                   <input
-                    id="phone"
                     type="tel"
-                    value={formData.phone}
-                    onChange={(e) => handleChange('phone', e.target.value)}
-                    placeholder="01012345678"
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                    value={contactNumber}
+                    onChange={(e) => handleContactNumberChange(e.target.value)}
+                    placeholder="1234-5678"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
                     required
                   />
                 </div>
@@ -330,7 +417,7 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                   비밀번호 <span className="text-red-500">*</span>
                 </label>
                 <p className="text-xs text-gray-500 mb-2">
-                  영문/숫자/특수문자 중 2종 이상 포함. 2종 10~16자, 3종 8~16자 ( ) &lt; &gt; " ' ; 사용 불가.
+                  영문/숫자/특수문자 포함. 8자 이상. ( ) &lt; &gt; " ' ; 사용 불가.
                 </p>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -359,6 +446,11 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                 </div>
                 {passwordPolicyError && (
                   <p className="mt-1.5 text-xs text-red-500">{passwordPolicyError}</p>
+                )}
+                {!passwordPolicyError && isPasswordValid && (
+                  <p className="mt-1.5 text-xs text-green-600">
+                    사용 가능한 비밀번호입니다.
+                  </p>
                 )}
               </div>
 
@@ -609,17 +701,45 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                   전화번호 (대표번호) <span className="text-red-500">*</span>
                 </label>
                 <p className="text-xs text-gray-500 mb-2">학부모 및 학생 문의용 대표 연락처</p>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Phone className="h-5 w-5 text-gray-400" />
+                <div className="flex gap-3">
+                  <div className="relative w-36">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <Phone className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      id="schoolPhone"
+                      value={schoolAreaCode}
+                      onChange={(e) => handleSchoolAreaCodeChange(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all bg-white"
+                      required
+                    >
+                      <option value="">지역번호</option>
+                      <option value="02">02</option>
+                      <option value="031">031</option>
+                      <option value="032">032</option>
+                      <option value="033">033</option>
+                      <option value="041">041</option>
+                      <option value="042">042</option>
+                      <option value="043">043</option>
+                      <option value="044">044</option>
+                      <option value="051">051</option>
+                      <option value="052">052</option>
+                      <option value="053">053</option>
+                      <option value="054">054</option>
+                      <option value="055">055</option>
+                      <option value="061">061</option>
+                      <option value="062">062</option>
+                      <option value="063">063</option>
+                      <option value="064">064</option>
+                      <option value="070">070</option>
+                    </select>
                   </div>
                   <input
-                    id="schoolPhone"
                     type="tel"
-                    value={formData.schoolPhone}
-                    onChange={(e) => handleChange('schoolPhone', e.target.value)}
-                    placeholder="051-000-0000"
-                    className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
+                    value={schoolNumber}
+                    onChange={(e) => handleSchoolNumberChange(e.target.value)}
+                    placeholder="123-4567"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
                     required
                   />
                 </div>
@@ -821,6 +941,11 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
         onAgree={() => setAgreedToPrivacy(true)}
       />
       <Footer />
+      <ErrorModal
+        isOpen={isErrorOpen}
+        message={errorMessage ?? ''}
+        onClose={() => setIsErrorOpen(false)}
+      />
     </div>
   );
 }

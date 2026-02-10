@@ -5,6 +5,8 @@ import mealTrayImage from '@/assets/AppLogo.png';
 import { loginDietitian } from '../data/auth';
 import { useAuth } from '../auth/AuthContext';
 import { Footer } from '../components/Footer';
+import { ErrorModal } from '../components/ErrorModal';
+import { normalizeErrorMessage } from '../utils/errorMessage';
 
 type LoginPageProps = {
   onLogin: () => void;
@@ -16,6 +18,8 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isErrorOpen, setIsErrorOpen] = useState(false);
   const { loginWithToken } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -30,8 +34,10 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
       loginWithToken(response.accessToken);
       onLogin();
     } catch (error) {
-      const message = error instanceof Error ? error.message : '로그인에 실패했습니다.';
-      alert(message);
+      const rawMessage = (error as { message?: string })?.message ?? '';
+      const message = normalizeErrorMessage(rawMessage, '로그인에 실패했습니다.');
+      setErrorMessage(message);
+      setIsErrorOpen(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -172,6 +178,11 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
         </div>
       </main>
       <Footer />
+      <ErrorModal
+        isOpen={isErrorOpen}
+        message={errorMessage ?? ''}
+        onClose={() => setIsErrorOpen(false)}
+      />
     </div>
   );
 }
