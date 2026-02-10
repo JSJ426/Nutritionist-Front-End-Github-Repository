@@ -1,3 +1,5 @@
+import { allergyInfo } from '../utils/allergy';
+
 export type MealType = 'lunch' | 'dinner';
 
 export type MealDetailPayload = {
@@ -280,27 +282,6 @@ const getDayLabel = (date: Date) => {
   return ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
 };
 
-const allergyInfoMap: Record<number, string> = {
-  1: '난류',
-  2: '우유',
-  3: '메밀',
-  4: '땅콩',
-  5: '대두',
-  6: '밀',
-  7: '고등어',
-  8: '게',
-  9: '새우',
-  10: '돼지고기',
-  11: '복숭아',
-  12: '토마토',
-  13: '아황산류',
-  14: '호두',
-  15: '닭고기',
-  16: '쇠고기',
-  17: '오징어',
-  18: '조개류',
-};
-
 const formatMacro = (value: number) => `${value}g`;
 
 const buildAllergenSummaryFromMenu = (menu: MenuItem[]) => {
@@ -319,7 +300,7 @@ const buildAllergenSummaryFromMenu = (menu: MenuItem[]) => {
 
 const buildAllergenTextList = (menu: MenuItem[]) => {
   const { uniqueAllergens } = buildAllergenSummaryFromMenu(menu);
-  return uniqueAllergens.map((num) => allergyInfoMap[num] || '알 수 없음');
+  return uniqueAllergens.map((num) => allergyInfo[num]?.label || '알 수 없음');
 };
 
 const buildMenuItemsFromMenuItems = (
