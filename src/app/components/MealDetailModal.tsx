@@ -1,12 +1,6 @@
 import { ChevronDown, X } from 'lucide-react';
 import { useState } from 'react';
-
-// 알레르기 정보 매핑
-const allergyInfo: { [key: number]: string } = {
-  1: '난류', 2: '우유', 3: '메밀', 4: '땅콩', 5: '대두', 6: '밀',
-  7: '고등어', 8: '게', 9: '새우', 10: '돼지고기', 11: '복숭아', 12: '토마토',
-  13: '아황산류', 14: '호두', 15: '닭고기', 16: '쇠고기', 17: '오징어', 18: '조개류',
-};
+import { allergyInfo } from '../utils/allergy';
 
 // 상세 정보 생성 함수
 const generateMealDetails = (menu: Array<{ name: string; allergy: number[] }>) => {
@@ -220,7 +214,7 @@ export function MealDetailModal({ day, week, mealType, mealData, detail, onClose
               {allAllergies.map((allergyNum) => (
                 <div key={allergyNum} className="inline-flex items-center gap-2 px-3 py-2 bg-[#FCE8E6] text-red-700 rounded-lg border border-red-200">
                   <span className="font-medium text-sm">{allergyNum}</span>
-                  <span className="text-xs">{allergyInfo[allergyNum] || '알 수 없음'}</span>
+                  <span className="text-xs">{allergyInfo[allergyNum]?.label || '알 수 없음'}</span>
                 </div>
               ))}
             </div>
@@ -290,7 +284,7 @@ export function MealDetailModal({ day, week, mealType, mealData, detail, onClose
           {/* 알레르기 정보 안내 */}
           <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
             <p className="text-xs text-amber-800 leading-relaxed">
-              <strong>알레르기 표시 번호:</strong> 1.난류 2.우유 3.메밀 4.땅콩 5.대두 6.밀 7.고등어 8.게 9.새우 10.돼지고기 11.복숭아 12.토마토 13.아황산류 14.호두 15.닭고기 16.쇠고기 17.오징어 18.조개류
+              <strong>알레르기 표시 번호:</strong> 1.난류(가금류) 2.우류 3.메밀 4.땅콩 5.대두 6.밀 7.고등어 8.게 9.새우 10.돼지고기 11.복숭아 12.토마토 13.아황산류 14.호두 15.닭고기 16.쇠고기 17.오징어 18.조개류(굴,전복,홍합포함) 19.잣
             </p>
           </div>
         </div>

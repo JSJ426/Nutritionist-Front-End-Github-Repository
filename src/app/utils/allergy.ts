@@ -1,0 +1,22 @@
+// 알레르기 정보 매핑
+export const allergyInfo: { [key: number]: { label: string; code: string } } = {
+  1: { label: '난류(가금류)', code: 'EGG' },
+  2: { label: '우류', code: 'MILK' },
+  3: { label: '메밀', code: 'BUCKWHEAT' },
+  4: { label: '땅콩', code: 'PEANUT' },
+  5: { label: '대두', code: 'SOYBEAN' },
+  6: { label: '밀', code: 'WHEAT' },
+  7: { label: '고등어', code: 'MACKEREL' },
+  8: { label: '게', code: 'CRAB' },
+  9: { label: '새우', code: 'SHRIMP' },
+  10: { label: '돼지고기', code: 'PORK' },
+  11: { label: '복숭아', code: 'PEACH' },
+  12: { label: '토마토', code: 'TOMATO' },
+  13: { label: '아황산류', code: 'SULFITES' },
+  14: { label: '호두', code: 'WALNUT' },
+  15: { label: '닭고기', code: 'CHICKEN' },
+  16: { label: '쇠고기', code: 'BEEF' },
+  17: { label: '오징어', code: 'SQUID' },
+  18: { label: '조개류(굴,전복,홍합포함)', code: 'SHELLFISH' },
+  19: { label: '잣', code: 'PINE_NUT' },
+};

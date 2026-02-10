@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { GripVertical, Plus, Trash2, X } from 'lucide-react';
 import { Button } from './ui/button';
+import { allergyInfo } from '../utils/allergy';
 
 // 식단 데이터 타입
 interface MenuItem {
@@ -11,12 +12,6 @@ interface MenuItem {
 interface MealData {
   menu: MenuItem[];
 }
-
-// 알레르기 정보 매핑
-const allergyInfo: { [key: number]: string } = {
-  1: '난류', 2: '우유', 5: '대두', 6: '밀', 9: '새우', 10: '돼지고기',
-  12: '토마토', 13: '아황산류', 15: '닭고기', 16: '쇠고기', 17: '오징어',
-};
 
 interface MealEditModalProps {
   isOpen: boolean;
@@ -207,7 +202,7 @@ export function MealEditModal({
                               key={allergyNum}
                               className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#FCE8E6] text-red-700 text-xs rounded"
                             >
-                              {allergyNum}. {allergyInfo[allergyNum] || '알 수 없음'}
+                              {allergyNum}. {allergyInfo[allergyNum]?.label || '알 수 없음'}
                             </span>
                           ))}
                         </div>
