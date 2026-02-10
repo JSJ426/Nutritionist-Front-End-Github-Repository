@@ -16,7 +16,7 @@ type WeeklyMealSectionProps = {
 
 export function WeeklyMealSection({ currentMonth, currentDate, weeklyMeals }: WeeklyMealSectionProps) {
   return (
-    <div className="bg-white rounded-lg shadow-md p-6" style={{ width: '75%' }}>
+    <div className="bg-white rounded-lg shadow-md p-6" style={{ width: '70%' }}>
       <h2 className="text-xl font-medium mb-4 pb-2 border-b-2 border-[#5dccb4]">
         이 주의 식단표
       </h2>
