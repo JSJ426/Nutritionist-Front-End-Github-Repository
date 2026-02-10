@@ -19,6 +19,7 @@ export function Header({ onLogout, schoolName, onLogoClick }: HeaderProps) {
         >
           <img src={appLogo} alt="AppLogo" className="h-13" />
         </button>
+        <div className="text-xl font">학교 급식 관리 시스템</div>
       </div>
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 px-3 py-1.5 bg-[#3d3d3d] rounded text-sm">

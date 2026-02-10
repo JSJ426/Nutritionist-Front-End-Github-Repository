@@ -5,7 +5,7 @@ export function Footer() {
         {/* Contact 정보 */}
         <div className="mb-4">
           <p className="text-sm text-gray-600">
-            Contact : ktaivle@kt.com
+            Contact : busan_help@globalfoodai.co.kr
           </p>
         </div>
 
@@ -16,7 +16,7 @@ export function Footer() {
               href="#"
               className="text-gray-700 hover:text-gray-900 hover:underline transition-colors"
             >
-              KT AIVLE EDU 개인정보 처리방침
+              Global Food AI 개인정보 처리방침
             </a>
             <span className="text-gray-400">|</span>
             <a
@@ -37,9 +37,9 @@ export function Footer() {
 
         {/* 회사 정보 */}
         <div className="text-xs text-gray-500 space-y-1">
-          <p>(주)케이티 경기도 성남시 분당구 불정로 90 (정자동) | 대표자명 : 김영섭</p>
-          <p>사업자등록번호 : 102-81-42945 | 통신판매업신고 : 2002-경기성남-0048</p>
-          <p>Copyright© 2022 KT Corp. All rights reserved.</p>
+          <p>(주)글로벌푸드AI 부산지사 | 부산광역시 해운대구 센텀중앙로 79, 15층 (우동) | 지점장 : 박지훈</p>
+          <p>사업자등록번호 : 617-85-39201 | 통신판매업신고 : 2026-부산해운대-0882</p>
+          <p>Copyright© 2026 Global Food AI Busan. All rights reserved.</p>
         </div>
       </div>
     </footer>
