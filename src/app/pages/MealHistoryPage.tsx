@@ -115,7 +115,7 @@ export function MealHistoryPage() {
     return (
       <div className="p-6 text-lg">
         <div className="mb-6">
-          <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">식단표 수정 히스토리</h1>
+          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">식단표 수정 히스토리</h1>
         </div>
         <div className="flex items-center justify-center text-gray-500 py-12">
           데이터를 불러오는 중입니다.
@@ -127,7 +127,7 @@ export function MealHistoryPage() {
   return (
     <div className="p-6 text-lg">
       <div className="mb-6">
-        <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">식단표 수정 히스토리</h1>
+        <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">식단표 수정 히스토리</h1>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm p-6">

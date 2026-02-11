@@ -146,7 +146,7 @@ export function BoardListPage({ initialParams, onNavigate }: BoardListPageProps)
     return (
       <div className="flex flex-col h-full bg-gray-50">
         <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
-          <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
+          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
             게시판
           </h1>
         </div>
@@ -162,7 +162,7 @@ export function BoardListPage({ initialParams, onNavigate }: BoardListPageProps)
     <div className="flex flex-col h-full bg-gray-50">
       {/* Header */}
       <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
-        <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
+        <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
           게시판
         </h1>
       </div>

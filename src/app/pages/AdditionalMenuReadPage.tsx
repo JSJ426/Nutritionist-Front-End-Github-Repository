@@ -107,7 +107,7 @@ export function AdditionalMenuReadPage({
     return (
       <div className="flex flex-col h-full bg-gray-50">
         <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
-          <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
+          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
             신메뉴
           </h1>
         </div>
@@ -122,7 +122,7 @@ export function AdditionalMenuReadPage({
     return (
       <div className="flex flex-col h-full bg-gray-50">
         <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
-          <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
+          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
             신메뉴
           </h1>
         </div>
@@ -146,7 +146,7 @@ export function AdditionalMenuReadPage({
       {/* Header */}
       <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center justify-between">
-          <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
+          <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">
             신메뉴
           </h1>
           <Button
