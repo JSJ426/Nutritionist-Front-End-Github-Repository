@@ -62,7 +62,19 @@ export function FindIdPage({ onNavigate }: FindIdPageProps) {
       />
       <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden p-8 lg:p-12">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">아이디 찾기</h2>
+          <div className="flex items-center gap-3 mb-2">
+            <button
+              type="button"
+              onClick={() => onNavigate('login')}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="로그인으로 돌아가기"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h2 className="text-2xl font-bold text-gray-800">아이디 찾기</h2>
+          </div>
           <p className="text-gray-600 mb-8">
             가입 시 입력한 정보로 아이디를 찾을 수 있습니다.
           </p>
