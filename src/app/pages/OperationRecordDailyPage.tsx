@@ -87,7 +87,7 @@ export function OperationRecordDailyPage() {
 
   const syncMonthToQuery = (nextMonth: Date) => {
     const monthKey = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`;
-    const nextParams = new URLSearchParams(searchParams);
+    const nextParams = new URLSearchParams();
     nextParams.set('month', monthKey);
     setSearchParams(nextParams);
   };

@@ -50,7 +50,7 @@ export function FoodListPage({ onNavigate }: FoodListProps) {
     sort?: string;
     page?: number;
   }) => {
-    const nextParams = new URLSearchParams(searchParams);
+    const nextParams = new URLSearchParams();
     const nextCategory = next.category ?? categoryFilter;
     const nextSort = next.sort ?? sortBy;
     const nextPage = next.page ?? currentPage;

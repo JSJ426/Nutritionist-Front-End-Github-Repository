@@ -25,7 +25,7 @@ export function MealMonthlyPage() {
   const [defaultMonth, setDefaultMonth] = useState(initialMonthKey);
 
   const setMonthInQuery = (monthKey: string) => {
-    const nextParams = new URLSearchParams(searchParams);
+    const nextParams = new URLSearchParams();
     nextParams.set('month', monthKey);
     setSearchParams(nextParams);
   };

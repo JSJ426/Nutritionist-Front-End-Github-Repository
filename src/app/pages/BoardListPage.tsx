@@ -81,7 +81,7 @@ export function BoardListPage({ initialParams, onNavigate }: BoardListPageProps)
   }, [searchParams]);
 
   useEffect(() => {
-    const nextParams = new URLSearchParams(searchParams);
+    const nextParams = new URLSearchParams();
     if (appliedSearchQuery) {
       nextParams.set('q', appliedSearchQuery);
     } else {

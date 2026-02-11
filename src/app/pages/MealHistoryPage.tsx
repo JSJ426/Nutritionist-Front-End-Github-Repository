@@ -89,20 +89,25 @@ export function MealHistoryPage() {
   }, [appliedActionType, appliedStartDate, appliedEndDate, currentPage, itemsPerPage]);
 
   const handleSearch = () => {
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.set('actionType', selectedActionType);
+    const nextParams = new URLSearchParams();
+    if (selectedActionType !== '전체') {
+      nextParams.set('actionType', selectedActionType);
+    }
     nextParams.set('startDate', selectedStartDate);
     nextParams.set('endDate', selectedEndDate);
-    nextParams.set('page', '1');
     setSearchParams(nextParams);
   };
 
   const handlePageChange = (page: number) => {
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.set('actionType', appliedActionType);
+    const nextParams = new URLSearchParams();
+    if (appliedActionType !== '전체') {
+      nextParams.set('actionType', appliedActionType);
+    }
     nextParams.set('startDate', appliedStartDate);
     nextParams.set('endDate', appliedEndDate);
-    nextParams.set('page', String(page));
+    if (page > 1) {
+      nextParams.set('page', String(page));
+    }
     setSearchParams(nextParams);
   };
 

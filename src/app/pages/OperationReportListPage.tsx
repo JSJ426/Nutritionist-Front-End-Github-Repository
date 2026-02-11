@@ -131,24 +131,25 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
   }, [currentPage, totalPages]);
 
   const handleYearChange = (value: string) => {
-    const nextParams = new URLSearchParams(searchParams);
+    const nextParams = new URLSearchParams();
     if (value === '전체') {
       nextParams.delete('year');
     } else {
       nextParams.set('year', value);
     }
-    nextParams.set('page', '1');
     setSearchParams(nextParams);
   };
 
   const handlePageChange = (page: number) => {
-    const nextParams = new URLSearchParams(searchParams);
+    const nextParams = new URLSearchParams();
     if (selectedYear === '전체') {
       nextParams.delete('year');
     } else {
       nextParams.set('year', selectedYear);
     }
-    nextParams.set('page', String(page));
+    if (page > 1) {
+      nextParams.set('page', String(page));
+    }
     setSearchParams(nextParams);
   };
 
