@@ -22,17 +22,26 @@ interface AdditionalMenuEditPageProps {
   onNavigate?: (page: string, params?: any) => void;
 }
 
+const parseMenuId = (value: unknown): string | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return String(value);
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed.length > 0) return trimmed;
+  }
+  return undefined;
+};
+
 export function AdditionalMenuEditPage({
   initialParams,
   onNavigate,
 }: AdditionalMenuEditPageProps) {
-  const menuId =
-    initialParams?.menuId !== undefined && initialParams?.menuId !== null
-      ? String(initialParams.menuId)
-      : undefined;
+  const menuId = parseMenuId(initialParams?.menuId);
   const { modalProps, openAlert } = useErrorModal();
   const [menuIdValue, setMenuIdValue] = useState<string | undefined>(menuId);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [nutritionBasis, setNutritionBasis] = useState('');
@@ -66,31 +75,48 @@ export function AdditionalMenuEditPage({
     let isActive = true;
 
     const load = async () => {
-      const response = await getAdditionalMenuDetailResponse(menuId);
-      if (!isActive) return;
-      const editVm = response ? toAdditionalMenuEditVMFromResponse(response, menuId) : null;
-      const initialForm = editVm?.form ?? getAdditionalMenuCreateForm();
+      if (!menuId) {
+        if (!isActive) return;
+        setErrorMessage('잘못된 신메뉴 접근입니다.');
+        setIsLoading(false);
+        return;
+      }
 
-      setMenuIdValue(editVm?.id ?? menuId);
-      setName(initialForm.name);
-      setCategory(initialForm.category);
-      setNutritionBasis(initialForm.nutritionBasis);
-      setServingSize(initialForm.servingSize);
-      setKcal(initialForm.kcal);
-      setCarb(initialForm.carb);
-      setProt(initialForm.prot);
-      setFat(initialForm.fat);
-      setCalcium(initialForm.calcium);
-      setIron(initialForm.iron);
-      setVitaminA(initialForm.vitaminA);
-      setThiamin(initialForm.thiamin);
-      setRiboflavin(initialForm.riboflavin);
-      setVitaminC(initialForm.vitaminC);
-      setIngredientsText(initialForm.ingredientsText);
-      setAllergensText(initialForm.allergensText);
-      setRecipeText(initialForm.recipeText);
-      setCreatedAtText(editVm?.createdAtText ?? '');
-      setIsLoading(false);
+      setIsLoading(true);
+      setErrorMessage(null);
+      try {
+        const response = await getAdditionalMenuDetailResponse(menuId);
+        if (!isActive) return;
+        const editVm = response ? toAdditionalMenuEditVMFromResponse(response, menuId) : null;
+        const initialForm = editVm?.form ?? getAdditionalMenuCreateForm();
+
+        setMenuIdValue(editVm?.id ?? menuId);
+        setName(initialForm.name);
+        setCategory(initialForm.category);
+        setNutritionBasis(initialForm.nutritionBasis);
+        setServingSize(initialForm.servingSize);
+        setKcal(initialForm.kcal);
+        setCarb(initialForm.carb);
+        setProt(initialForm.prot);
+        setFat(initialForm.fat);
+        setCalcium(initialForm.calcium);
+        setIron(initialForm.iron);
+        setVitaminA(initialForm.vitaminA);
+        setThiamin(initialForm.thiamin);
+        setRiboflavin(initialForm.riboflavin);
+        setVitaminC(initialForm.vitaminC);
+        setIngredientsText(initialForm.ingredientsText);
+        setAllergensText(initialForm.allergensText);
+        setRecipeText(initialForm.recipeText);
+        setCreatedAtText(editVm?.createdAtText ?? '');
+      } catch (error) {
+        if (!isActive) return;
+        console.error('Failed to load additional menu detail:', error);
+        setErrorMessage('신메뉴 정보를 불러오지 못했습니다.');
+      } finally {
+        if (!isActive) return;
+        setIsLoading(false);
+      }
     };
 
     load();
@@ -101,6 +127,10 @@ export function AdditionalMenuEditPage({
   }, [menuId]);
 
   const handleSubmit = async () => {
+    if (!menuIdValue) {
+      openAlert('유효한 신메뉴 식별자가 없습니다.');
+      return;
+    }
     if (!name.trim()) {
       openAlert('메뉴명을 입력해주세요.');
       return;
@@ -159,7 +189,9 @@ export function AdditionalMenuEditPage({
   const handleCancel = () => {
     if (menuIdValue) {
       onNavigate?.('additional-menu-read', { menuId: menuIdValue });
+      return;
     }
+    onNavigate?.('additional-menu-list');
   };
 
   if (isLoading) {
@@ -172,6 +204,29 @@ export function AdditionalMenuEditPage({
         </div>
         <div className="flex-1 flex items-center justify-center text-gray-500">
           데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="flex flex-col h-full bg-gray-50">
+        <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
+          <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
+            신메뉴 편집
+          </h1>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-gray-500">
+          <div>{errorMessage}</div>
+          <Button
+            variant="outline"
+            onClick={() => onNavigate?.('additional-menu-list')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft size={16} />
+            목록으로 이동
+          </Button>
         </div>
       </div>
     );

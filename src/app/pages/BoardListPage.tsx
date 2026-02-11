@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, Edit } from 'lucide-react';
 
 import { getBoardListResponse } from '../data/board';
@@ -32,12 +33,17 @@ interface BoardListPageProps {
 }
 
 export function BoardListPage({ initialParams, onNavigate }: BoardListPageProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [posts, setPosts] = useState<BoardListItemVM[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('전체');
-  const [currentPage, setCurrentPage] = useState(1);
+  const initialQuery = searchParams.get('q') ?? '';
+  const initialCategory = searchParams.get('category') || '전체';
+  const initialPageRaw = searchParams.get('page');
+  const initialPage = initialPageRaw ? Number(initialPageRaw) : 1;
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState(initialQuery);
+  const [categoryFilter, setCategoryFilter] = useState<string>(initialCategory);
+  const [currentPage, setCurrentPage] = useState(Number.isFinite(initialPage) && initialPage > 0 ? initialPage : 1);
   const itemsPerPage = 20;
   const [totalPages, setTotalPages] = useState(1);
 
@@ -60,6 +66,46 @@ export function BoardListPage({ initialParams, onNavigate }: BoardListPageProps)
     setAppliedSearchQuery(searchQuery.trim());
     setCurrentPage(1);
   };
+
+  useEffect(() => {
+    const nextQuery = searchParams.get('q') ?? '';
+    const nextCategory = searchParams.get('category') || '전체';
+    const nextPageRaw = searchParams.get('page');
+    const nextPage = nextPageRaw ? Number(nextPageRaw) : 1;
+    const safePage = Number.isFinite(nextPage) && nextPage > 0 ? nextPage : 1;
+
+    setSearchQuery((prev) => (prev === nextQuery ? prev : nextQuery));
+    setAppliedSearchQuery((prev) => (prev === nextQuery ? prev : nextQuery));
+    setCategoryFilter((prev) => (prev === nextCategory ? prev : nextCategory));
+    setCurrentPage((prev) => (prev === safePage ? prev : safePage));
+  }, [searchParams]);
+
+  useEffect(() => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (appliedSearchQuery) {
+      nextParams.set('q', appliedSearchQuery);
+    } else {
+      nextParams.delete('q');
+    }
+
+    if (categoryFilter && categoryFilter !== '전체') {
+      nextParams.set('category', categoryFilter);
+    } else {
+      nextParams.delete('category');
+    }
+
+    if (currentPage > 1) {
+      nextParams.set('page', String(currentPage));
+    } else {
+      nextParams.delete('page');
+    }
+
+    const currentText = searchParams.toString();
+    const nextText = nextParams.toString();
+    if (currentText !== nextText) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [appliedSearchQuery, categoryFilter, currentPage, searchParams, setSearchParams]);
 
   useEffect(() => {
     let isActive = true;

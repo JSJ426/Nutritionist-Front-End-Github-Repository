@@ -60,6 +60,7 @@ type MealMonthlyData = {
 interface MealMonthlyCalendarProps {
   mealDataByMonth: Record<string, MealMonthlyData>;
   currentMonth: string;
+  canGoNextMonth?: boolean;
   onPrevMonth: () => void;
   onNextMonth: () => void;
   onResetMonth: () => void;
@@ -68,6 +69,7 @@ interface MealMonthlyCalendarProps {
 export function MealMonthlyCalendar({
   mealDataByMonth,
   currentMonth,
+  canGoNextMonth = true,
   onPrevMonth,
   onNextMonth,
   onResetMonth,
@@ -159,7 +161,11 @@ export function MealMonthlyCalendar({
             <button className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50" onClick={onPrevMonth}>
               이전 달
             </button>
-            <button className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50" onClick={onNextMonth}>
+            <button
+              className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+              onClick={onNextMonth}
+              disabled={!canGoNextMonth}
+            >
               다음 달
             </button>
             <button className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50" onClick={onResetMonth}>

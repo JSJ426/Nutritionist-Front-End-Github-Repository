@@ -14,18 +14,49 @@ interface FoodInfoProps {
   onNavigate?: (page: string, params?: any) => void;
 }
 
+const parseMenuId = (value: unknown): string | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return String(value);
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed.length > 0) return trimmed;
+  }
+  return undefined;
+};
+
 export function FoodInfoPage({ initialParams, onNavigate }: FoodInfoProps) {
-  const menuId = initialParams?.foodId ? String(initialParams.foodId) : undefined;
+  const menuId = parseMenuId(initialParams?.foodId);
   const [food, setFood] = useState<FoodInfoVM | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
     const load = async () => {
-      const rawResponse = await getFoodDetailResponse(menuId);
-      if (!isActive) return;
-      setFood(toFoodInfoVMFromResponse(rawResponse));
-      setIsLoading(false);
+      if (!menuId) {
+        if (!isActive) return;
+        setFood(null);
+        setErrorMessage('잘못된 메뉴 접근입니다.');
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setErrorMessage(null);
+      try {
+        const rawResponse = await getFoodDetailResponse(menuId);
+        if (!isActive) return;
+        setFood(toFoodInfoVMFromResponse(rawResponse));
+      } catch (error) {
+        if (!isActive) return;
+        console.error('Failed to load food detail:', error);
+        setFood(null);
+        setErrorMessage('메뉴 정보를 불러오지 못했습니다.');
+      } finally {
+        if (!isActive) return;
+        setIsLoading(false);
+      }
     };
     load();
     return () => {
@@ -35,7 +66,7 @@ export function FoodInfoPage({ initialParams, onNavigate }: FoodInfoProps) {
 
   const allergens: number[] = Array.isArray(food?.allergens) ? food.allergens : [];
 
-  if (isLoading || !food) {
+  if (isLoading) {
     return (
       <div className="flex flex-col h-full bg-gray-50">
         <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
@@ -55,6 +86,39 @@ export function FoodInfoPage({ initialParams, onNavigate }: FoodInfoProps) {
         </div>
         <div className="flex-1 flex items-center justify-center text-gray-500">
           데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMessage || !food) {
+    return (
+      <div className="flex flex-col h-full bg-gray-50">
+        <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
+              메뉴 조회
+            </h1>
+            <Button
+              variant="outline"
+              onClick={() => onNavigate?.('food-list')}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft size={16} />
+              목록으로
+            </Button>
+          </div>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-gray-500">
+          <div>{errorMessage ?? '메뉴 정보를 찾을 수 없습니다.'}</div>
+          <Button
+            variant="outline"
+            onClick={() => onNavigate?.('food-list')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft size={16} />
+            목록으로 이동
+          </Button>
         </div>
       </div>
     );

@@ -22,24 +22,29 @@ interface OperationReportReadPageProps {
   onNavigate?: (page: string, params?: any) => void;
 }
 
+const parsePositiveId = (value: unknown): number | undefined => {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) return undefined;
+  return parsed;
+};
+
 export function OperationReportReadPage({ initialParams, onNavigate }: OperationReportReadPageProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(100);
   const [numPages, setNumPages] = useState(0);
 
-  const reportId = typeof initialParams?.id === 'number' ? initialParams.id : undefined;
+  const reportId = parsePositiveId(initialParams?.id);
+  const isInvalidReportId = !reportId;
   const { status, data, error } = useMonthlyOpsDocDetail(reportId);
 
-  const pdfUrl = data?.pdfUrl ?? initialParams?.pdfUrl ?? '';
+  const pdfUrl = data?.pdfUrl ?? '';
   const resolvedPdfUrl = pdfUrl;
   const documentOptions = useMemo(
     () => ({ cMapUrl: '/cmaps/', cMapPacked: true }),
     []
   );
-  const displayTitle = data?.title ?? (initialParams?.title ? String(initialParams.title) : '월간 운영 보고서');
-  const displayYear = data?.year ?? initialParams?.year;
-  const displayMonth = data?.month ?? initialParams?.month;
-  const generatedDate = data?.generatedDateText ?? initialParams?.generatedDate ?? '-';
+  const displayTitle = data?.title ?? '월간 운영 보고서';
+  const generatedDate = data?.generatedDateText ?? '-';
   const downloadFileName = data?.fileName;
   const hasPdf = Boolean(resolvedPdfUrl);
   const scale = useMemo(() => zoom / 100, [zoom]);
@@ -113,7 +118,8 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6">
-        <div className="max-w-[1400px] mx-auto space-y-4">
+
+        {/* <div className="max-w-[1400px] mx-auto space-y-4">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
@@ -127,10 +133,20 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
                   <span>생성일: {generatedDate}</span>
                 </div>
               </div>
-              {/* <div className="flex items-center gap-2 text-sm text-gray-600">
-                <FileText size={16} />
-                PDF 뷰어
-              </div> */}
+            </div>
+          </div> */}
+
+        <div className="max-w-[1400px] mx-auto space-y-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-semibold text-gray-900">
+                  {displayTitle}
+                </h2>
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-gray-600">
+                  <span>생성일: {generatedDate}</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -187,10 +203,31 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
                   <FileText size={36} />
                   <div className="text-sm">PDF를 불러오는 중입니다.</div>
                 </div>
+              ) : isInvalidReportId ? (
+                <div className="h-[70vh] flex flex-col items-center justify-center text-gray-500 gap-3">
+                  <FileText size={36} />
+                  <div className="text-sm">잘못된 보고서 접근입니다.</div>
+                  <Button
+                    variant="outline"
+                    onClick={() => onNavigate?.('operation-report-list')}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft size={16} />
+                    목록으로 이동
+                  </Button>
+                </div>
               ) : status === 'error' ? (
                 <div className="h-[70vh] flex flex-col items-center justify-center text-gray-500 gap-3">
                   <FileText size={36} />
                   <div className="text-sm">{error ?? 'PDF를 불러오지 못했습니다.'}</div>
+                  <Button
+                    variant="outline"
+                    onClick={() => onNavigate?.('operation-report-list')}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft size={16} />
+                    목록으로 이동
+                  </Button>
                 </div>
               ) : hasPdf ? (
                 <div className="h-[70vh] overflow-auto">
@@ -225,6 +262,14 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
                 <div className="h-[70vh] flex flex-col items-center justify-center text-gray-500 gap-3">
                   <FileText size={36} />
                   <div className="text-sm">표시할 PDF가 없습니다.</div>
+                  <Button
+                    variant="outline"
+                    onClick={() => onNavigate?.('operation-report-list')}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft size={16} />
+                    목록으로 이동
+                  </Button>
                 </div>
               )}
             </div>

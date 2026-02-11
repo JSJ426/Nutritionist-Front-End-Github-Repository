@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Download, FileText, Calendar } from 'lucide-react';
 
 import {
@@ -48,12 +49,18 @@ interface OperationReportListPageProps {
 }
 
 export function OperationReportListPage({ onNavigate }: OperationReportListPageProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { modalProps, openAlert } = useErrorModal();
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [selectedYear, setSelectedYear] = useState('전체');
-  const [currentPage, setCurrentPage] = useState(1);
+  const initialYear = searchParams.get('year') || '전체';
+  const initialPageRaw = searchParams.get('page');
+  const initialPage = initialPageRaw ? Number(initialPageRaw) : 1;
+  const [selectedYear, setSelectedYear] = useState(initialYear);
+  const [currentPage, setCurrentPage] = useState(
+    Number.isFinite(initialPage) && initialPage > 0 ? initialPage : 1
+  );
   const itemsPerPage = 12;
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -93,6 +100,16 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
     };
   }, [selectedYear, currentPage]);
 
+  useEffect(() => {
+    const nextYear = searchParams.get('year') || '전체';
+    const nextPageRaw = searchParams.get('page');
+    const nextPage = nextPageRaw ? Number(nextPageRaw) : 1;
+    const safePage = Number.isFinite(nextPage) && nextPage > 0 ? nextPage : 1;
+
+    setSelectedYear((prev) => (prev === nextYear ? prev : nextYear));
+    setCurrentPage((prev) => (prev === safePage ? prev : safePage));
+  }, [searchParams]);
+
   // 연도 목록 생성
   const years = getOperationReportYearOptions(reports);
 
@@ -103,15 +120,37 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
   useEffect(() => {
     if (totalPages === 0) {
       if (currentPage !== 1) {
-        setCurrentPage(1);
+        handlePageChange(1);
       }
       return;
     }
 
     if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
+      handlePageChange(totalPages);
     }
   }, [currentPage, totalPages]);
+
+  const handleYearChange = (value: string) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (value === '전체') {
+      nextParams.delete('year');
+    } else {
+      nextParams.set('year', value);
+    }
+    nextParams.set('page', '1');
+    setSearchParams(nextParams);
+  };
+
+  const handlePageChange = (page: number) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (selectedYear === '전체') {
+      nextParams.delete('year');
+    } else {
+      nextParams.set('year', selectedYear);
+    }
+    nextParams.set('page', String(page));
+    setSearchParams(nextParams);
+  };
 
   const handleDownload = async (report: Report) => {
     try {
@@ -140,9 +179,6 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
   const handleView = (report: Report) => {
     onNavigate?.('operation-report-read', {
       id: report.id,
-      title: report.title,
-      year: report.year,
-      month: report.month,
     });
   };
 
@@ -230,10 +266,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
               <div className="w-40">
                 <Select
                   value={selectedYear}
-                  onValueChange={(value) => {
-                    setSelectedYear(value);
-                    setCurrentPage(1);
-                  }}
+                  onValueChange={handleYearChange}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="(연도)" />
@@ -330,7 +363,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            onPageChange={setCurrentPage}
+            onPageChange={handlePageChange}
           />
 
         </div>

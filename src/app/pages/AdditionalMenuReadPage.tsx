@@ -17,25 +17,53 @@ interface AdditionalMenuReadPageProps {
   onNavigate?: (page: string, params?: any) => void;
 }
 
+const parseMenuId = (value: unknown): string | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return String(value);
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed.length > 0) return trimmed;
+  }
+  return undefined;
+};
+
 export function AdditionalMenuReadPage({
   initialParams,
   onNavigate,
 }: AdditionalMenuReadPageProps) {
-  const menuId =
-    initialParams?.menuId !== undefined && initialParams?.menuId !== null
-      ? String(initialParams.menuId)
-      : undefined;
+  const menuId = parseMenuId(initialParams?.menuId);
   const { modalProps, openAlert, openConfirm } = useErrorModal();
   const [vm, setVm] = useState<AdditionalMenuReadVM | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
     const load = async () => {
-      const response = await getAdditionalMenuDetailResponse(menuId);
-      if (!isActive) return;
-      setVm(toAdditionalMenuReadVMFromResponse(response, menuId));
-      setIsLoading(false);
+      if (!menuId) {
+        if (!isActive) return;
+        setVm(null);
+        setErrorMessage('잘못된 신메뉴 접근입니다.');
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setErrorMessage(null);
+      try {
+        const response = await getAdditionalMenuDetailResponse(menuId);
+        if (!isActive) return;
+        setVm(toAdditionalMenuReadVMFromResponse(response, menuId));
+      } catch (error) {
+        if (!isActive) return;
+        console.error('Failed to load additional menu detail:', error);
+        setVm(null);
+        setErrorMessage('신메뉴 정보를 불러오지 못했습니다.');
+      } finally {
+        if (!isActive) return;
+        setIsLoading(false);
+      }
     };
     load();
     return () => {
@@ -43,7 +71,7 @@ export function AdditionalMenuReadPage({
     };
   }, [menuId]);
 
-  const menuIdValue = vm?.id ?? menuId;
+  const menuIdValue = vm?.id ? String(vm.id) : menuId;
 
   const handleEdit = () => {
     console.log(`${menuIdValue}`);
@@ -98,8 +126,16 @@ export function AdditionalMenuReadPage({
             신메뉴
           </h1>
         </div>
-        <div className="flex-1 flex items-center justify-center text-gray-500">
-          등록된 신메뉴가 없습니다.
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-gray-500">
+          <div>{errorMessage ?? '등록된 신메뉴가 없습니다.'}</div>
+          <Button
+            variant="outline"
+            onClick={() => onNavigate?.('additional-menu-list')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft size={16} />
+            목록으로 이동
+          </Button>
         </div>
       </div>
     );

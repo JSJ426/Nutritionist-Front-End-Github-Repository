@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 
 import { getAdditionalMenuListResponse } from '../data/additionalMenu';
@@ -17,15 +18,63 @@ interface AdditionalMenuListPageProps {
 }
 
 export function AdditionalMenuListPage({ initialParams, onNavigate }: AdditionalMenuListPageProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [baseVm, setBaseVm] = useState<AdditionalMenuListVM | null>(null);
   const [items, setItems] = useState<AdditionalMenuListItemVM[]>([]);
-  const [categoryFilter, setCategoryFilter] = useState('전체');
+  const initialCategory = searchParams.get('category') || '전체';
+  const initialSort = searchParams.get('sort') || 'date-desc';
+  const initialPageRaw = searchParams.get('page');
+  const initialPage = initialPageRaw ? Number(initialPageRaw) : 1;
+  const [categoryFilter, setCategoryFilter] = useState(initialCategory);
   const [categoryOptions, setCategoryOptions] = useState<string[]>(['전체']);
-  const [sortBy, setSortBy] = useState('date-desc');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState(initialSort);
+  const [currentPage, setCurrentPage] = useState(Number.isFinite(initialPage) && initialPage > 0 ? initialPage : 1);
   const itemsPerPage = 20;
   const [totalPages, setTotalPages] = useState(1);
   const offsetIndex = (currentPage - 1) * itemsPerPage;
+
+  const applySearchParams = (next: {
+    category?: string;
+    sort?: string;
+    page?: number;
+  }) => {
+    const nextParams = new URLSearchParams(searchParams);
+    const nextCategory = next.category ?? categoryFilter;
+    const nextSort = next.sort ?? sortBy;
+    const nextPage = next.page ?? currentPage;
+
+    if (nextCategory && nextCategory !== '전체') {
+      nextParams.set('category', nextCategory);
+    } else {
+      nextParams.delete('category');
+    }
+
+    if (nextSort && nextSort !== 'date-desc') {
+      nextParams.set('sort', nextSort);
+    } else {
+      nextParams.delete('sort');
+    }
+
+    if (nextPage > 1) {
+      nextParams.set('page', String(nextPage));
+    } else {
+      nextParams.delete('page');
+    }
+
+    setSearchParams(nextParams);
+  };
+
+  const handleCategoryChange = (value: string) => {
+    applySearchParams({ category: value, page: 1 });
+  };
+
+  const handleSortChange = (value: string) => {
+    applySearchParams({ sort: value, page: 1 });
+  };
+
+  const handlePageChange = (page: number) => {
+    applySearchParams({ page });
+  };
 
   useEffect(() => {
     let isActive = true;
@@ -72,6 +121,18 @@ export function AdditionalMenuListPage({ initialParams, onNavigate }: Additional
       isActive = false;
     };
   }, [currentPage, itemsPerPage, categoryFilter, sortBy]);
+
+  useEffect(() => {
+    const nextCategory = searchParams.get('category') || '전체';
+    const nextSort = searchParams.get('sort') || 'date-desc';
+    const nextPageRaw = searchParams.get('page');
+    const nextPage = nextPageRaw ? Number(nextPageRaw) : 1;
+    const safePage = Number.isFinite(nextPage) && nextPage > 0 ? nextPage : 1;
+
+    setCategoryFilter((prev) => (prev === nextCategory ? prev : nextCategory));
+    setSortBy((prev) => (prev === nextSort ? prev : nextSort));
+    setCurrentPage((prev) => (prev === safePage ? prev : safePage));
+  }, [searchParams]);
 
   useEffect(() => {
     const deletedId = initialParams?.deletedId as string | undefined;
@@ -126,7 +187,7 @@ export function AdditionalMenuListPage({ initialParams, onNavigate }: Additional
                 <label className="text-base text-gray-600 mb-1 block">식품대분류명</label>
                 <select
                   value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
                   className="w-48 px-3 py-2 rounded border bg-gray-100 text-base text-gray-900 focus:outline-none focus:border-[#5dccb4]"
                 >
                   {categoryOptions.map((option) => (
@@ -140,7 +201,7 @@ export function AdditionalMenuListPage({ initialParams, onNavigate }: Additional
                 <label className="text-base text-gray-600 mb-1 block">정렬</label>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  onChange={(e) => handleSortChange(e.target.value)}
                   className="w-40 px-3 py-2 rounded border bg-gray-100 text-base text-gray-900 focus:outline-none focus:border-[#5dccb4]"
                 >
                 {baseVm.sortOptions.map((option) => (
@@ -207,7 +268,7 @@ export function AdditionalMenuListPage({ initialParams, onNavigate }: Additional
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            onPageChange={setCurrentPage}
+            onPageChange={handlePageChange}
           />
         </div>
       </div>

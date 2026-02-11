@@ -31,10 +31,17 @@ interface BoardEditPageProps {
   onNavigate?: (page: string, params?: any) => void;
 }
 
+const parsePositiveId = (value: unknown): number | undefined => {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) return undefined;
+  return parsed;
+};
+
 export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps) {
-  const postId = initialParams?.postId || 15;
+  const postId = parsePositiveId(initialParams?.postId);
   const { modalProps, openAlert, openConfirm } = useErrorModal();
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('공지');
@@ -49,22 +56,39 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
   useEffect(() => {
     let isActive = true;
     const load = async () => {
-      const rawPost = await getBoardDetailResponse(postId);
-      if (!isActive) return;
-      const nextPost = toBoardEditVMFromResponse(rawPost, '관리자');
-      setOriginalPost(nextPost);
-      setTitle(nextPost.title);
-      setContent(nextPost.content);
-      setCategory(nextPost.category);
-      setExistingFiles(
-        nextPost.existingFiles.map((file) => ({
-          id: file.id,
-          name: file.name,
-          size: file.size,
-        }))
-      );
-      setDeletedFileIds([]);
-      setIsLoading(false);
+      if (!postId) {
+        if (!isActive) return;
+        setErrorMessage('잘못된 게시글 접근입니다.');
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setErrorMessage(null);
+      try {
+        const rawPost = await getBoardDetailResponse(postId);
+        if (!isActive) return;
+        const nextPost = toBoardEditVMFromResponse(rawPost, '관리자');
+        setOriginalPost(nextPost);
+        setTitle(nextPost.title);
+        setContent(nextPost.content);
+        setCategory(nextPost.category);
+        setExistingFiles(
+          nextPost.existingFiles.map((file) => ({
+            id: file.id,
+            name: file.name,
+            size: file.size,
+          }))
+        );
+        setDeletedFileIds([]);
+      } catch (error) {
+        if (!isActive) return;
+        console.error('Failed to load board post:', error);
+        setErrorMessage('게시글 정보를 불러오지 못했습니다.');
+      } finally {
+        if (!isActive) return;
+        setIsLoading(false);
+      }
     };
     load();
     return () => {
@@ -132,6 +156,10 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
   };
 
   const handleSubmit = async () => {
+    if (!postId) {
+      openAlert('유효한 게시글 식별자가 없습니다.');
+      return;
+    }
     if (!title.trim()) {
       openAlert('제목을 입력해주세요.');
       return;
@@ -163,6 +191,10 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
   };
 
   const handleCancel = () => {
+    if (!postId) {
+      onNavigate?.('board-list');
+      return;
+    }
     openConfirm(
       '수정을 취소하시겠습니까? 변경한 내용은 저장되지 않습니다.',
       () => onNavigate?.('board-read', { postId }),
@@ -180,6 +212,29 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
         </div>
         <div className="flex-1 flex items-center justify-center text-gray-500">
           데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="flex flex-col h-full bg-gray-50">
+        <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
+          <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
+            게시물 수정
+          </h1>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-gray-500">
+          <div>{errorMessage}</div>
+          <Button
+            variant="outline"
+            onClick={() => onNavigate?.('board-list')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft size={16} />
+            목록으로 이동
+          </Button>
         </div>
       </div>
     );

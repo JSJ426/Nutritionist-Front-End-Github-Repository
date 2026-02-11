@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { fetchMealPlanHistories } from '../data/mealplan';
 import { Pagination } from '../components/Pagination';
@@ -8,6 +9,7 @@ import { toMealHistoryVM } from '../viewModels/meal';
 import type { MealHistoryItemVM } from '../viewModels/meal';
 
 export function MealHistoryPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedActionType, setSelectedActionType] = useState<string>('전체');
   const [appliedActionType, setAppliedActionType] = useState<string>('전체');
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,6 +39,23 @@ export function MealHistoryPage() {
     if (value === '수정 (AI대체)') return 'AI_AUTO_REPLACE';
     return undefined;
   };
+
+  useEffect(() => {
+    const queryActionType = searchParams.get('actionType') || '전체';
+    const queryStartDate = searchParams.get('startDate') || defaultStartDate;
+    const queryEndDate = searchParams.get('endDate') || defaultEndDate;
+    const queryPageRaw = searchParams.get('page');
+    const queryPage = queryPageRaw ? Number(queryPageRaw) : 1;
+    const safePage = Number.isFinite(queryPage) && queryPage > 0 ? queryPage : 1;
+
+    setSelectedActionType((prev) => (prev === queryActionType ? prev : queryActionType));
+    setAppliedActionType((prev) => (prev === queryActionType ? prev : queryActionType));
+    setSelectedStartDate((prev) => (prev === queryStartDate ? prev : queryStartDate));
+    setAppliedStartDate((prev) => (prev === queryStartDate ? prev : queryStartDate));
+    setSelectedEndDate((prev) => (prev === queryEndDate ? prev : queryEndDate));
+    setAppliedEndDate((prev) => (prev === queryEndDate ? prev : queryEndDate));
+    setCurrentPage((prev) => (prev === safePage ? prev : safePage));
+  }, [searchParams, defaultStartDate, defaultEndDate]);
 
   useEffect(() => {
     let isActive = true;
@@ -70,10 +89,21 @@ export function MealHistoryPage() {
   }, [appliedActionType, appliedStartDate, appliedEndDate, currentPage, itemsPerPage]);
 
   const handleSearch = () => {
-    setAppliedActionType(selectedActionType);
-    setAppliedStartDate(selectedStartDate);
-    setAppliedEndDate(selectedEndDate);
-    setCurrentPage(1);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('actionType', selectedActionType);
+    nextParams.set('startDate', selectedStartDate);
+    nextParams.set('endDate', selectedEndDate);
+    nextParams.set('page', '1');
+    setSearchParams(nextParams);
+  };
+
+  const handlePageChange = (page: number) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('actionType', appliedActionType);
+    nextParams.set('startDate', appliedStartDate);
+    nextParams.set('endDate', appliedEndDate);
+    nextParams.set('page', String(page));
+    setSearchParams(nextParams);
   };
 
   if (isLoading) {
@@ -223,7 +253,7 @@ export function MealHistoryPage() {
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={setCurrentPage}
+          onPageChange={handlePageChange}
         />
       </div>
     </div>

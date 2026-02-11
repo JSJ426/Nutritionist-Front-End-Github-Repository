@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
 
@@ -13,6 +14,7 @@ import { useOperationRecordMonthlyRecords } from '../hooks/useOperationRecordMon
 import { emptyMealAvailability } from '../utils/OperationRecordUtils';
 
 export function OperationRecordDailyPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { claims, isReady } = useAuth();
   const schoolId = claims?.schoolId;
   const serverNow = useMemo(() => new Date(), []);
@@ -22,9 +24,20 @@ export function OperationRecordDailyPage() {
     return d;
   }, [serverNow]);
 
-  const [currentMonth, setCurrentMonth] = useState(
-    () => new Date(serverToday.getFullYear(), serverToday.getMonth(), 1)
-  );
+  const initialMonth = useMemo(() => {
+    const monthParam = searchParams.get('month');
+    if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+      const [yearStr, monthStr] = monthParam.split('-');
+      const year = Number(yearStr);
+      const month = Number(monthStr) - 1;
+      if (Number.isFinite(year) && Number.isFinite(month) && month >= 0 && month <= 11) {
+        return new Date(year, month, 1);
+      }
+    }
+    return new Date(serverToday.getFullYear(), serverToday.getMonth(), 1);
+  }, [searchParams, serverToday]);
+
+  const [currentMonth, setCurrentMonth] = useState(() => initialMonth);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const { records, setRecords, isLoading } = useOperationRecordMonthlyRecords(
@@ -72,6 +85,39 @@ export function OperationRecordDailyPage() {
     setIsModalOpen(true);
   };
 
+  const syncMonthToQuery = (nextMonth: Date) => {
+    const monthKey = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`;
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('month', monthKey);
+    setSearchParams(nextParams);
+  };
+
+  const handlePrevMonth = () => {
+    const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+    syncMonthToQuery(nextMonth);
+  };
+
+  const handleNextMonth = () => {
+    const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+    syncMonthToQuery(nextMonth);
+  };
+
+  useEffect(() => {
+    const monthParam = searchParams.get('month');
+    if (!monthParam || !/^\d{4}-\d{2}$/.test(monthParam)) return;
+    const [yearStr, monthStr] = monthParam.split('-');
+    const year = Number(yearStr);
+    const month = Number(monthStr) - 1;
+    if (!Number.isFinite(year) || !Number.isFinite(month) || month < 0 || month > 11) return;
+
+    const monthDate = new Date(year, month, 1);
+    const prevKey = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
+    const nextKey = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
+    if (prevKey !== nextKey) {
+      setCurrentMonth(monthDate);
+    }
+  }, [searchParams, currentMonth]);
+
   if (isLoading || isMealPlanLoading) {
     return (
       <div className="flex flex-col h-full bg-gray-50">
@@ -104,16 +150,8 @@ export function OperationRecordDailyPage() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
             <OperationRecordMonthHeader
               currentMonth={currentMonth}
-              onPrev={() =>
-                setCurrentMonth(
-                  new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)
-                )
-              }
-              onNext={() =>
-                setCurrentMonth(
-                  new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
-                )
-              }
+              onPrev={handlePrevMonth}
+              onNext={handleNextMonth}
               nextDisabled={isNextDisabled}
             />
 

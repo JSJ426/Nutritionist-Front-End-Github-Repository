@@ -316,6 +316,10 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
     }
   };
 
+  const handleCancel = () => {
+    onNavigate?.('institution-info');
+  };
+
   const isSecondaryDisabled =
     !form.schoolTypePrimary || form.schoolTypePrimary === '초등학교';
 
@@ -634,7 +638,12 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
             </div>
 
             <div className="flex gap-3 justify-end mt-8">
-              <Button variant="cancel" className="px-6 py-2 h-auto">
+              <Button
+                variant="cancel"
+                className="px-6 py-2 h-auto"
+                onClick={handleCancel}
+                disabled={isSaving}
+              >
                 취소
               </Button>
               <Button
@@ -670,7 +679,12 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
             </div>
 
             <div className="flex gap-3 justify-end mt-8">
-              <Button variant="cancel" className="px-6 py-2 h-auto">
+              <Button
+                variant="cancel"
+                className="px-6 py-2 h-auto"
+                onClick={handleCancel}
+                disabled={isSaving}
+              >
                 취소
               </Button>
               <Button

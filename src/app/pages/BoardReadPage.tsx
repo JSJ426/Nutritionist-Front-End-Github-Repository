@@ -17,19 +17,45 @@ interface BoardReadPageProps {
   onNavigate?: (page: string, params?: any) => void;
 }
 
+const parsePositiveId = (value: unknown): number | undefined => {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) return undefined;
+  return parsed;
+};
+
 export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps) {
-  const postId = initialParams?.postId || 15;
+  const postId = parsePositiveId(initialParams?.postId);
   const { modalProps, openAlert, openConfirm } = useErrorModal();
   const [post, setPost] = useState<BoardReadVM | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
     const load = async () => {
-      const rawPost = await getBoardDetailResponse(postId);
-      if (!isActive) return;
-      setPost(toBoardReadVMFromResponse(rawPost));
-      setIsLoading(false);
+      if (!postId) {
+        if (!isActive) return;
+        setPost(null);
+        setErrorMessage('잘못된 게시글 접근입니다.');
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setErrorMessage(null);
+      try {
+        const rawPost = await getBoardDetailResponse(postId);
+        if (!isActive) return;
+        setPost(toBoardReadVMFromResponse(rawPost));
+      } catch (error) {
+        if (!isActive) return;
+        console.error('Failed to load board post:', error);
+        setPost(null);
+        setErrorMessage('게시글 정보를 불러오지 못했습니다.');
+      } finally {
+        if (!isActive) return;
+        setIsLoading(false);
+      }
     };
     load();
     return () => {
@@ -77,7 +103,7 @@ export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps)
     link.remove();
   };
 
-  if (isLoading || !post) {
+  if (isLoading) {
     return (
       <div className="flex flex-col h-full bg-gray-50">
         <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
@@ -87,6 +113,29 @@ export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps)
         </div>
         <div className="flex-1 flex items-center justify-center text-gray-500">
           데이터를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className="flex flex-col h-full bg-gray-50">
+        <div className="px-6 pt-6 pb-4 bg-white border-b border-gray-200 flex-shrink-0">
+          <h1 className="text-4xl font-medium border-b-2 border-gray-300 pb-2">
+            게시판
+          </h1>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-gray-500">
+          <div>{errorMessage ?? '게시글을 찾을 수 없습니다.'}</div>
+          <Button
+            variant="outline"
+            onClick={() => onNavigate?.('board-list')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft size={16} />
+            목록으로 이동
+          </Button>
         </div>
       </div>
     );

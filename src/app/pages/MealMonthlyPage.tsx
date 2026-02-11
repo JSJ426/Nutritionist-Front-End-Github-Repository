@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { fetchMealPlanMonthly } from '../data/mealplan';
 
@@ -8,11 +9,36 @@ import { toMealMonthlyDataByMonth } from '../viewModels/meal';
 import type { MealMonthlyData } from '../viewModels/meal';
 
 export function MealMonthlyPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const now = new Date();
+  const nextMonthDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
   const initialMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const maxSelectableMonthKey = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, '0')}`;
   const [mealDataByMonth, setMealDataByMonth] = useState<Record<string, MealMonthlyData>>({});
-  const [currentMonth, setCurrentMonth] = useState(initialMonthKey);
+  const queryMonth = searchParams.get('month');
+  const monthPattern = /^\d{4}-\d{2}$/;
+  const clampMonthKey = (monthKey: string) =>
+    monthKey > maxSelectableMonthKey ? maxSelectableMonthKey : monthKey;
+  const initialCurrentMonth =
+    queryMonth && monthPattern.test(queryMonth) ? clampMonthKey(queryMonth) : initialMonthKey;
+  const [currentMonth, setCurrentMonth] = useState(initialCurrentMonth);
   const [defaultMonth, setDefaultMonth] = useState(initialMonthKey);
+
+  const setMonthInQuery = (monthKey: string) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('month', monthKey);
+    setSearchParams(nextParams);
+  };
+
+  useEffect(() => {
+    const nextMonth = searchParams.get('month');
+    if (!nextMonth || !monthPattern.test(nextMonth)) return;
+    const clampedMonth = clampMonthKey(nextMonth);
+    if (clampedMonth !== nextMonth) {
+      setMonthInQuery(clampedMonth);
+    }
+    setCurrentMonth((prev) => (prev === clampedMonth ? prev : clampedMonth));
+  }, [searchParams]);
 
   useEffect(() => {
     let isActive = true;
@@ -23,7 +49,7 @@ export function MealMonthlyPage() {
       const dataByMonth = toMealMonthlyDataByMonth(response);
 
       setMealDataByMonth(dataByMonth);
-      setCurrentMonth(initialMonthKey);
+      setCurrentMonth(initialCurrentMonth);
       setDefaultMonth(initialMonthKey);
     };
 
@@ -55,6 +81,9 @@ export function MealMonthlyPage() {
 
   const moveToMonth = async (target: { key: string; year: number; month: number }) => {
     if (!target.key) return;
+    if (target.key > maxSelectableMonthKey) return;
+    setMonthInQuery(target.key);
+
     if (mealDataByMonth[target.key]) {
       setCurrentMonth(target.key);
       return;
@@ -81,7 +110,7 @@ export function MealMonthlyPage() {
 
   const handleResetMonth = () => {
     if (defaultMonth) {
-      setCurrentMonth(defaultMonth);
+      setMonthInQuery(defaultMonth);
     }
   };
 
@@ -93,6 +122,7 @@ export function MealMonthlyPage() {
       <MealMonthlyCalendar
         mealDataByMonth={mealDataByMonth}
         currentMonth={currentMonth}
+        canGoNextMonth={currentMonth < maxSelectableMonthKey}
         onPrevMonth={handlePrevMonth}
         onNextMonth={handleNextMonth}
         onResetMonth={handleResetMonth}
