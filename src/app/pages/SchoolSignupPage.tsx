@@ -8,6 +8,7 @@ import PrivacyModal from '../components/PrivacyModal';
 import { Footer } from '../components/Footer';
 import { GuestHeader } from '../components/GuestHeader';
 import { validatePasswordPolicy } from '../utils/password';
+import { composePhone, formatLocalNumber, normalizeLocalNumber } from '../utils/phone';
 import { ErrorModal } from '../components/ErrorModal';
 import { useErrorModal } from '../hooks/useErrorModal';
 import { normalizeErrorMessage } from '../utils/errorMessage';
@@ -73,12 +74,6 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const formatLocalNumber = (value: string) => {
-      const digits = value.replace(/\D/g, '').slice(0, 8);
-      if (digits.length <= 4) return digits;
-      return `${digits.slice(0, -4)}-${digits.slice(-4)}`;
-    };
-
     if (formData.password !== formData.confirmPassword) {
       openAlert('비밀번호가 일치하지 않습니다.');
       return;
@@ -114,14 +109,8 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
       ? `${formData.schoolAddress} ${formData.schoolAddressDetail}`.trim()
       : formData.schoolAddress.trim();
 
-    const contactNumberFormatted = formatLocalNumber(contactNumber);
-    const schoolNumberFormatted = formatLocalNumber(schoolNumber);
-    const contactPhone = contactAreaCode
-      ? `${contactAreaCode}-${contactNumberFormatted}`
-      : contactNumberFormatted;
-    const schoolPhone = schoolAreaCode
-      ? `${schoolAreaCode}-${schoolNumberFormatted}`
-      : schoolNumberFormatted;
+    const contactPhone = composePhone(contactAreaCode, contactNumber);
+    const schoolPhone = composePhone(schoolAreaCode, schoolNumber);
 
     const payload = {
       username: formData.username.trim(),
@@ -244,28 +233,24 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
 
   const handleContactAreaCodeChange = (value: string) => {
     setContactAreaCode(value);
-    const combined = contactNumber ? `${value}-${contactNumber}` : value;
-    setFormData((prev) => ({ ...prev, phone: combined }));
+    setFormData((prev) => ({ ...prev, phone: composePhone(value, contactNumber) }));
   };
 
   const handleContactNumberChange = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 8);
+    const digits = normalizeLocalNumber(value);
     setContactNumber(digits);
-    const combined = contactAreaCode ? `${contactAreaCode}-${digits}` : digits;
-    setFormData((prev) => ({ ...prev, phone: combined }));
+    setFormData((prev) => ({ ...prev, phone: composePhone(contactAreaCode, digits) }));
   };
 
   const handleSchoolAreaCodeChange = (value: string) => {
     setSchoolAreaCode(value);
-    const combined = schoolNumber ? `${value}-${schoolNumber}` : value;
-    setFormData((prev) => ({ ...prev, schoolPhone: combined }));
+    setFormData((prev) => ({ ...prev, schoolPhone: composePhone(value, schoolNumber) }));
   };
 
   const handleSchoolNumberChange = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 8);
+    const digits = normalizeLocalNumber(value);
     setSchoolNumber(digits);
-    const combined = schoolAreaCode ? `${schoolAreaCode}-${digits}` : digits;
-    setFormData((prev) => ({ ...prev, schoolPhone: combined }));
+    setFormData((prev) => ({ ...prev, schoolPhone: composePhone(schoolAreaCode, digits) }));
   };
 
   const isSchoolSelected = Boolean(
@@ -407,7 +392,7 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                   </div>
                   <input
                     type="tel"
-                    value={contactNumber}
+                    value={formatLocalNumber(contactNumber)}
                     onChange={(e) => handleContactNumberChange(e.target.value)}
                     placeholder="1234-5678"
                     className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
@@ -741,9 +726,9 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
                   </div>
                   <input
                     type="tel"
-                    value={schoolNumber}
+                    value={formatLocalNumber(schoolNumber)}
                     onChange={(e) => handleSchoolNumberChange(e.target.value)}
-                    placeholder="123-4567"
+                    placeholder="1234-5678"
                     className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00B3A4] focus:border-transparent transition-all"
                     required
                   />

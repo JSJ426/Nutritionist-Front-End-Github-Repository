@@ -7,6 +7,7 @@ import { ErrorModal } from '../components/ErrorModal';
 import { Button } from '../components/ui/button';
 import { useErrorModal } from '../hooks/useErrorModal';
 import { normalizeErrorMessage } from '../utils/errorMessage';
+import { composePhone, formatLocalNumber, normalizeLocalNumber, splitPhone } from '../utils/phone';
 
 interface NutritionistInfoPageProps {
   onNavigate?: (page: string, params?: any) => void;
@@ -17,8 +18,7 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
   const [formState, setFormState] = useState({
     name: '',
     phoneArea: '',
-    phoneMiddle: '',
-    phoneLine: '',
+    phoneNumber: '',
     email: '',
   });
   const [errors, setErrors] = useState<{ name?: string; phone?: string; email?: string }>({});
@@ -32,44 +32,16 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
   const passwordMismatch =
     Boolean(confirmPassword.trim()) && Boolean(newPassword.trim()) && confirmPassword !== newPassword;
 
-  const parsePhoneParts = (phoneRaw: string) => {
-    let phoneArea = '';
-    let phoneMiddle = '';
-    let phoneLine = '';
-
-    if (phoneRaw.includes('-')) {
-      [phoneArea, phoneMiddle, phoneLine] = phoneRaw.split('-');
-    } else {
-      const digitsOnly = phoneRaw.replace(/\D/g, '');
-      if (digitsOnly.startsWith('02') && digitsOnly.length === 10) {
-        phoneArea = digitsOnly.slice(0, 2);
-        phoneMiddle = digitsOnly.slice(2, 6);
-        phoneLine = digitsOnly.slice(6, 10);
-      } else if (digitsOnly.length === 10) {
-        phoneArea = digitsOnly.slice(0, 3);
-        phoneMiddle = digitsOnly.slice(3, 6);
-        phoneLine = digitsOnly.slice(6, 10);
-      } else if (digitsOnly.length === 11) {
-        phoneArea = digitsOnly.slice(0, 3);
-        phoneMiddle = digitsOnly.slice(3, 7);
-        phoneLine = digitsOnly.slice(7, 11);
-      }
-    }
-
-    return { phoneArea, phoneMiddle, phoneLine };
-  };
-
   useEffect(() => {
     const loadProfile = async () => {
       try {
         const response = await getNutritionistProfile();
-        const { phoneArea, phoneMiddle, phoneLine } = parsePhoneParts(response.phone ?? '');
+        const { areaCode, localNumber } = splitPhone(response.phone ?? '');
 
         setFormState({
           name: response.name ?? '',
-          phoneArea: phoneArea ?? '',
-          phoneMiddle: phoneMiddle ?? '',
-          phoneLine: phoneLine ?? '',
+          phoneArea: areaCode ?? '',
+          phoneNumber: localNumber ?? '',
           email: response.email ?? '',
         });
       } catch {
@@ -83,8 +55,7 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
     const nextErrors: { name?: string; phone?: string; email?: string } = {};
     const trimmedName = formState.name.trim();
     const trimmedArea = formState.phoneArea.trim();
-    const trimmedMiddle = formState.phoneMiddle.trim();
-    const trimmedLine = formState.phoneLine.trim();
+    const trimmedNumber = formState.phoneNumber.trim();
     const trimmedEmail = formState.email.trim();
     const allDigits = /^[0-9]+$/;
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -99,17 +70,14 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
       nextErrors.email = '이메일 형식을 확인해주세요.';
     }
 
-    if (!trimmedArea || !trimmedMiddle || !trimmedLine) {
+    if (!trimmedArea || !trimmedNumber) {
       nextErrors.phone = '영양사 전화번호를 입력해주세요.';
     } else if (
       !allDigits.test(trimmedArea) ||
-      !allDigits.test(trimmedMiddle) ||
-      !allDigits.test(trimmedLine) ||
+      !allDigits.test(trimmedNumber) ||
       trimmedArea.length < 2 ||
       trimmedArea.length > 4 ||
-      trimmedMiddle.length < 3 ||
-      trimmedMiddle.length > 4 ||
-      trimmedLine.length !== 4
+      trimmedNumber.length > 8
     ) {
       nextErrors.phone = '전화번호 형식을 확인해주세요.';
     }
@@ -149,16 +117,14 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
 
     const trimmedName = formState.name.trim();
     const trimmedArea = formState.phoneArea.trim();
-    const trimmedMiddle = formState.phoneMiddle.trim();
-    const trimmedLine = formState.phoneLine.trim();
+    const trimmedNumber = normalizeLocalNumber(formState.phoneNumber);
     const trimmedEmail = formState.email.trim();
-    const phone = `${trimmedArea}-${trimmedMiddle}-${trimmedLine}`;
+    const phone = composePhone(trimmedArea, trimmedNumber);
 
     setFormState({
       name: trimmedName,
       phoneArea: trimmedArea,
-      phoneMiddle: trimmedMiddle,
-      phoneLine: trimmedLine,
+      phoneNumber: trimmedNumber,
       email: trimmedEmail,
     });
 
@@ -169,12 +135,11 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
         phone,
         email: trimmedEmail,
       });
-      const nextPhone = parsePhoneParts(response.phone ?? phone);
+      const nextPhone = splitPhone(response.phone ?? phone);
       setFormState({
         name: response.name ?? trimmedName,
-        phoneArea: nextPhone.phoneArea,
-        phoneMiddle: nextPhone.phoneMiddle,
-        phoneLine: nextPhone.phoneLine,
+        phoneArea: nextPhone.areaCode,
+        phoneNumber: nextPhone.localNumber,
         email: response.email ?? trimmedEmail,
       });
       openAlert('저장되었습니다.', { title: '안내' });
@@ -267,7 +232,9 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
                         setFormState((prev) => ({ ...prev, phoneArea: event.target.value }))
                       }
                       className="w-full sm:w-32 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
+                      required
                     >
+                      <option value="">지역번호</option>
                       <option value="02">02</option>
                       <option value="031">031</option>
                       <option value="032">032</option>
@@ -291,24 +258,20 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
                       <option value="017">017</option>
                       <option value="018">018</option>
                       <option value="019">019</option>
+                      <option value="070">070</option>
                     </select>
                     <input
                       type="tel"
-                      value={formState.phoneMiddle}
+                      value={formatLocalNumber(formState.phoneNumber)}
                       onChange={(event) =>
-                        setFormState((prev) => ({ ...prev, phoneMiddle: event.target.value }))
+                        setFormState((prev) => ({
+                          ...prev,
+                          phoneNumber: normalizeLocalNumber(event.target.value),
+                        }))
                       }
                       className="w-full sm:flex-1 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
-                      placeholder="국번"
-                    />
-                    <input
-                      type="tel"
-                      value={formState.phoneLine}
-                      onChange={(event) =>
-                        setFormState((prev) => ({ ...prev, phoneLine: event.target.value }))
-                      }
-                      className="w-full sm:flex-1 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
-                      placeholder="개인번호"
+                      placeholder="1234-5678"
+                      required
                     />
                   </div>
                   {errors.phone && <p className="text-sm text-red-500 mt-2">{errors.phone}</p>}
@@ -371,7 +334,7 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
                 새 비밀번호
               </label>
               <p className="text-xs text-gray-500 mb-2">
-                영문/숫자/특수문자 중 2종 이상 포함. 2종 10~16자, 3종 8~16자 ( ) &lt; &gt; " ' ; 사용 불가.
+                영문/숫자/특수문자 포함. 8자 이상. ( ) &lt; &gt; " ' ; 사용 불가.
               </p>
               <input
                 type="password"

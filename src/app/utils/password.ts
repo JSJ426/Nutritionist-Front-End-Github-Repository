@@ -24,22 +24,17 @@ export const validatePasswordPolicy = (value: string): PasswordValidationResult 
   const hasDigit = DIGITS.test(value);
   const hasSpecial = SPECIALS.test(value);
 
-  const typeCount = [hasLetter, hasDigit, hasSpecial].filter(Boolean).length;
-  if (typeCount < 2) {
+  if (!hasLetter || !hasDigit || !hasSpecial) {
     return {
       isValid: false,
-      message: '영문/숫자/특수문자 중 2종류 이상을 포함해야 합니다.',
+      message: '영문/숫자/특수문자를 모두 포함해야 합니다.',
     };
   }
 
-  const minLength = typeCount === 3 ? 8 : 10;
-  if (value.length < minLength || value.length > 16) {
+  if (value.length < 8) {
     return {
       isValid: false,
-      message:
-        typeCount === 3
-          ? '영문/숫자/특수문자 3종류 포함 시 8~16자로 입력해주세요.'
-          : '영문/숫자/특수문자 2종류 포함 시 10~16자로 입력해주세요.',
+      message: '비밀번호는 8자 이상이어야 합니다.',
     };
   }
 

@@ -8,6 +8,7 @@ import { ErrorModal } from '../components/ErrorModal';
 import { Button } from '../components/ui/button';
 import { useErrorModal } from '../hooks/useErrorModal';
 import { normalizeErrorMessage } from '../utils/errorMessage';
+import { composePhone, formatLocalNumber, normalizeLocalNumber, splitPhone } from '../utils/phone';
 
 interface InstitutionInfoEditPageProps {
   onNavigate?: (page: string, params?: any) => void;
@@ -38,6 +39,8 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
     address: '',
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [schoolAreaCode, setSchoolAreaCode] = useState('');
+  const [schoolNumber, setSchoolNumber] = useState('');
 
   const [schoolSearchQuery, setSchoolSearchQuery] = useState('');
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false);
@@ -85,13 +88,14 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
     const applySchoolResponse = (response: Awaited<ReturnType<typeof getSchoolResponse>>) => {
       if (response?.status !== 'success') return;
       const { primary, secondary } = mapSchoolTypeToForm(response.data.school_type ?? '');
+      const parsedPhone = splitPhone(response.data.phone ?? '');
       setForm({
         schoolName: response.data.school_name ?? '',
         schoolTypePrimary: primary,
         schoolTypeSecondary: secondary,
         schoolAddress: response.data.address ?? '',
         schoolAddressDetail: '',
-        schoolPhone: response.data.phone ?? '',
+        schoolPhone: composePhone(parsedPhone.areaCode, parsedPhone.localNumber),
         email: response.data.email ?? '',
         studentCount: String(response.data.student_count ?? ''),
         mealPriceTarget: String(response.data.target_unit_price ?? ''),
@@ -100,6 +104,8 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
         equipmentDetails: response.data.kitchen_equipment ?? '',
         rulesText: response.data.operation_rules ?? '',
       });
+      setSchoolAreaCode(parsedPhone.areaCode);
+      setSchoolNumber(parsedPhone.localNumber);
       setSchoolMeta({
         regionCode: response.data.region_code ?? '',
         schoolCode: response.data.school_code ?? '',
@@ -233,6 +239,17 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
     setForm((prev) => ({ ...prev, schoolTypeSecondary: event.target.value }));
   };
 
+  const handleSchoolAreaCodeChange = (value: string) => {
+    setSchoolAreaCode(value);
+    setForm((prev) => ({ ...prev, schoolPhone: composePhone(value, schoolNumber) }));
+  };
+
+  const handleSchoolNumberChange = (value: string) => {
+    const digits = normalizeLocalNumber(value);
+    setSchoolNumber(digits);
+    setForm((prev) => ({ ...prev, schoolPhone: composePhone(schoolAreaCode, digits) }));
+  };
+
   const handleSave = async () => {
     if (!form.schoolName.trim()) {
       openAlert('학교 이름을 입력해주세요.');
@@ -250,11 +267,11 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
       openAlert('학교 구분을 정확히 선택해주세요.');
       return;
     }
-    if (!form.schoolPhone.trim()) {
+    if (!schoolAreaCode || !schoolNumber.trim()) {
       openAlert('대표 전화번호를 입력해주세요.');
       return;
     }
-    const phone = form.schoolPhone.trim();
+    const phone = composePhone(schoolAreaCode, schoolNumber).trim();
     const schoolAddress = form.schoolAddressDetail
       ? `${form.schoolAddress} ${form.schoolAddressDetail}`.trim()
       : form.schoolAddress.trim();
@@ -280,13 +297,14 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
       const refreshed = await getSchoolResponse();
       if (refreshed?.status === 'success') {
         const { primary, secondary } = mapSchoolTypeToForm(refreshed.data.school_type ?? '');
+        const parsedPhone = splitPhone(refreshed.data.phone ?? phone);
         setForm({
           schoolName: refreshed.data.school_name ?? '',
           schoolTypePrimary: primary,
           schoolTypeSecondary: secondary,
           schoolAddress: refreshed.data.address ?? '',
           schoolAddressDetail: '',
-          schoolPhone: refreshed.data.phone ?? '',
+          schoolPhone: composePhone(parsedPhone.areaCode, parsedPhone.localNumber),
           email: refreshed.data.email ?? '',
           studentCount: String(refreshed.data.student_count ?? ''),
           mealPriceTarget: String(refreshed.data.target_unit_price ?? ''),
@@ -295,6 +313,8 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
           equipmentDetails: refreshed.data.kitchen_equipment ?? '',
           rulesText: refreshed.data.operation_rules ?? '',
         });
+        setSchoolAreaCode(parsedPhone.areaCode);
+        setSchoolNumber(parsedPhone.localNumber);
         setSchoolMeta({
           regionCode: refreshed.data.region_code ?? '',
           schoolCode: refreshed.data.school_code ?? '',
@@ -548,13 +568,47 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
                   <Phone size={16} />
                   대표 전화번호
                 </label>
-                <input
-                  type="tel"
-                  value={form.schoolPhone}
-                  onChange={handleFieldChange('schoolPhone')}
-                  placeholder="051-000-0000"
-                  className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
-                />
+                <div className="flex gap-3">
+                  <div className="relative w-36">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <Phone className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      value={schoolAreaCode}
+                      onChange={(event) => handleSchoolAreaCodeChange(event.target.value)}
+                      className="w-full pl-12 pr-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4] bg-white"
+                      required
+                    >
+                      <option value="">지역번호</option>
+                      <option value="02">02</option>
+                      <option value="031">031</option>
+                      <option value="032">032</option>
+                      <option value="033">033</option>
+                      <option value="041">041</option>
+                      <option value="042">042</option>
+                      <option value="043">043</option>
+                      <option value="044">044</option>
+                      <option value="051">051</option>
+                      <option value="052">052</option>
+                      <option value="053">053</option>
+                      <option value="054">054</option>
+                      <option value="055">055</option>
+                      <option value="061">061</option>
+                      <option value="062">062</option>
+                      <option value="063">063</option>
+                      <option value="064">064</option>
+                      <option value="070">070</option>
+                    </select>
+                  </div>
+                  <input
+                    type="tel"
+                    value={formatLocalNumber(schoolNumber)}
+                    onChange={(event) => handleSchoolNumberChange(event.target.value)}
+                    placeholder="1234-5678"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-[#5dccb4]"
+                    required
+                  />
+                </div>
               </div>
 
               {/* Email */}
