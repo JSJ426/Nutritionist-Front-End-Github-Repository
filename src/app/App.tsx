@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
@@ -79,6 +79,58 @@ const PATH_TO_PAGE = Object.entries(PAGE_PATHS).reduce<Record<string, PageKey>>(
   return acc;
 }, {});
 
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const MONTH_PATTERN = /^\d{4}-\d{2}$/;
+const YEAR_PATTERN = /^\d{4}$/;
+
+const BOARD_CATEGORIES = new Set(['전체', '공지', '건의', '신메뉴', '기타의견']);
+const MEAL_HISTORY_ACTION_TYPES = new Set(['전체', '수정', '수정 (AI대체)']);
+const FOOD_SORTS = new Set(['name-asc', 'name-desc', 'calories-asc', 'calories-desc']);
+const ADDITIONAL_MENU_SORTS = new Set([
+  'date-asc',
+  'date-desc',
+  'title-asc',
+  'title-desc',
+  'calories-asc',
+  'calories-desc',
+]);
+
+function sanitizeNonEmptyString(value: string | null): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function sanitizePositiveInt(value: string | null): number | undefined {
+  if (!value) return undefined;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) return undefined;
+  return parsed;
+}
+
+function sanitizeDate(value: string | null): string | undefined {
+  if (!value || !DATE_PATTERN.test(value)) return undefined;
+  return value;
+}
+
+function sanitizeMonth(value: string | null): string | undefined {
+  if (!value || !MONTH_PATTERN.test(value)) return undefined;
+  const month = Number(value.slice(5, 7));
+  if (!Number.isInteger(month) || month < 1 || month > 12) return undefined;
+  return value;
+}
+
+function sanitizeSearchForPage(page: PageKey, search: string): string {
+  const codec = PAGE_QUERY_CODECS[page];
+  if (!codec) return search;
+
+  const decoded = codec.decode(new URLSearchParams(search));
+  const sanitizedParams = new URLSearchParams();
+  codec.encode(decoded, sanitizedParams);
+  const nextQuery = sanitizedParams.toString();
+  return nextQuery ? `?${nextQuery}` : '';
+}
+
 function parseLegacyData(searchParams: URLSearchParams): any {
   const encoded = searchParams.get('data');
   if (!encoded) return null;
@@ -98,108 +150,202 @@ const PAGE_QUERY_CODECS: Partial<
     }
   >
 > = {
-  'meal-edit': {
-    decode: (searchParams) => ({
-      date: searchParams.get('date') ?? undefined,
-    }),
+  'food-list': {
+    decode: (searchParams) => {
+      const category = sanitizeNonEmptyString(searchParams.get('category'));
+      const sortRaw = searchParams.get('sort');
+      const sort = sortRaw && FOOD_SORTS.has(sortRaw) ? sortRaw : undefined;
+      const page = sanitizePositiveInt(searchParams.get('page'));
+      return { category, sort, page };
+    },
     encode: (params, searchParams) => {
-      if (typeof params?.date === 'string' && params.date) {
+      if (params?.category && typeof params.category === 'string') {
+        searchParams.set('category', params.category);
+      }
+      if (params?.sort && typeof params.sort === 'string' && FOOD_SORTS.has(params.sort)) {
+        searchParams.set('sort', params.sort);
+      }
+      if (typeof params?.page === 'number' && params.page > 1) {
+        searchParams.set('page', String(params.page));
+      }
+    },
+  },
+  'meal-edit': {
+    decode: (searchParams) => ({ date: sanitizeDate(searchParams.get('date')) }),
+    encode: (params, searchParams) => {
+      if (typeof params?.date === 'string' && DATE_PATTERN.test(params.date)) {
         searchParams.set('date', params.date);
       }
     },
   },
-  'food-info': {
-    decode: (searchParams) => ({
-      foodId: searchParams.get('foodId') ?? undefined,
-    }),
+  'meal-history': {
+    decode: (searchParams) => {
+      const actionTypeRaw = searchParams.get('actionType');
+      const actionType =
+        actionTypeRaw && MEAL_HISTORY_ACTION_TYPES.has(actionTypeRaw) ? actionTypeRaw : undefined;
+      const startDate = sanitizeDate(searchParams.get('startDate'));
+      const endDate = sanitizeDate(searchParams.get('endDate'));
+      const page = sanitizePositiveInt(searchParams.get('page'));
+      return { actionType, startDate, endDate, page };
+    },
     encode: (params, searchParams) => {
-      if (params?.foodId !== undefined && params?.foodId !== null) {
+      if (
+        params?.actionType &&
+        typeof params.actionType === 'string' &&
+        MEAL_HISTORY_ACTION_TYPES.has(params.actionType)
+      ) {
+        searchParams.set('actionType', params.actionType);
+      }
+      if (typeof params?.startDate === 'string' && DATE_PATTERN.test(params.startDate)) {
+        searchParams.set('startDate', params.startDate);
+      }
+      if (typeof params?.endDate === 'string' && DATE_PATTERN.test(params.endDate)) {
+        searchParams.set('endDate', params.endDate);
+      }
+      if (typeof params?.page === 'number' && params.page > 1) {
+        searchParams.set('page', String(params.page));
+      }
+    },
+  },
+  'meal-monthly': {
+    decode: (searchParams) => ({ month: sanitizeMonth(searchParams.get('month')) }),
+    encode: (params, searchParams) => {
+      if (typeof params?.month === 'string' && sanitizeMonth(params.month)) {
+        searchParams.set('month', params.month);
+      }
+    },
+  },
+  'operation-record': {
+    decode: (searchParams) => ({ month: sanitizeMonth(searchParams.get('month')) }),
+    encode: (params, searchParams) => {
+      if (typeof params?.month === 'string' && sanitizeMonth(params.month)) {
+        searchParams.set('month', params.month);
+      }
+    },
+  },
+  'food-info': {
+    decode: (searchParams) => ({ foodId: sanitizeNonEmptyString(searchParams.get('foodId')) }),
+    encode: (params, searchParams) => {
+      if (params?.foodId !== undefined && params?.foodId !== null && String(params.foodId).trim()) {
         searchParams.set('foodId', String(params.foodId));
       }
     },
   },
   'additional-menu-list': {
-    decode: (searchParams) => ({
-      deletedId: searchParams.get('deletedId') ?? undefined,
-    }),
+    decode: (searchParams) => {
+      const deletedId = sanitizeNonEmptyString(searchParams.get('deletedId'));
+      const category = sanitizeNonEmptyString(searchParams.get('category'));
+      const sortRaw = searchParams.get('sort');
+      const sort = sortRaw && ADDITIONAL_MENU_SORTS.has(sortRaw) ? sortRaw : undefined;
+      const page = sanitizePositiveInt(searchParams.get('page'));
+      return { deletedId, category, sort, page };
+    },
     encode: (params, searchParams) => {
-      if (params?.deletedId !== undefined && params?.deletedId !== null) {
+      if (params?.deletedId !== undefined && params?.deletedId !== null && String(params.deletedId).trim()) {
         searchParams.set('deletedId', String(params.deletedId));
+      }
+      if (params?.category && typeof params.category === 'string') {
+        searchParams.set('category', params.category);
+      }
+      if (params?.sort && typeof params.sort === 'string' && ADDITIONAL_MENU_SORTS.has(params.sort)) {
+        searchParams.set('sort', params.sort);
+      }
+      if (typeof params?.page === 'number' && params.page > 1) {
+        searchParams.set('page', String(params.page));
       }
     },
   },
   'additional-menu-read': {
-    decode: (searchParams) => ({
-      menuId: searchParams.get('menuId') ?? undefined,
-    }),
+    decode: (searchParams) => ({ menuId: sanitizeNonEmptyString(searchParams.get('menuId')) }),
     encode: (params, searchParams) => {
-      if (params?.menuId !== undefined && params?.menuId !== null) {
+      if (params?.menuId !== undefined && params?.menuId !== null && String(params.menuId).trim()) {
         searchParams.set('menuId', String(params.menuId));
       }
     },
   },
   'additional-menu-edit': {
-    decode: (searchParams) => ({
-      menuId: searchParams.get('menuId') ?? undefined,
-    }),
+    decode: (searchParams) => ({ menuId: sanitizeNonEmptyString(searchParams.get('menuId')) }),
     encode: (params, searchParams) => {
-      if (params?.menuId !== undefined && params?.menuId !== null) {
+      if (params?.menuId !== undefined && params?.menuId !== null && String(params.menuId).trim()) {
         searchParams.set('menuId', String(params.menuId));
       }
     },
   },
   'board-list': {
-    decode: (searchParams) => ({
-      refresh: searchParams.get('refresh') === '1',
-      deletedId: searchParams.get('deletedId') ?? undefined,
-    }),
+    decode: (searchParams) => {
+      const refresh = searchParams.get('refresh') === '1' ? true : undefined;
+      const deletedId = sanitizePositiveInt(searchParams.get('deletedId'));
+      const q = sanitizeNonEmptyString(searchParams.get('q'));
+      const categoryRaw = searchParams.get('category');
+      const category = categoryRaw && BOARD_CATEGORIES.has(categoryRaw) ? categoryRaw : undefined;
+      const page = sanitizePositiveInt(searchParams.get('page'));
+      return { refresh, deletedId, q, category, page };
+    },
     encode: (params, searchParams) => {
       if (params?.refresh) {
         searchParams.set('refresh', '1');
       }
-      if (params?.deletedId !== undefined && params?.deletedId !== null) {
+      if (typeof params?.deletedId === 'number' && params.deletedId > 0) {
         searchParams.set('deletedId', String(params.deletedId));
+      }
+      if (params?.q && typeof params.q === 'string') {
+        searchParams.set('q', params.q);
+      }
+      if (params?.category && typeof params.category === 'string' && BOARD_CATEGORIES.has(params.category)) {
+        searchParams.set('category', params.category);
+      }
+      if (typeof params?.page === 'number' && params.page > 1) {
+        searchParams.set('page', String(params.page));
       }
     },
   },
   'board-read': {
     decode: (searchParams) => {
-      const rawPostId = searchParams.get('postId');
-      const postId = rawPostId ? Number(rawPostId) : undefined;
-      return {
-        postId: Number.isFinite(postId) ? postId : undefined,
-      };
+      const postId = sanitizePositiveInt(searchParams.get('postId'));
+      return { postId };
     },
     encode: (params, searchParams) => {
-      if (params?.postId !== undefined && params?.postId !== null) {
+      if (typeof params?.postId === 'number' && params.postId > 0) {
         searchParams.set('postId', String(params.postId));
       }
     },
   },
   'board-edit': {
     decode: (searchParams) => {
-      const rawPostId = searchParams.get('postId');
-      const postId = rawPostId ? Number(rawPostId) : undefined;
+      const postId = sanitizePositiveInt(searchParams.get('postId'));
+      return { postId };
+    },
+    encode: (params, searchParams) => {
+      if (typeof params?.postId === 'number' && params.postId > 0) {
+        searchParams.set('postId', String(params.postId));
+      }
+    },
+  },
+  'operation-report-list': {
+    decode: (searchParams) => {
+      const year = searchParams.get('year');
+      const page = sanitizePositiveInt(searchParams.get('page'));
       return {
-        postId: Number.isFinite(postId) ? postId : undefined,
+        year: year && YEAR_PATTERN.test(year) ? year : undefined,
+        page,
       };
     },
     encode: (params, searchParams) => {
-      if (params?.postId !== undefined && params?.postId !== null) {
-        searchParams.set('postId', String(params.postId));
+      if (typeof params?.year === 'string' && YEAR_PATTERN.test(params.year)) {
+        searchParams.set('year', params.year);
+      }
+      if (typeof params?.page === 'number' && params.page > 1) {
+        searchParams.set('page', String(params.page));
       }
     },
   },
   'operation-report-read': {
     decode: (searchParams) => {
-      const rawId = searchParams.get('id');
-      const id = rawId ? Number(rawId) : undefined;
-      return {
-        id: Number.isFinite(id) ? id : undefined,
-      };
+      const id = sanitizePositiveInt(searchParams.get('id'));
+      return { id };
     },
     encode: (params, searchParams) => {
-      if (params?.id !== undefined && params?.id !== null) {
+      if (typeof params?.id === 'number' && params.id > 0) {
         searchParams.set('id', String(params.id));
       }
     },
@@ -214,7 +360,7 @@ function decodeNavigationParams(page: PageKey, search: string, state: unknown): 
     typeof state === 'object' && state !== null ? (state as Record<string, unknown>) : null;
 
   if (queryDecoded && typeof queryDecoded === 'object') {
-    return { ...(legacyData ?? {}), ...(stateParams ?? {}), ...queryDecoded };
+    return { ...(stateParams ?? {}), ...queryDecoded };
   }
   if (legacyData) return legacyData;
   return state ?? null;
@@ -277,6 +423,13 @@ export default function App() {
     () => decodeNavigationParams(currentPage, location.search, location.state),
     [currentPage, location.search, location.state]
   );
+
+  useEffect(() => {
+    const sanitizedSearch = sanitizeSearchForPage(currentPage, location.search);
+    if (sanitizedSearch !== location.search) {
+      navigate(`${location.pathname}${sanitizedSearch}`, { replace: true, state: location.state });
+    }
+  }, [currentPage, location.pathname, location.search, location.state, navigate]);
 
   const navigateTo = (page: string, params?: any, replace = false) => {
     const targetPage =
