@@ -226,15 +226,16 @@ export function MealEditModal({
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3 flex-shrink-0">
           <Button
-            variant="outline"
+            variant="cancel"
             onClick={onClose}
             className="px-6"
           >
             취소
           </Button>
           <Button
+            variant="brand"
             onClick={handleSaveClick}
-            className="px-6 bg-[#5dccb4] hover:bg-[#4dbba3] text-white"
+            className="px-6"
           >
             적용
           </Button>

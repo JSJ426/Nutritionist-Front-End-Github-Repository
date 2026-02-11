@@ -4,6 +4,7 @@ import { KeyRound, Lock, Mail, Phone, User } from 'lucide-react';
 import { getNutritionistProfile, patchNutritionistMe, putNutritionistPassword } from '../data/nutritionist';
 import { validatePasswordPolicy } from '../utils/password';
 import { ErrorModal } from '../components/ErrorModal';
+import { Button } from '../components/ui/button';
 import { useErrorModal } from '../hooks/useErrorModal';
 import { normalizeErrorMessage } from '../utils/errorMessage';
 
@@ -334,13 +335,14 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
             </div>
           </div>
           <div className="flex gap-3 justify-end mt-8">
-            <button
+            <Button
+              variant="brand"
               onClick={handleSave}
-              className="px-6 py-2 bg-[#5dccb4] text-white rounded hover:bg-[#4dbba3] disabled:opacity-60 disabled:cursor-not-allowed"
+              className="px-6 py-2 h-auto disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={isSaving}
             >
               {isSaving ? '저장 중...' : '저장'}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -410,13 +412,14 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
             </div>
           </div>
           <div className="flex gap-3 justify-end mt-8">
-            <button
+            <Button
+              variant="brand"
               onClick={handlePasswordChange}
-              className="px-6 py-2 bg-[#5dccb4] text-white rounded hover:bg-[#4dbba3] disabled:opacity-60 disabled:cursor-not-allowed"
+              className="px-6 py-2 h-auto disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={isPasswordSaving}
             >
               {isPasswordSaving ? '변경 중...' : '비밀번호 변경'}
-            </button>
+            </Button>
           </div>
         </div>
 

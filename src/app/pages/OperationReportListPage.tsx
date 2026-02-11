@@ -252,9 +252,9 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
               </div>
               <div className="flex-1"></div>
               <Button
+                variant="brand"
                 onClick={handleGenerateMonthlyReport}
                 disabled={isGenerating}
-                className="bg-[#5dccb4] hover:bg-[#4db9a3] text-white"
               >
                 월간 운영 보고서 생성
               </Button>
@@ -305,8 +305,9 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
                           </Button>
                           <Button
                             size="lg"
+                            variant="brand"
                             onClick={() => handleDownload(reports[index])}
-                            className="bg-[#5dccb4] hover:bg-[#4db9a3] text-white flex items-center gap-1"
+                            className="flex items-center gap-1"
                           >
                             <Download size={32} />
                             다운로드

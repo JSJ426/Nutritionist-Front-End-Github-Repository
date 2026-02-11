@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Building2, Phone, Mail, Users, FileText, Warehouse } from 'lucide-react';
 
 import { getSchoolResponse } from '../data/school';
+import { Button } from '../components/ui/button';
 
 interface InstitutionInfoPageProps {
   onNavigate?: (page: string, params?: any) => void;
@@ -70,12 +71,13 @@ export function InstitutionInfoPage({ onNavigate }: InstitutionInfoPageProps) {
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-medium border-b-2 border-gray-300 pb-2">학교 정보</h1>
-        <button
+        <Button
+          variant="brand"
           onClick={() => onNavigate?.('institution-info-edit')}
-          className="px-6 py-2 bg-[#5dccb4] text-white rounded hover:bg-[#4dbba3]"
+          className="px-6 py-2 h-auto"
         >
           정보 수정
-        </button>
+        </Button>
       </div>
 
       <div className="border-b border-gray-300 mb-6">

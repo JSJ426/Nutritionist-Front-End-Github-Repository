@@ -164,17 +164,18 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
 
         {/* Footer */}
         <div className="h-[72px] border-t border-gray-200 bg-white px-6 flex items-center justify-end gap-3">
-          <button
+          <Button
             onClick={handleGenerate}
             disabled={isLoading}
-            className="px-6 py-2 bg-[#5dccb4] text-white rounded hover:bg-[#4fb9a3] disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+            variant="brand"
+            className="px-6 py-2 h-auto inline-flex items-center gap-2"
           >
             {isLoading
               ? "식단표 생성 중"
               : hasGenerated
                 ? "식단표 재생성"
                 : "식단표 생성"}
-          </button>
+          </Button>
           {/* <button
             onClick={handleCancel}
             className="px-6 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"

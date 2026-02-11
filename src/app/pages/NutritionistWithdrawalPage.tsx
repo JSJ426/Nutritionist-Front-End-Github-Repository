@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 
 import { useAuth } from '../auth/AuthContext';
 import { withdrawDietitian } from '../data/auth';
+import { Button } from '../components/ui/button';
 
 interface NutritionistWithdrawalPageProps {
   onNavigate?: (page: string, params?: any) => void;
@@ -116,13 +117,14 @@ export function NutritionistWithdrawalPage({ onNavigate }: NutritionistWithdrawa
           {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
 
           <div className="flex gap-3 justify-end pt-2">
-            <button
+            <Button
+              variant="cancel"
               onClick={() => onNavigate?.('nutritionist-info')}
-              className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50"
+              className="px-6 py-2 h-auto"
               disabled={isSubmitting}
             >
               취소
-            </button>
+            </Button>
             <button
               onClick={handleWithdraw}
               className="px-6 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-60 disabled:cursor-not-allowed"

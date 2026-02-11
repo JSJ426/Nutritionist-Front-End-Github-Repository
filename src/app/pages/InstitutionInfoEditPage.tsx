@@ -5,6 +5,7 @@ import { getSchoolResponse, patchSchoolMe, searchSchools } from '../data/school'
 import type { SchoolSearchItem } from '../viewModels/school';
 import { useAuth } from '../auth/AuthContext';
 import { ErrorModal } from '../components/ErrorModal';
+import { Button } from '../components/ui/button';
 import { useErrorModal } from '../hooks/useErrorModal';
 import { normalizeErrorMessage } from '../utils/errorMessage';
 
@@ -633,16 +634,17 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
             </div>
 
             <div className="flex gap-3 justify-end mt-8">
-              <button className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50">
+              <Button variant="cancel" className="px-6 py-2 h-auto">
                 취소
-              </button>
-              <button
-                className="px-6 py-2 bg-[#5dccb4] text-white rounded hover:bg-[#4dbba3] disabled:opacity-60 disabled:cursor-not-allowed"
+              </Button>
+              <Button
+                variant="brand"
+                className="px-6 py-2 h-auto disabled:opacity-60 disabled:cursor-not-allowed"
                 onClick={handleSave}
                 disabled={isSaving}
               >
                 {isSaving ? '저장 중...' : '저장'}
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -668,16 +670,17 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
             </div>
 
             <div className="flex gap-3 justify-end mt-8">
-              <button className="px-6 py-2 border border-gray-300 rounded hover:bg-gray-50">
+              <Button variant="cancel" className="px-6 py-2 h-auto">
                 취소
-              </button>
-              <button
-                className="px-6 py-2 bg-[#5dccb4] text-white rounded hover:bg-[#4dbba3] disabled:opacity-60 disabled:cursor-not-allowed"
+              </Button>
+              <Button
+                variant="brand"
+                className="px-6 py-2 h-auto disabled:opacity-60 disabled:cursor-not-allowed"
                 onClick={handleSave}
                 disabled={isSaving}
               >
                 {isSaving ? '저장 중...' : '저장'}
-              </button>
+              </Button>
             </div>
           </div>
         )}

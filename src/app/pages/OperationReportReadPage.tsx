@@ -86,7 +86,8 @@ export function OperationReportReadPage({ initialParams, onNavigate }: Operation
               목록으로
             </Button>
             <Button
-              className="bg-[#5dccb4] hover:bg-[#4db9a3] text-white flex items-center gap-2"
+              variant="brand"
+              className="flex items-center gap-2"
               disabled={!hasPdf}
               onClick={() => {
                 if (!pdfUrl) {

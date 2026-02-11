@@ -90,10 +90,10 @@ export function OperationRecordModal({
         </div>
 
         <div className="flex justify-end gap-2 mt-6">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="cancel" onClick={onClose}>
             취소
           </Button>
-          <Button className="bg-[#5dccb4] hover:bg-[#4dbba3] text-white" onClick={onSave}>
+          <Button variant="brand" onClick={onSave}>
             {hasRecord ? '수정' : '입력'}
           </Button>
         </div>

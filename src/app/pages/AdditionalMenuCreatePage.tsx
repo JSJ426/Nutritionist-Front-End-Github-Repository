@@ -381,12 +381,12 @@ export function AdditionalMenuCreatePage({ onNavigate }: AdditionalMenuCreatePag
               </div> */}
 
               <div className="flex justify-end gap-3 pt-4">
-                <Button variant="outline" onClick={handleCancel}>
+                <Button variant="cancel" onClick={handleCancel}>
                   취소
                 </Button>
                 <Button
+                  variant="brand"
                   onClick={handleSubmit}
-                  className="bg-[#5dccb4] hover:bg-[#4db9a3] text-white"
                 >
                   확인
                 </Button>

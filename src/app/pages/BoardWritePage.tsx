@@ -257,15 +257,15 @@ export function BoardWritePage({ onNavigate }: BoardWritePageProps) {
               {/* 버튼 영역 */}
               <div className="flex justify-end gap-3 pt-4">
                 <Button
-                  variant="outline"
+                  variant="cancel"
                   onClick={handleCancel}
                   disabled={isUploading}
                 >
                   취소
                 </Button>
                 <Button
+                  variant="brand"
                   onClick={handleSubmit}
-                  className="bg-[#5dccb4] hover:bg-[#4db9a3] text-white"
                   disabled={isUploading}
                 >
                   {isUploading ? '업로드 중...' : '등록'}

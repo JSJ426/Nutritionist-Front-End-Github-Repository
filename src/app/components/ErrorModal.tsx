@@ -55,7 +55,9 @@ export function ErrorModal({
           {onCancel ? (
             <AlertDialogCancel onClick={handleCancel}>{cancelLabel}</AlertDialogCancel>
           ) : null}
-          <AlertDialogAction onClick={handleConfirm}>{actionLabel}</AlertDialogAction>
+          <AlertDialogAction variant="brand" onClick={handleConfirm}>
+            {actionLabel}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

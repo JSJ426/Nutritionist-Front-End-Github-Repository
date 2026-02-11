@@ -108,8 +108,8 @@ export function AdditionalMenuListPage({ initialParams, onNavigate }: Additional
             신메뉴
           </h1>
           <Button
+            variant="brand"
             onClick={() => onNavigate?.('additional-menu-write')}
-            className="bg-[#5dccb4] hover:bg-[#4db9a3] text-white"
           >
             <Plus size={16} className="mr-2" />
             메뉴 생성

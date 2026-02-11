@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { fetchMealPlanHistories } from '../data/mealplan';
 import { Pagination } from '../components/Pagination';
+import { Button } from '../components/ui/button';
 
 import { toMealHistoryVM } from '../viewModels/meal';
 import type { MealHistoryItemVM } from '../viewModels/meal';
@@ -128,12 +129,13 @@ export function MealHistoryPage() {
             </select>
           </div>
           <div className="flex items-end">
-            <button 
-              className="px-6 py-2 bg-[#5dccb4] text-white rounded hover:bg-[#4dbba3]"
+            <Button
+              variant="brand"
+              className="px-6 py-2 h-auto"
               onClick={handleSearch}
             >
               조회
-            </button>
+            </Button>
           </div>
         </div>
 

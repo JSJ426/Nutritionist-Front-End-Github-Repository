@@ -156,8 +156,8 @@ export function BoardListPage({ initialParams, onNavigate }: BoardListPageProps)
                 </Select>
               </div>
               <Button 
+                variant="brand"
                 onClick={() => onNavigate?.('board-write')}
-                className="bg-[#5dccb4] hover:bg-[#4db9a3] text-white"
               >
                 <Edit size={16} className="mr-2" />
                 글쓰기

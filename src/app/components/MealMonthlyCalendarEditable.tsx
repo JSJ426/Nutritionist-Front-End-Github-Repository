@@ -322,7 +322,7 @@ export function MealMonthlyCalendarEditable({
             </div>
             <div className="flex items-center gap-3">
               <Button
-                variant="outline"
+                variant="cancel"
                 onClick={() => {
                   if (confirm('변경사항을 취소하시겠습니까?')) {
                     setWeeksData(initialWeeks);
@@ -335,11 +335,12 @@ export function MealMonthlyCalendarEditable({
                 취소
               </Button>
               <Button
+                variant="brand"
                 onClick={() => {
                   alert('변경사항이 저장되었습니다.');
                   setHasUnsavedChanges(false);
                 }}
-                className="px-6 bg-[#5dccb4] hover:bg-[#4dbba3] text-white"
+                className="px-6"
               >
                 <Save className="w-4 h-4 mr-2" />
                 저장
