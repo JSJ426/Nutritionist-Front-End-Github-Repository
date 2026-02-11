@@ -3,7 +3,6 @@ import { KeyRound, Lock, Mail, Phone, User } from 'lucide-react';
 
 import { getNutritionistProfile, patchNutritionistMe, putNutritionistPassword } from '../data/nutritionist';
 import { validatePasswordPolicy } from '../utils/password';
-import { ErrorModal } from '../components/ErrorModal';
 import { Button } from '../components/ui/button';
 import { useErrorModal } from '../hooks/useErrorModal';
 import { normalizeErrorMessage } from '../utils/errorMessage';
@@ -14,7 +13,7 @@ interface NutritionistInfoPageProps {
 }
 
 export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) {
-  const { modalProps, openAlert } = useErrorModal();
+  const { openAlert } = useErrorModal();
   const [formState, setFormState] = useState({
     name: '',
     phoneArea: '',
@@ -401,7 +400,6 @@ export function NutritionistInfoPage({ onNavigate }: NutritionistInfoPageProps) 
           </div>
         </div>
       </div>
-      <ErrorModal {...modalProps} />
     </div>
   );
 }

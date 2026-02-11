@@ -9,7 +9,6 @@ import { Footer } from '../components/Footer';
 import { GuestHeader } from '../components/GuestHeader';
 import { validatePasswordPolicy } from '../utils/password';
 import { composePhone, formatLocalNumber, normalizeLocalNumber } from '../utils/phone';
-import { ErrorModal } from '../components/ErrorModal';
 import { useErrorModal } from '../hooks/useErrorModal';
 import { normalizeErrorMessage } from '../utils/errorMessage';
 import type { SchoolSearchItem } from '../viewModels/school';
@@ -19,7 +18,7 @@ type SchoolSignupPageProps = {
 };
 
 export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
-  const { modalProps, openAlert } = useErrorModal();
+  const { openAlert } = useErrorModal();
   const [formData, setFormData] = useState({
     username: '',
     name: '',
@@ -931,7 +930,6 @@ export function SchoolSignupPage({ onNavigate }: SchoolSignupPageProps) {
         onAgree={() => setAgreedToPrivacy(true)}
       />
       <Footer />
-      <ErrorModal {...modalProps} />
     </div>
   );
 }

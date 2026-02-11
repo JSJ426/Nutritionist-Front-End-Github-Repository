@@ -4,7 +4,6 @@ import { Upload, FileText, X } from "lucide-react";
 import { getSchoolResponse } from "../data/school";
 import { generateMealPlan } from "../data/mealplan";
 
-import { ErrorModal } from "../components/ErrorModal";
 import { Button } from "../components/ui/button";
 import { Spinner } from "../components/Spinner";
 import { useErrorModal } from "../hooks/useErrorModal";
@@ -14,7 +13,7 @@ interface MealCreatePageProps {
 }
 
 export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
-  const { modalProps, openAlert } = useErrorModal();
+  const { openAlert } = useErrorModal();
   const [isLoading, setIsLoading] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
   const now = new Date();
@@ -184,7 +183,6 @@ export function MealCreatePage({ onNavigate }: MealCreatePageProps) {
           </button> */}
         </div>
       </div>
-      <ErrorModal {...modalProps} />
     </div>
   );
 }

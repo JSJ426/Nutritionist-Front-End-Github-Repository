@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 
 import { fetchMealPlanMonthly, replaceMealPlanWithAI, updateMealPlanManually } from '../data/mealplan';
 
-import { ErrorModal } from '../components/ErrorModal';
 import { Spinner } from '../components/Spinner';
 import { MealMonthlyCalendarEditable } from "../components/MealMonthlyCalendarEditable";
 
@@ -15,7 +14,7 @@ interface MealEditPageProps {
 }
 
 export function MealEditPage({ initialParams }: MealEditPageProps) {
-  const { modalProps, openAlert } = useErrorModal();
+  const { openAlert } = useErrorModal();
   const [weeklyEditableVm, setWeeklyEditableVm] = useState<MealWeeklyEditableVM>({ weeks: [] });
   const [currentMonth, setCurrentMonth] = useState<string>('');
   const [isAiReplacing, setIsAiReplacing] = useState(false);
@@ -135,7 +134,6 @@ export function MealEditPage({ initialParams }: MealEditPageProps) {
           isAiReplacing={isAiReplacing}
         />
       </div>
-      <ErrorModal {...modalProps} />
     </div>
   );
 }

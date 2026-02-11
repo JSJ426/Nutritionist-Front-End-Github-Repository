@@ -31,17 +31,23 @@ export function ErrorModal({
   onConfirm,
 }: ErrorModalProps) {
   const handleCancel = () => {
-    if (onCancel) {
-      onCancel();
-    }
     onClose();
+    if (!onCancel) return;
+    try {
+      onCancel();
+    } catch (error) {
+      console.error("[modal] onCancel callback failed:", error);
+    }
   };
 
   const handleConfirm = () => {
-    if (onConfirm) {
-      onConfirm();
-    }
     onClose();
+    if (!onConfirm) return;
+    try {
+      onConfirm();
+    } catch (error) {
+      console.error("[modal] onConfirm callback failed:", error);
+    }
   };
 
   return (

@@ -3,7 +3,6 @@ import { ArrowLeft, Paperclip, Upload, X } from 'lucide-react';
 
 import { getBoardDetailResponse, updateBoardPost } from '../data/board';
 
-import { ErrorModal } from '../components/ErrorModal';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
@@ -39,7 +38,7 @@ const parsePositiveId = (value: unknown): number | undefined => {
 
 export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps) {
   const postId = parsePositiveId(initialParams?.postId);
-  const { modalProps, openAlert, openConfirm } = useErrorModal();
+  const { openAlert, openConfirm } = useErrorModal();
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [title, setTitle] = useState('');
@@ -409,7 +408,6 @@ export function BoardEditPage({ initialParams, onNavigate }: BoardEditPageProps)
           </div>
         </div>
       </div>
-      <ErrorModal {...modalProps} />
     </div>
   );
 }

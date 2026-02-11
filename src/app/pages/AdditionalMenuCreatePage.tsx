@@ -3,7 +3,6 @@ import { ArrowLeft } from 'lucide-react';
 
 import { createAdditionalMenu } from '../data/additionalMenu';
 
-import { ErrorModal } from '../components/ErrorModal';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
@@ -22,7 +21,7 @@ interface AdditionalMenuCreatePageProps {
 
 export function AdditionalMenuCreatePage({ onNavigate }: AdditionalMenuCreatePageProps) {
   const initialForm = getAdditionalMenuCreateForm();
-  const { modalProps, openAlert, openConfirm } = useErrorModal();
+  const { openAlert, openConfirm } = useErrorModal();
   const [name, setName] = useState(initialForm.name);
   const [category, setCategory] = useState(initialForm.category);
   const [nutritionBasis, setNutritionBasis] = useState(initialForm.nutritionBasis);
@@ -395,7 +394,6 @@ export function AdditionalMenuCreatePage({ onNavigate }: AdditionalMenuCreatePag
           </div>
         </div>
       </div>
-      <ErrorModal {...modalProps} />
     </div>
   );
 }

@@ -3,7 +3,6 @@ import { ArrowLeft, Download, Edit, Paperclip, Trash2 } from 'lucide-react';
 
 import { deleteBoardPost, getBoardDetailResponse } from '../data/board';
 
-import { ErrorModal } from '../components/ErrorModal';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 
@@ -25,7 +24,7 @@ const parsePositiveId = (value: unknown): number | undefined => {
 
 export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps) {
   const postId = parsePositiveId(initialParams?.postId);
-  const { modalProps, openAlert, openConfirm } = useErrorModal();
+  const { openAlert, openConfirm } = useErrorModal();
   const [post, setPost] = useState<BoardReadVM | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -269,7 +268,6 @@ export function BoardReadPage({ initialParams, onNavigate }: BoardReadPageProps)
           
         </div>
       </div>
-      <ErrorModal {...modalProps} />
     </div>
   );
 }

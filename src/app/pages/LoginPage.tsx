@@ -6,7 +6,6 @@ import { loginDietitian } from '../data/auth';
 import { useAuth } from '../auth/AuthContext';
 import { Footer } from '../components/Footer';
 import { GuestHeader } from '../components/GuestHeader';
-import { ErrorModal } from '../components/ErrorModal';
 import { useErrorModal } from '../hooks/useErrorModal';
 import { normalizeErrorMessage } from '../utils/errorMessage';
 
@@ -16,7 +15,7 @@ type LoginPageProps = {
 };
 
 export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
-  const { modalProps, openAlert } = useErrorModal();
+  const { openAlert } = useErrorModal();
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -181,7 +180,6 @@ export function LoginPage({ onLogin, onNavigate }: LoginPageProps) {
         </div>
       </main>
       <Footer />
-      <ErrorModal {...modalProps} />
     </div>
   );
 }

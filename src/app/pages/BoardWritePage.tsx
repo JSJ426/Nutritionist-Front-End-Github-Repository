@@ -4,7 +4,6 @@ import { ArrowLeft, Paperclip, Upload, X } from 'lucide-react';
 import { createBoardPost, uploadBoardFiles } from '../data/board';
 import { useAuth } from '../auth/AuthContext';
 
-import { ErrorModal } from '../components/ErrorModal';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
@@ -24,7 +23,7 @@ interface BoardWritePageProps {
 }
 
 export function BoardWritePage({ onNavigate }: BoardWritePageProps) {
-  const { modalProps, openAlert, openConfirm } = useErrorModal();
+  const { openAlert, openConfirm } = useErrorModal();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category] = useState('공지'); // 공지로 고정
@@ -275,7 +274,6 @@ export function BoardWritePage({ onNavigate }: BoardWritePageProps) {
           </div>
         </div>
       </div>
-      <ErrorModal {...modalProps} />
     </div>
   );
 }

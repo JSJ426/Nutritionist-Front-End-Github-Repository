@@ -4,7 +4,6 @@ import { Building2, Phone, Mail, Users, FileText, Warehouse, MapPin, Search } fr
 import { getSchoolResponse, patchSchoolMe, searchSchools } from '../data/school';
 import type { SchoolSearchItem } from '../viewModels/school';
 import { useAuth } from '../auth/AuthContext';
-import { ErrorModal } from '../components/ErrorModal';
 import { Button } from '../components/ui/button';
 import { useErrorModal } from '../hooks/useErrorModal';
 import { normalizeErrorMessage } from '../utils/errorMessage';
@@ -16,7 +15,7 @@ interface InstitutionInfoEditPageProps {
 
 export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageProps) {
   const { refreshSchoolInfo } = useAuth();
-  const { modalProps, openAlert } = useErrorModal();
+  const { openAlert } = useErrorModal();
   const [activeTab, setActiveTab] = useState<'school' | 'rules'>('school');
   const [form, setForm] = useState({
     schoolName: '',
@@ -754,7 +753,6 @@ export function InstitutionInfoEditPage({ onNavigate }: InstitutionInfoEditPageP
         )}
 
       </div>
-      <ErrorModal {...modalProps} />
     </div>
   );
 }

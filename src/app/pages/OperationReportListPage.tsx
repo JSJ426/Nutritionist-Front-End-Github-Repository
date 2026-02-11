@@ -8,7 +8,6 @@ import {
   getMonthlyOpsDocListResponse,
 } from '../data/operation';
 
-import { ErrorModal } from '../components/ErrorModal';
 import { Button } from '../components/ui/button';
 import {
   Select,
@@ -50,7 +49,7 @@ interface OperationReportListPageProps {
 
 export function OperationReportListPage({ onNavigate }: OperationReportListPageProps) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { modalProps, openAlert } = useErrorModal();
+  const { openAlert } = useErrorModal();
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -369,7 +368,6 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
 
         </div>
       </div>
-      <ErrorModal {...modalProps} />
     </div>
   );
 }

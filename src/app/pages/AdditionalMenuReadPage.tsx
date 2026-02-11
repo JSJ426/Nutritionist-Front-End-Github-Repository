@@ -3,7 +3,6 @@ import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
 
 import { deleteAdditionalMenu, getAdditionalMenuDetailResponse } from '../data/additionalMenu';
 
-import { ErrorModal } from '../components/ErrorModal';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 
@@ -33,7 +32,7 @@ export function AdditionalMenuReadPage({
   onNavigate,
 }: AdditionalMenuReadPageProps) {
   const menuId = parseMenuId(initialParams?.menuId);
-  const { modalProps, openAlert, openConfirm } = useErrorModal();
+  const { openAlert, openConfirm } = useErrorModal();
   const [vm, setVm] = useState<AdditionalMenuReadVM | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -259,7 +258,6 @@ export function AdditionalMenuReadPage({
           </div>
         </div>
       </div>
-      <ErrorModal {...modalProps} />
     </div>
   );
 }
