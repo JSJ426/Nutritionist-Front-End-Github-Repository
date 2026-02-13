@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { AlertCircle, Save, XCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { MealDetailModal } from './MealDetailModal';
 import { MealEditModal } from './MealEditModal';
@@ -100,8 +99,6 @@ export function MealMonthlyCalendarEditable({
     mealType: 'lunch' | 'dinner';
     detail?: MealData['detail'];
   } | null>(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
   useEffect(() => {
     setWeeksData(initialWeeks);
   }, [initialWeeks]);
@@ -207,7 +204,6 @@ export function MealMonthlyCalendarEditable({
     targetMeal.menu = payload.menus.map((name) => ({ name, allergy: [] }));
 
     setWeeksData(updatedWeeks);
-    setHasUnsavedChanges(true);
     onSubmit({
       ...payload,
       menuId: targetMeal.menuId,
@@ -312,43 +308,6 @@ export function MealMonthlyCalendarEditable({
         )}
       </div>
 
-      {/* Sticky Bottom Action Bar */}
-      {hasUnsavedChanges && (
-        <div className="sticky bottom-0 z-10 bg-white border-t border-gray-200 px-6 py-4 shadow-lg">
-          <div className="max-w-[1600px] mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2 text-amber-700">
-              <AlertCircle className="w-5 h-5" />
-              <span className="text-sm font-medium">저장되지 않은 변경사항이 있습니다</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="cancel"
-                onClick={() => {
-                  if (confirm('변경사항을 취소하시겠습니까?')) {
-                    setWeeksData(initialWeeks);
-                    setHasUnsavedChanges(false);
-                  }
-                }}
-                className="px-6"
-              >
-                <XCircle className="w-4 h-4 mr-2" />
-                취소
-              </Button>
-              <Button
-                variant="brand"
-                onClick={() => {
-                  alert('변경사항이 저장되었습니다.');
-                  setHasUnsavedChanges(false);
-                }}
-                className="px-6"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                저장
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
     </div>
   );

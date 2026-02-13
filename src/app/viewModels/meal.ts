@@ -15,6 +15,7 @@ export type MealDetailPayload = {
     uniqueAllergens: number[];
     byMenu: Record<string, number[]>;
   };
+  actionType?: 'AI_AUTO_REPLACE' | 'MANUAL_UPDATE' | 'GENERATE';
   recipeByMenu?: Record<string, string>;
   menuItems?: Record<string, MealPlanMenuItem | null>;
   imageUrl?: string | null;
@@ -125,6 +126,7 @@ export type MealMonthlyResponse = {
       };
       cost: number;
       ai_comment: string | null;
+      action_type?: 'AI_AUTO_REPLACE' | 'MANUAL_UPDATE' | 'GENERATE';
       menu_items: Record<string, MealPlanMenuItem | null>;
       allergen_summary: {
         unique: number[];
@@ -358,6 +360,7 @@ export const buildMealMonthlyDataFromResponse = (raw: MealMonthlyResponse): Meal
       nutrition: menu.nutrition,
       cost: menu.cost,
       aiComment: menu.ai_comment ?? '',
+      actionType: menu.action_type,
       allergenSummary: {
         uniqueAllergens: menu.allergen_summary.unique.length
           ? menu.allergen_summary.unique
@@ -773,22 +776,24 @@ export const toMealWeeklyEditableVMFromMonthlyData = (
       const meals: Record<string, MealEditableDayMeals> = {};
       weekDays.forEach((day) => {
         const dayMeals = week.meals[day];
-        const lunchComment = dayMeals?.lunch?.detail?.aiComment;
-        const dinnerComment = dayMeals?.dinner?.detail?.aiComment;
+        const lunchDetail = dayMeals?.lunch?.detail;
+        const dinnerDetail = dayMeals?.dinner?.detail;
+        const isLunchAi = lunchDetail?.actionType === 'AI_AUTO_REPLACE';
+        const isDinnerAi = dinnerDetail?.actionType === 'AI_AUTO_REPLACE';
         meals[day] = {
           lunch: {
             menu: dayMeals?.lunch?.menu ?? [],
-            isAiReplacement: Boolean(lunchComment),
-            aiReason: lunchComment || undefined,
-            menuId: dayMeals?.lunch?.detail?.menuId,
-            mealPlanId: dayMeals?.lunch?.detail?.mealPlanId,
+            isAiReplacement: isLunchAi,
+            aiReason: isLunchAi ? (lunchDetail?.aiComment || undefined) : undefined,
+            menuId: lunchDetail?.menuId,
+            mealPlanId: lunchDetail?.mealPlanId,
           },
           dinner: {
             menu: dayMeals?.dinner?.menu ?? [],
-            isAiReplacement: Boolean(dinnerComment),
-            aiReason: dinnerComment || undefined,
-            menuId: dayMeals?.dinner?.detail?.menuId,
-            mealPlanId: dayMeals?.dinner?.detail?.mealPlanId,
+            isAiReplacement: isDinnerAi,
+            aiReason: isDinnerAi ? (dinnerDetail?.aiComment || undefined) : undefined,
+            menuId: dinnerDetail?.menuId,
+            mealPlanId: dinnerDetail?.mealPlanId,
           },
         };
       });

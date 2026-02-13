@@ -8,6 +8,7 @@ import {
   getMonthlyOpsDocListResponse,
 } from '../data/operation';
 
+import { Spinner } from '../components/Spinner';
 import { Button } from '../components/ui/button';
 import {
   Select,
@@ -251,6 +252,7 @@ export function OperationReportListPage({ onNavigate }: OperationReportListPageP
           <Spinner
             label="월간 운영 보고서 생성 중"
             showLabel
+            estimatedWaitSeconds={60}
             containerClassName="absolute inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm"
           />
         ) : null}

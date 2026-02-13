@@ -73,11 +73,22 @@ export function MealEditPage({ initialParams }: MealEditPageProps) {
       return;
     }
     try {
-      await updateMealPlanManually(payload.mealPlanId, payload.menuId, {
+      const response = await updateMealPlanManually(payload.mealPlanId, payload.menuId, {
         reason: payload.reason,
         menus: payload.menus,
       });
       openAlert('식단표 수정 요청이 전송되었습니다.', { title: '안내' });
+      const dateObj = new Date(`${response.data.date}T00:00:00`);
+      const monthlyResponse = await fetchMealPlanMonthly(dateObj.getFullYear(), dateObj.getMonth() + 1);
+      const dataByMonth = toMealMonthlyDataByMonth(monthlyResponse);
+      const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+      const monthlyData = dataByMonth[monthKey] ?? Object.values(dataByMonth)[0];
+      if (!monthlyData) {
+        setWeeklyEditableVm({ weeks: [] });
+        return;
+      }
+      setCurrentMonth(monthlyData.month);
+      setWeeklyEditableVm(toMealWeeklyEditableVMFromMonthlyData(monthlyData, response.data.date));
     } catch (error) {
       console.error('Failed to update meal plan:', error);
       openAlert('식단표 수정 요청에 실패했습니다.');
